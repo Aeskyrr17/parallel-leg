@@ -1,0 +1,44 @@
+{
+  "build": {
+    "usbx": true,
+    "motors": {
+      "dji": true,
+      "dm": true,
+      "lk": false
+    }
+  },
+  "bindings": {
+    "remoter_uart": "uart5",
+    "referee_uart": "usart1"
+  },
+  "can": {
+    "fdcan1": {
+      "id_type": "standard"
+    },
+    "fdcan2": {
+      "id_type": "standard"
+    },
+    "fdcan3": {
+      "id_type": "standard"
+    }
+  },
+  "ahrs": {
+    "imu_offset_x": 0.0,
+    "imu_thread_priority": 3,
+    "temp_thread_priority": 4,
+    "target_temp": 45.0
+  },
+  "remoter": {
+    "source": "dr16",
+    "thread_priority": 2,
+    "rx_timeout_ticks": 100
+  },
+  "referee": {
+    "thread_priority": 8
+  },
+  "test": {
+    "thread_priority": 10,
+    "report_uart": "uart7",
+    "auto_run_on_boot": true
+  }
+}
