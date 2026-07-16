@@ -60,16 +60,6 @@ struct unit_test_state
 struct imu_unit_state : unit_test_state
 {
     bool ahrs_solved = false;
-    float ahrs_dt_s = 0.0f;
-    float ahrs_dt_min_s = 0.0f;
-    float ahrs_dt_max_s = 0.0f;
-    std::uint32_t ahrs_loop_runtime_us = 0;
-    std::uint32_t ahrs_loop_runtime_max_us = 0;
-    std::uint32_t ahrs_loop_runtime_overruns = 0;
-    float ahrs_loop_runtime_avg_us = 0.0f;
-    std::uint32_t monitor_runtime_us = 0;
-    std::uint32_t monitor_runtime_max_us = 0;
-    float monitor_runtime_avg_us = 0.0f;
     float quaternion[4] = {1.0f, 0.0f, 0.0f, 0.0f};
     float yaw = 0.0f;
     float pitch = 0.0f;
