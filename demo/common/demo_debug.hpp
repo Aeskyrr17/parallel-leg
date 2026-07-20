@@ -65,6 +65,44 @@ struct imu_unit_state : unit_test_state
     float pitch = 0.0f;
     float roll = 0.0f;
     float total_yaw = 0.0f;
+    float imu_temperature = 0.0f;
+    bool imu_temperature_ready = false;
+    bool imu_temperature_control_ok = false;
+    bool imu_calibrated = false;
+    std::uint32_t imu_sample_error_count = 0;
+    std::uint32_t imu_spi_read_error_count = 0;
+    std::uint32_t imu_spi_write_error_count = 0;
+    std::uint32_t imu_spi_lock_error_count = 0;
+
+    // Shadow Tactical ESKF diagnostics.  These fields are intentionally kept
+    // in the global demo_debug_instance for live debugger comparison.
+    bool tactical_solved = false;
+    float tactical_quaternion[4] = {1.0f, 0.0f, 0.0f, 0.0f};
+    float tactical_yaw = 0.0f;
+    float tactical_pitch = 0.0f;
+    float tactical_roll = 0.0f;
+    float tactical_gyro_bias[3] = {};
+    float tactical_accel_weight = 1.0f;
+    float tactical_accel_direction_error = 0.0f;
+    float tactical_accel_magnitude_g = 0.0f;
+    float tactical_gyro_magnitude_rad_s = 0.0f;
+    float tactical_accel_magnitude_variance = 0.0f;
+    float tactical_gyro_magnitude_variance = 0.0f;
+    float tactical_impact_acc_delta_g = 0.0f;
+    float tactical_impact_gyro_delta_rad_s = 0.0f;
+    std::uint8_t tactical_motion_state = 0;
+    std::uint8_t tactical_impact_state = 0;
+    bool tactical_paddling = false;
+    bool tactical_linear_motion = false;
+    std::uint32_t tactical_update_count = 0;
+    float tactical_earth_acceleration[3] = {};
+    float tactical_heave_velocity = 0.0f;
+    float tactical_heave_position = 0.0f;
+
+    // Formal EKF minus Tactical ESKF, wrapped to [-pi, pi].
+    float yaw_difference = 0.0f;
+    float pitch_difference = 0.0f;
+    float roll_difference = 0.0f;
 };
 
 struct remoter_unit_state : unit_test_state

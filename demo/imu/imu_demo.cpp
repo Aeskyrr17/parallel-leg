@@ -36,7 +36,7 @@ enum failure : std::uint32_t
 constexpr std::uint32_t pass_stage_mask =
     service_initialized | subscriber_created | monitor_thread_started | data_received | quaternion_ok;
 
-constexpr ULONG monitor_period_ticks = 50;
+constexpr ULONG monitor_period_ticks = 1;
 constexpr std::uint32_t warmup_ticks = 12000;
 
 TX_THREAD monitor_thread{};
@@ -54,6 +54,21 @@ bool quaternion_valid(const ahrs::message& data) noexcept
         data.quaternion[2] * data.quaternion[2] +
         data.quaternion[3] * data.quaternion[3];
     return std::isfinite(norm) && norm > 0.8f && norm < 1.2f;
+}
+
+float wrap_angle(float angle) noexcept
+{
+    constexpr float pi = 3.14159265358979323846f;
+    constexpr float two_pi = 2.0f * pi;
+    while (angle > pi)
+    {
+        angle -= two_pi;
+    }
+    while (angle < -pi)
+    {
+        angle += two_pi;
+    }
+    return angle;
 }
 
 void sync_debug(const ahrs::message& data, std::uint32_t stages, bool timed_out) noexcept
@@ -78,6 +93,45 @@ void sync_debug(const ahrs::message& data, std::uint32_t stages, bool timed_out)
     state.pitch = data.pitch;
     state.roll = data.roll;
     state.total_yaw = data.total_yaw;
+
+    const auto& diagnostics = ahrs::service::instance().diagnostics();
+    state.imu_temperature = diagnostics.temperature;
+    state.imu_temperature_ready = diagnostics.temperature_ready;
+    state.imu_temperature_control_ok =
+        ahrs::service::instance().imu().diagnostics().temperature_control_ok;
+    state.imu_calibrated = diagnostics.calibrated;
+    state.imu_sample_error_count = diagnostics.sample_error_count;
+    state.imu_spi_read_error_count = diagnostics.imu_spi_read_error_count;
+    state.imu_spi_write_error_count = diagnostics.imu_spi_write_error_count;
+    state.imu_spi_lock_error_count = diagnostics.imu_spi_lock_error_count;
+
+    const auto& tactical = diagnostics.tactical;
+    state.tactical_solved = tactical.update_count != 0U;
+    std::memcpy(state.tactical_quaternion, tactical.quaternion, sizeof(state.tactical_quaternion));
+    state.tactical_yaw = tactical.yaw;
+    state.tactical_pitch = tactical.pitch;
+    state.tactical_roll = tactical.roll;
+    std::memcpy(state.tactical_gyro_bias, tactical.gyro_bias, sizeof(state.tactical_gyro_bias));
+    state.tactical_accel_weight = tactical.accel_weight;
+    state.tactical_accel_direction_error = tactical.accel_direction_error;
+    state.tactical_accel_magnitude_g = tactical.accel_magnitude_g;
+    state.tactical_gyro_magnitude_rad_s = tactical.gyro_magnitude_rad_s;
+    state.tactical_accel_magnitude_variance = tactical.accel_magnitude_variance;
+    state.tactical_gyro_magnitude_variance = tactical.gyro_magnitude_variance;
+    state.tactical_impact_acc_delta_g = tactical.impact_acc_delta_g;
+    state.tactical_impact_gyro_delta_rad_s = tactical.impact_gyro_delta_rad_s;
+    state.tactical_motion_state = tactical.motion_state;
+    state.tactical_impact_state = tactical.impact_state;
+    state.tactical_paddling = tactical.paddling;
+    state.tactical_linear_motion = tactical.linear_motion;
+    state.tactical_update_count = tactical.update_count;
+    std::memcpy(state.tactical_earth_acceleration, tactical.earth_acceleration,
+                sizeof(state.tactical_earth_acceleration));
+    state.tactical_heave_velocity = tactical.heave_velocity;
+    state.tactical_heave_position = tactical.heave_position;
+    state.yaw_difference = wrap_angle(data.yaw - tactical.yaw);
+    state.pitch_difference = wrap_angle(data.pitch - tactical.pitch);
+    state.roll_difference = wrap_angle(data.roll - tactical.roll);
 
     state.failure_mask = 0;
     if ((stages & service_initialized) == 0U)
