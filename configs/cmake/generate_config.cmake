@@ -652,6 +652,10 @@ function(_pnx_motor_model_expr model out_var)
         set(${out_var} "model::dm_dm4310" PARENT_SCOPE)
     elseif(model_lower STREQUAL "dm_dm8009p")
         set(${out_var} "model::dm_dm8009p" PARENT_SCOPE)
+    elseif(model_lower STREQUAL "lk_lk8016")
+        set(${out_var} "model::lk_lk8016" PARENT_SCOPE)
+    elseif(model_lower STREQUAL "lk_lk9025")
+        set(${out_var} "model::lk_lk9025" PARENT_SCOPE)
     elseif(model_lower STREQUAL "unknown" OR model_lower STREQUAL "")
         set(${out_var} "model::unknown" PARENT_SCOPE)
     else()
@@ -788,6 +792,8 @@ file(WRITE "${ROBOT_CONFIG_HPP}"
 "    dji_xroll,\n"
 "    dm_dm4310,\n"
 "    dm_dm8009p,\n"
+"    lk_lk8016,\n"
+"    lk_lk9025,\n"
 "};\n\n"
 "namespace dm {\n"
 "inline constexpr std::uint32_t id_base = ${robot_dm_id_base}U;\n"

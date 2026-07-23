@@ -23,6 +23,8 @@ enum class model : std::uint8_t {
     dji_xroll,
     dm_dm4310,
     dm_dm8009p,
+    lk_lk8016,
+    lk_lk9025,
 };
 
 namespace dm {

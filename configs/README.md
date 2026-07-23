@@ -55,7 +55,7 @@ CAN 的 `id_type` 只表示标准帧 ID 或扩展帧 ID，不表示 CAN Classic 
 | 字段 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
 | `name` | string | 是 | 生成到 `robot::motors` 命名空间中的 C++ 标识符。 |
-| `model` | string | 是 | 电机型号。当前 motor demo 支持 `dji_m2006`、`dji_m3508`、`dji_gm6020`、`dji_xroll`、`dm_dm4310`、`dm_dm8009p`。 |
+| `model` | string | 是 | 电机型号。配置生成器支持 `dji_m2006`、`dji_m3508`、`dji_gm6020`、`dji_xroll`、`dm_dm4310`、`dm_dm8009p`、`lk_lk8016`、`lk_lk9025`。 |
 | `can_bus` | string | 是 | CAN 外设名称，例如 `fdcan1`、`fdcan2`，必须存在于 `board.ioc`。 |
 | `can_type` | string | 是 | CAN 帧类型：`classic` 或 `fd`。 |
 | `can_id` | string/number | 是 | 电机基础 CAN ID，建议十六进制字符串，如 `0x01`。 |
