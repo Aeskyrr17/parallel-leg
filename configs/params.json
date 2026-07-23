@@ -3,8 +3,8 @@
     "usbx": true,
     "motors": {
       "dji": true,
-      "dm": true,
-      "lk": false
+      "dm": false,
+      "lk": true
     }
   },
   "bindings": {
@@ -39,6 +39,6 @@
   "test": {
     "thread_priority": 10,
     "report_uart": "uart7",
-    "auto_run_on_boot": true
+    "auto_run_on_boot": false
   }
 }

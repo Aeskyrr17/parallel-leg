@@ -8,10 +8,10 @@
 
 namespace robot::motors {
 
-inline constexpr std::size_t motor_count = 2;
-inline constexpr bool has_dji = 1;
-inline constexpr bool has_dm = 1;
-inline constexpr bool has_lk = 0;
+inline constexpr std::size_t motor_count = 6;
+inline constexpr bool has_dji = 0;
+inline constexpr bool has_dm = 0;
+inline constexpr bool has_lk = 1;
 inline constexpr bool has_xv2 = 0;
 inline constexpr bool has_other = 0;
 
@@ -33,22 +33,58 @@ inline constexpr std::uint32_t master_id_base = 0x05U;
 inline constexpr std::size_t max_motors = 4;
 } // namespace dm
 
-// dji_gm6020
-inline constexpr model motor1_model = model::dji_gm6020;
-inline constexpr ::motors::config motor1{
-    bsp::can::bus::fdcan2,
+// lk_lk8016
+inline constexpr model ljoint4_model = model::lk_lk8016;
+inline constexpr ::motors::config ljoint4{
+    bsp::can::bus::fdcan1,
     bsp::can::bus_type::classic,
-    0x205U,
-    ::motors::mode::relax,
+    0x141U,
+    ::motors::mode::torque,
 };
 
-// dm_dm4310
-inline constexpr model motor2_model = model::dm_dm4310;
-inline constexpr ::motors::config motor2{
+// lk_lk8016
+inline constexpr model ljoint1_model = model::lk_lk8016;
+inline constexpr ::motors::config ljoint1{
     bsp::can::bus::fdcan1,
-    bsp::can::bus_type::fd,
-    0x01U,
-    ::motors::mode::mit,
+    bsp::can::bus_type::classic,
+    0x142U,
+    ::motors::mode::torque,
+};
+
+// lk_lk8016
+inline constexpr model rjoint4_model = model::lk_lk8016;
+inline constexpr ::motors::config rjoint4{
+    bsp::can::bus::fdcan1,
+    bsp::can::bus_type::classic,
+    0x143U,
+    ::motors::mode::torque,
+};
+
+// lk_lk8016
+inline constexpr model rjoint1_model = model::lk_lk8016;
+inline constexpr ::motors::config rjoint1{
+    bsp::can::bus::fdcan1,
+    bsp::can::bus_type::classic,
+    0x144U,
+    ::motors::mode::torque,
+};
+
+// lk_lk9025
+inline constexpr model lwheel_model = model::lk_lk9025;
+inline constexpr ::motors::config lwheel{
+    bsp::can::bus::fdcan3,
+    bsp::can::bus_type::classic,
+    0x141U,
+    ::motors::mode::torque,
+};
+
+// lk_lk9025
+inline constexpr model rwheel_model = model::lk_lk9025;
+inline constexpr ::motors::config rwheel{
+    bsp::can::bus::fdcan3,
+    bsp::can::bus_type::classic,
+    0x142U,
+    ::motors::mode::torque,
 };
 
 } // namespace robot::motors

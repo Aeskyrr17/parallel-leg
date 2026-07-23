@@ -1,26 +1,63 @@
 {
   "devices": {
     "motors": {
-      "dm": {
-        "id_base": "0x01",
-        "master_id_base": "0x05",
+      // "dm": {
+      //   "id_base": "0x01",
+      //   "master_id_base": "0x05",
+      //   "max_motors": 4
+      "lk": {
+        "id_base": "0x141",
+        "master_id_base": "0x141",
         "max_motors": 4
       },
       "list": [
       {
-        "name": "motor1",
-        "model": "dji_gm6020",
-        "can_bus": "fdcan2",
+        "name": "ljoint4",
+        "model": "lk_lk8016",
+        "can_bus": "fdcan1",
         "can_type": "classic",
-        "can_id": "0x205"
+        "can_id": "0x141",
+        "control_mode": "torque"
       },
       {
-        "name": "motor2",
-        "model": "dm_dm4310",
+        "name": "ljoint1",
+        "model": "lk_lk8016",
         "can_bus": "fdcan1",
-        "can_type": "fd",
-        "can_id": "0x01",
-        "control_mode": "mit"
+        "can_type": "classic",
+        "can_id": "0x142",
+        "control_mode": "torque"
+      },
+      {
+        "name": "rjoint4",
+        "model": "lk_lk8016",
+        "can_bus": "fdcan1",
+        "can_type": "classic",
+        "can_id": "0x143",
+        "control_mode": "torque"
+      },
+      {
+        "name": "rjoint1",
+        "model": "lk_lk8016",
+        "can_bus": "fdcan1",
+        "can_type": "classic",
+        "can_id": "0x144",
+        "control_mode": "torque"
+      },
+      {
+        "name": "lwheel",
+        "model": "lk_lk9025",
+        "can_bus": "fdcan3",
+        "can_type": "classic",
+        "can_id": "0x141",
+        "control_mode": "torque"
+      },
+      {
+        "name": "rwheel",
+        "model": "lk_lk9025",
+        "can_bus": "fdcan3",
+        "can_type": "classic",
+        "can_id": "0x142",
+        "control_mode": "torque"
       }
       ]
     }

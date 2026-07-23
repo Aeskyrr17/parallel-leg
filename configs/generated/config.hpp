@@ -19,8 +19,8 @@
 #define HAS_PWM_TIM12_CH2 1
 #define HAS_MOTORS 1
 #define MOTOR_DJI 1
-#define MOTOR_DM 1
-#define MOTOR_LK 0
+#define MOTOR_DM 0
+#define MOTOR_LK 1
 
 namespace config::feature {
 
@@ -38,8 +38,8 @@ inline constexpr bool has_pwm_tim3_ch4 = 1;
 inline constexpr bool has_pwm_tim12_ch2 = 1;
 inline constexpr bool has_motors = 1;
 inline constexpr bool motor_dji = 1;
-inline constexpr bool motor_dm = 1;
-inline constexpr bool motor_lk = 0;
+inline constexpr bool motor_dm = 0;
+inline constexpr bool motor_lk = 1;
 
 } // namespace config::feature
 
@@ -64,9 +64,9 @@ inline constexpr std::size_t max_rx_callbacks = 8;
 inline constexpr std::uint32_t tx_delay_comp_tdc = 13;
 inline constexpr std::uint32_t tx_delay_comp_filter = 13;
 
-inline constexpr std::array<bus_config, bus_count> configs = {{ { true, handle_id::fdcan1, bus_type::fd, id_type::standard }, { true, handle_id::fdcan2, bus_type::classic, id_type::standard }, { true, handle_id::fdcan3, bus_type::classic, id_type::standard } }};
+inline constexpr std::array<bus_config, bus_count> configs = {{ { true, handle_id::fdcan1, bus_type::classic, id_type::standard }, { true, handle_id::fdcan2, bus_type::classic, id_type::standard }, { true, handle_id::fdcan3, bus_type::classic, id_type::standard } }};
 inline constexpr std::array<bool, bus_count> enabled = { true, true, true };
-inline constexpr std::array<bus_type, bus_count> configured_bus_types = { bus_type::fd, bus_type::classic, bus_type::classic };
+inline constexpr std::array<bus_type, bus_count> configured_bus_types = { bus_type::classic, bus_type::classic, bus_type::classic };
 inline constexpr std::array<id_type, bus_count> filter_id_types = { id_type::standard, id_type::standard, id_type::standard };
 
 } // namespace can
@@ -158,7 +158,7 @@ namespace params::referee {
 
 namespace params::test {
   inline constexpr std::uint32_t thread_priority = 10;
-  inline constexpr bool auto_run_on_boot = true;
+  inline constexpr bool auto_run_on_boot = false;
 } // namespace params::test
 
 namespace params::usb {
