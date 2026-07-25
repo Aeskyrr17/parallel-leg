@@ -26,12 +26,12 @@ bool finite_array(const float* values, int count)
 
 } // namespace
 
-odometry::odometry(const odometry_config& cfg) : cfg_(cfg)
+Odometry::Odometry(const chassis_config& cfg) : cfg_(cfg)
 {
     reset();
 }
 
-bool odometry::update(const odometry_input& input)
+bool Odometry::update(const odometry_input& input)
 {
     state_.valid = false;
     if (!valid_input(input))
@@ -81,7 +81,7 @@ bool odometry::update(const odometry_input& input)
     return state_.valid;
 }
 
-void odometry::reset()
+void Odometry::reset()
 {
     state_ = {};
     estimate_[0] = 0.0f;
@@ -92,12 +92,12 @@ void odometry::reset()
     {
         value = 0.0f;
     }
-    covariance_[0] = cfg_.initial_variance;
-    covariance_[4] = cfg_.initial_variance;
-    covariance_[8] = cfg_.initial_variance;
+    covariance_[0] = cfg_.odometry.initial_variance;
+    covariance_[4] = cfg_.odometry.initial_variance;
+    covariance_[8] = cfg_.odometry.initial_variance;
 }
 
-void odometry::quaternion_product(const float left[4], const float right[4], float result[4])
+void Odometry::quaternion_product(const float left[4], const float right[4], float result[4])
 {
     result[0] = left[0] * right[0] - left[1] * right[1] - left[2] * right[2] - left[3] * right[3];
     result[1] = left[0] * right[1] + left[1] * right[0] + left[2] * right[3] - left[3] * right[2];
@@ -105,12 +105,12 @@ void odometry::quaternion_product(const float left[4], const float right[4], flo
     result[3] = left[0] * right[3] + left[1] * right[2] - left[2] * right[1] + left[3] * right[0];
 }
 
-bool odometry::valid_input(const odometry_input& input) const
+bool Odometry::valid_input(const odometry_input& input) const
 {
     if (!input.valid || !finite_array(input.quaternion, 4) ||
         !finite_array(input.acceleration, 3) || !std::isfinite(input.wheel_velocity) ||
-        !std::isfinite(input.yaw) || !std::isfinite(input.dt) || input.dt < cfg_.min_dt ||
-        input.dt > cfg_.max_dt)
+        !std::isfinite(input.yaw) || !std::isfinite(input.dt) || input.dt < cfg_.runtime.min_dt_s ||
+        input.dt > cfg_.runtime.max_dt_s)
     {
         return false;
     }
@@ -118,10 +118,10 @@ bool odometry::valid_input(const odometry_input& input) const
     const float norm_sq =
         input.quaternion[0] * input.quaternion[0] + input.quaternion[1] * input.quaternion[1] +
         input.quaternion[2] * input.quaternion[2] + input.quaternion[3] * input.quaternion[3];
-    return std::isfinite(norm_sq) && norm_sq > cfg_.quaternion_norm_epsilon;
+    return std::isfinite(norm_sq) && norm_sq > cfg_.odometry.quaternion_norm_epsilon;
 }
 
-bool odometry::update_filter(float velocity, float acceleration, float dt)
+bool Odometry::update_filter(float velocity, float acceleration, float dt)
 {
     const float dt2 = dt * dt;
     const float dt3 = dt2 * dt;
@@ -130,7 +130,7 @@ bool odometry::update_filter(float velocity, float acceleration, float dt)
     const float transition[9] = {
         1.0f, dt, 0.5f * dt2, 0.0f, 1.0f, dt, 0.0f, 0.0f, 1.0f,
     };
-    const float q = cfg_.process_noise;
+    const float q = cfg_.odometry.process_noise;
     const float process_noise[9] = {
         dt3 * q / 20.0f, dt4 * q / 8.0f, dt3 * q / 6.0f, dt4 * q / 8.0f, dt3 * q / 3.0f,
         dt2 * q / 2.0f,  dt3 * q / 6.0f, dt2 * q / 2.0f, dt * q,
@@ -172,12 +172,12 @@ bool odometry::update_filter(float velocity, float acceleration, float dt)
         }
     }
 
-    const float s00 = predicted_covariance[4] + cfg_.wheel_velocity_noise;
+    const float s00 = predicted_covariance[4] + cfg_.odometry.wheel_velocity_noise;
     const float s01 = predicted_covariance[5];
     const float s10 = predicted_covariance[7];
-    const float s11 = predicted_covariance[8] + cfg_.acceleration_noise;
+    const float s11 = predicted_covariance[8] + cfg_.odometry.acceleration_noise;
     const float determinant = s00 * s11 - s01 * s10;
-    if (!std::isfinite(determinant) || std::fabs(determinant) <= cfg_.innovation_epsilon)
+    if (!std::isfinite(determinant) || std::fabs(determinant) <= cfg_.odometry.innovation_epsilon)
     {
         return false;
     }

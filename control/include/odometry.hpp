@@ -1,22 +1,10 @@
 #pragma once
 
+#include "leg_config.hpp"
 #include "msgs.hpp"
 
 namespace wbr::control
 {
-
-struct odometry_config
-{
-    float process_noise = 5.0f;
-    float wheel_velocity_noise = 0.1f;
-    float acceleration_noise = 50.0f;
-    float initial_variance = 10.0f;
-
-    float min_dt = 1.0e-5f;
-    float max_dt = 5.0e-2f;
-    float quaternion_norm_epsilon = 1.0e-9f;
-    float innovation_epsilon = 1.0e-9f;
-};
 
 struct odometry_input
 {
@@ -31,15 +19,15 @@ struct odometry_input
 
     // Chassis yaw in rad.
     float yaw = 0.0f;
-    float dt = 0.001f;
+    float dt = 0.0f;
 
     bool valid = false;
 };
 
-class odometry
+class Odometry
 {
 public:
-    explicit odometry(const odometry_config& cfg = {});
+    explicit Odometry(const chassis_config& cfg);
 
     bool update(const odometry_input& input);
     const odometry_state& state() const { return state_; }
@@ -51,7 +39,7 @@ private:
     bool valid_input(const odometry_input& input) const;
     bool update_filter(float velocity, float acceleration, float dt);
 
-    odometry_config cfg_{};
+    chassis_config cfg_{};
     odometry_state state_{};
 
     // State is [longitudinal position, velocity, acceleration].
