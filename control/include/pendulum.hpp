@@ -15,9 +15,8 @@ public:
     Pendulum(motors::api& joint1, motors::api& joint4, const leg_calibration& calibration,
              const chassis_config& cfg);
 
-    void solve(const motor_feedback_sample& joint1_feedback,
-               const motor_feedback_sample& joint4_feedback, float pitch, float dpitch, float az,
-               float dt);
+    void solve(const motors::feedback& joint1_feedback, const motors::feedback& joint4_feedback,
+               bool feedback_valid, float pitch, float dpitch, float az, float dt);
 
     const link_state& link() const { return vmc_solver_.state(); }
 
@@ -35,7 +34,7 @@ public:
 
 private:
     bool valid_calibration() const;
-    static bool valid_motor_feedback(const motor_feedback_sample& feedback);
+    static bool valid_motor_feedback(const motors::feedback& feedback);
 
     motors::api& joint1_;
     motors::api& joint4_;

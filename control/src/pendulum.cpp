@@ -16,13 +16,13 @@ Pendulum::Pendulum(motors::api& joint1, motors::api& joint4, const leg_calibrati
 {
 }
 
-void Pendulum::solve(const motor_feedback_sample& joint1_feedback,
-                     const motor_feedback_sample& joint4_feedback, float pitch, float dpitch,
-                     float az, float dt)
+void Pendulum::solve(const motors::feedback& joint1_feedback,
+                     const motors::feedback& joint4_feedback, bool feedback_valid, float pitch,
+                     float dpitch, float az, float dt)
 {
     joint_state joint{};
-    joint.valid = valid_motor_feedback(joint1_feedback) && valid_motor_feedback(joint4_feedback) &&
-                  valid_calibration();
+    joint.valid = feedback_valid && valid_motor_feedback(joint1_feedback) &&
+                  valid_motor_feedback(joint4_feedback) && valid_calibration();
 
     if (joint.valid)
     {
@@ -178,11 +178,10 @@ bool Pendulum::valid_calibration() const
            std::isfinite(calibration_.joint4_zero_rad);
 }
 
-bool Pendulum::valid_motor_feedback(const motor_feedback_sample& feedback)
+bool Pendulum::valid_motor_feedback(const motors::feedback& feedback)
 {
-    return feedback.valid && feedback.online && feedback.error_code == 0U &&
-           std::isfinite(feedback.position) && std::isfinite(feedback.velocity) &&
-           std::isfinite(feedback.torque);
+    return feedback.error_code == 0U && std::isfinite(feedback.position) &&
+           std::isfinite(feedback.velocity) && std::isfinite(feedback.torque);
 }
 
 } // namespace wbr::control

@@ -33,11 +33,14 @@ hardware-validated.
   AHRS/remoter topics, and updates one mutex-protected latest snapshot.
 - `wbr_control` copies that snapshot with `TX_NO_WAIT`. It never calls `msg::read()` and never uses
   `TX_WAIT_FOREVER`.
+- The control path consumes the module-owned `ahrs::message` directly. Freshness and finite checks
+  stay in Control/health rather than being represented by a duplicate attitude message type.
 - The Control cycle directly calls `Function`, `Odometry`, both `Pendulum` objects,
   `ChassisController`, `LQR`, `VMCsolver`, limits, six motor-buffer writes, and one final LK batch
   commit. Intermediate control products do not use the message bus.
-- All six LK feedback values are copied into a named `motor_feedback_frame` inside one short
-  interrupt-disabled section before the cycle uses them.
+- All six module-owned `motors::feedback` values are copied directly into a named
+  `motor_feedback_frame` inside one short interrupt-disabled section before the cycle uses them.
+  There is no duplicate single-motor feedback type in the control layer.
 - Four LK8016 hips and two LK9025 wheels are constructed from generated device-tree configs and
   registered with `lkmotorhandler`.
 - The only application-level `send_control()` call is at the end of `control_entry()`.
@@ -118,7 +121,7 @@ did not merge, split, or otherwise redesign the existing `wbr_input`/`wbr_contro
   - discriminant, singularity, `dt`, and finite guards
 - `Pendulum`
   - non-template binding to two existing `motors::api&` objects
-  - named motor-feedback snapshot input
+  - direct `motors::feedback` snapshot input
   - zero/direction conversion
   - length/phi PID and phi slope
   - VMC torque resolution and motor-buffer write
@@ -302,9 +305,27 @@ Do not invent or silently choose these values.
     - Keep `runtime.actuation_enabled=false` until geometry, units, zero positions, signs, and
       captured-data comparisons are reviewed together.
 
+15. **FSM enum/source mismatch**
+    - `control/src/chassis.cpp` still contains `RECOVER`, `FLATTEN`, and `NEUTRAL` cases, while
+      `control/include/chassis.hpp::chassis_state` no longer declares those values.
+    - This mismatch predates the module-feedback type cleanup and currently blocks a full build.
+      Resolve the intended state set separately; do not silently change control behavior as part of
+      an unrelated refactor.
+
 ## Verification
 
-Latest completed checks:
+Latest attempted check after removing the duplicate motor/AHRS feedback wrappers:
+
+```text
+cmake --build --preset Debug --parallel
+```
+
+- `control_task.cpp` and `pendulum.cpp` compile with direct `motors::feedback` and `ahrs::message`
+  use.
+- The build stops in `chassis.cpp` because of the pre-existing FSM enum/source mismatch documented
+  above.
+
+Last fully completed checks before that mismatch was introduced:
 
 ```text
 cmake --preset Debug
@@ -313,7 +334,7 @@ cmake --preset Release
 cmake --build --preset Release --parallel
 ```
 
-- Debug and Release both link successfully.
+- Debug and Release both linked successfully at that earlier revision.
 - Debug uses 81,800 B DTCM and 206,012 B flash.
 - Release uses 81,744 B DTCM and 104,884 B flash.
 - The old and migrated 40x6 LQR tables compare exactly across all 240 coefficients.

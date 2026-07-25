@@ -341,8 +341,8 @@ void ChassisController::update_roll(const fsm_input& input)
 
 bool ChassisController::valid_input(const fsm_input& input) const
 {
-    return input.valid && input.command.valid && input.odometry.valid && input.attitude.valid &&
-           input.health.valid && input.health.motors_online && input.health.attitude_fresh &&
+    return input.valid && input.command.valid && input.odometry.valid && input.health.valid &&
+           input.health.motors_online && input.health.attitude_fresh &&
            input.health.command_fresh && input.lpendulum.link().valid &&
            input.rpendulum.link().valid && std::isfinite(input.dt) &&
            input.dt >= cfg_.runtime.min_dt_s && input.dt <= cfg_.runtime.max_dt_s &&

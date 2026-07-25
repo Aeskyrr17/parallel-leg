@@ -1,6 +1,6 @@
 #pragma once
 
-#include "leg_types.hpp"
+#include "motor.hpp"
 
 #include <cstdint>
 
@@ -64,28 +64,21 @@ struct odometry_state
     bool valid = false;
 };
 
-struct attitude_state
-{
-    float quaternion[4] = {1.0f, 0.0f, 0.0f, 0.0f};
-    float yaw = 0.0f;
-    float pitch = 0.0f;
-    float roll = 0.0f;
-    float total_yaw = 0.0f;
-    float gyro_r = 0.0f;
-    float gyro_p = 0.0f;
-    float gyro_y = 0.0f;
-    float acceleration[3] = {};
-    bool valid = false;
-};
-
 struct motor_feedback_frame
 {
-    motor_feedback_sample left_joint1{};
-    motor_feedback_sample left_joint4{};
-    motor_feedback_sample right_joint1{};
-    motor_feedback_sample right_joint4{};
-    motor_feedback_sample left_wheel{};
-    motor_feedback_sample right_wheel{};
+    motors::feedback left_joint1{};
+    motors::feedback left_joint4{};
+    motors::feedback right_joint1{};
+    motors::feedback right_joint4{};
+    motors::feedback left_wheel{};
+    motors::feedback right_wheel{};
+
+    bool left_joint1_valid = false;
+    bool left_joint4_valid = false;
+    bool right_joint1_valid = false;
+    bool right_joint4_valid = false;
+    bool left_wheel_valid = false;
+    bool right_wheel_valid = false;
     bool valid = false;
 };
 

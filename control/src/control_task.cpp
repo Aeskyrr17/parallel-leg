@@ -133,40 +133,12 @@ bool finite_ahrs(const ahrs::message& data)
     return true;
 }
 
-attitude_state make_attitude(const ahrs::message& data, bool fresh)
+bool capture_motor(const motors::api& motor, motors::feedback& snapshot)
 {
-    attitude_state result{};
-    for (int index = 0; index < 4; ++index)
-    {
-        result.quaternion[index] = data.quaternion[index];
-    }
-    for (int index = 0; index < 3; ++index)
-    {
-        result.acceleration[index] = data.accel[index];
-    }
-    result.yaw = data.yaw;
-    result.pitch = data.pitch;
-    result.roll = data.roll;
-    result.total_yaw = data.total_yaw;
-    result.gyro_r = data.gyro_r;
-    result.gyro_p = data.gyro_p;
-    result.gyro_y = data.gyro_y;
-    result.valid = fresh && finite_ahrs(data);
-    return result;
-}
-
-motor_feedback_sample capture_motor(const motors::api& motor)
-{
-    const motors::feedback& feedback = motor.get_feedback();
-    motor_feedback_sample sample{};
-    sample.position = feedback.position;
-    sample.velocity = feedback.velocity;
-    sample.torque = feedback.torque;
-    sample.error_code = feedback.error_code;
-    sample.online = motor.status() == motors::state::online;
-    sample.valid = sample.online && sample.error_code == 0U && std::isfinite(sample.position) &&
-                   std::isfinite(sample.velocity) && std::isfinite(sample.torque);
-    return sample;
+    snapshot = motor.get_feedback();
+    return motor.status() == motors::state::online && snapshot.error_code == 0U &&
+           std::isfinite(snapshot.position) && std::isfinite(snapshot.velocity) &&
+           std::isfinite(snapshot.torque);
 }
 
 motor_feedback_frame capture_motor_feedback()
@@ -176,22 +148,22 @@ motor_feedback_frame capture_motor_feedback()
     TX_INTERRUPT_SAVE_AREA
     TX_DISABLE
     motor_feedback_frame frame{};
-    frame.left_joint1 = capture_motor(left_joint1);
-    frame.left_joint4 = capture_motor(left_joint4);
-    frame.right_joint1 = capture_motor(right_joint1);
-    frame.right_joint4 = capture_motor(right_joint4);
-    frame.left_wheel = capture_motor(left_wheel);
-    frame.right_wheel = capture_motor(right_wheel);
+    frame.left_joint1_valid = capture_motor(left_joint1, frame.left_joint1);
+    frame.left_joint4_valid = capture_motor(left_joint4, frame.left_joint4);
+    frame.right_joint1_valid = capture_motor(right_joint1, frame.right_joint1);
+    frame.right_joint4_valid = capture_motor(right_joint4, frame.right_joint4);
+    frame.left_wheel_valid = capture_motor(left_wheel, frame.left_wheel);
+    frame.right_wheel_valid = capture_motor(right_wheel, frame.right_wheel);
     TX_RESTORE
 
-    frame.valid = frame.left_joint1.valid && frame.left_joint4.valid && frame.right_joint1.valid &&
-                  frame.right_joint4.valid && frame.left_wheel.valid && frame.right_wheel.valid;
+    frame.valid = frame.left_joint1_valid && frame.left_joint4_valid && frame.right_joint1_valid &&
+                  frame.right_joint4_valid && frame.left_wheel_valid && frame.right_wheel_valid;
     return frame;
 }
 
 float wheel_velocity(const motor_feedback_frame& feedback)
 {
-    if (!feedback.left_wheel.valid || !feedback.right_wheel.valid)
+    if (!feedback.left_wheel_valid || !feedback.right_wheel_valid)
     {
         return 0.0f;
     }
@@ -359,7 +331,8 @@ void control_entry(ULONG /*arg*/)
                         chassis_cfg.runtime.ahrs_max_age_s);
         const bool remote_fresh = input_fresh(async_input.remote_received, async_input.remote_tick,
                                               started_at, chassis_cfg.runtime.command_max_age_s);
-        const attitude_state attitude = make_attitude(async_input.attitude, ahrs_fresh);
+        const ahrs::message& attitude = async_input.attitude;
+        const bool attitude_valid = ahrs_fresh && finite_ahrs(attitude);
 
         remoter::state safe_remote = async_input.remote;
         if (!remote_fresh)
@@ -377,23 +350,25 @@ void control_entry(ULONG /*arg*/)
         }
         for (int index = 0; index < 3; ++index)
         {
-            odometry_sample.acceleration[index] = attitude.acceleration[index];
+            odometry_sample.acceleration[index] = attitude.accel[index];
         }
         odometry_sample.wheel_velocity = chassis_wheel_velocity;
         odometry_sample.yaw = attitude.yaw;
         odometry_sample.dt = dt;
         odometry_sample.valid =
-            attitude.valid && motor_feedback.left_wheel.valid && motor_feedback.right_wheel.valid;
+            attitude_valid && motor_feedback.left_wheel_valid && motor_feedback.right_wheel_valid;
         const bool odometry_valid = odometry.update(odometry_sample);
 
-        lpendulum.solve(motor_feedback.left_joint1, motor_feedback.left_joint4, attitude.pitch,
-                        attitude.gyro_p, odometry.state().a_z, dt);
-        rpendulum.solve(motor_feedback.right_joint1, motor_feedback.right_joint4, attitude.pitch,
-                        attitude.gyro_p, odometry.state().a_z, dt);
+        lpendulum.solve(motor_feedback.left_joint1, motor_feedback.left_joint4,
+                        motor_feedback.left_joint1_valid && motor_feedback.left_joint4_valid,
+                        attitude.pitch, attitude.gyro_p, odometry.state().a_z, dt);
+        rpendulum.solve(motor_feedback.right_joint1, motor_feedback.right_joint4,
+                        motor_feedback.right_joint1_valid && motor_feedback.right_joint4_valid,
+                        attitude.pitch, attitude.gyro_p, odometry.state().a_z, dt);
 
         health_state health{};
         health.motors_online = telemetry.motors_online && motor_feedback.valid;
-        health.attitude_fresh = attitude.valid;
+        health.attitude_fresh = attitude_valid;
         health.command_fresh = remote_fresh && command.valid;
         health.valid = health.motors_online && health.attitude_fresh && health.command_fresh &&
                        odometry_valid && lpendulum.link().valid && rpendulum.link().valid;
@@ -428,7 +403,7 @@ void control_entry(ULONG /*arg*/)
         const float support_force = lpendulum.link().valid && rpendulum.link().valid
                                         ? lpendulum.link().n + rpendulum.link().n
                                         : 0.0f;
-        telemetry.ahrs_fresh = attitude.valid;
+        telemetry.ahrs_fresh = attitude_valid;
         telemetry.remoter_fresh = remote_fresh;
         telemetry.motor_snapshot_valid = motor_feedback.valid;
         telemetry.odometry_valid = odometry_valid;

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ahrs.hpp"
 #include "lqr.hpp"
 #include "msgs.hpp"
 #include "pendulum.hpp"
@@ -32,7 +33,7 @@ struct fsm_input
 {
     const chassis_command& command;
     const odometry_state& odometry;
-    const attitude_state& attitude;
+    const ahrs::message& attitude;
     Pendulum& lpendulum;
     Pendulum& rpendulum;
     health_state health{};
