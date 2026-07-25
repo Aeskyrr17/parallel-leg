@@ -28,8 +28,8 @@ bool finite_state(const link_state& state)
     return std::isfinite(state.phi1) && std::isfinite(state.phi4) && std::isfinite(state.phi) &&
            std::isfinite(state.dphi) && std::isfinite(state.alpha) &&
            std::isfinite(state.dalpha) && std::isfinite(state.len) &&
-           std::isfinite(state.dlen) && std::isfinite(state.freal) &&
-           std::isfinite(state.treal) && std::isfinite(state.fs) && std::isfinite(state.n);
+           std::isfinite(state.dlen) && std::isfinite(state.fdb.F) &&
+           std::isfinite(state.fdb.Tp) && std::isfinite(state.Fs) && std::isfinite(state.N);
 }
 
 } // namespace
@@ -63,8 +63,8 @@ bool VMCsolver::solve(const joint_state& joint, float pitch, float dpitch, float
     state_.alpha = loop_clamp(state_.phi - 0.5f * k_pi + pitch, -k_pi, k_pi);
     state_.dalpha = state_.dphi + dpitch;
 
-    state_.freal = jt_inv_mat_[0] * joint.tau[0] + jt_inv_mat_[1] * joint.tau[1];
-    state_.treal = jt_inv_mat_[2] * joint.tau[0] + jt_inv_mat_[3] * joint.tau[1];
+    state_.fdb.F = jt_inv_mat_[0] * joint.tau[0] + jt_inv_mat_[1] * joint.tau[1];
+    state_.fdb.Tp = jt_inv_mat_[2] * joint.tau[0] + jt_inv_mat_[3] * joint.tau[1];
 
     calc_support_force(az, dt);
 
@@ -78,16 +78,17 @@ bool VMCsolver::solve(const joint_state& joint, float pitch, float dpitch, float
     return true;
 }
 
-joint_torque VMCsolver::vmc_cal(const virtual_force& force) const
+joint_torque VMCsolver::vmc_cal(const leg_wrench& target) const
 {
     joint_torque torque{};
-    if (!state_.valid || !jacobian_valid_ || !std::isfinite(force.f) || !std::isfinite(force.tp))
+    if (!state_.valid || !jacobian_valid_ || !std::isfinite(target.F) ||
+        !std::isfinite(target.Tp))
     {
         return torque;
     }
 
-    torque.t1 = jt_mat_[0] * force.f + jt_mat_[1] * force.tp;
-    torque.t4 = jt_mat_[2] * force.f + jt_mat_[3] * force.tp;
+    torque.t1 = jt_mat_[0] * target.F + jt_mat_[1] * target.Tp;
+    torque.t4 = jt_mat_[2] * target.F + jt_mat_[3] * target.Tp;
     torque.valid = std::isfinite(torque.t1) && std::isfinite(torque.t4);
     if (!torque.valid)
     {
@@ -162,7 +163,7 @@ bool VMCsolver::resolve(float phi1, float phi4)
     }
 
     calc_spring_force();
-    return std::isfinite(state_.fs);
+    return std::isfinite(state_.Fs);
 }
 
 bool VMCsolver::calc_jacobian()
@@ -204,7 +205,7 @@ bool VMCsolver::calc_jacobian()
 
 void VMCsolver::calc_spring_force()
 {
-    state_.fs = 0.0f;
+    state_.Fs = 0.0f;
 
     const float sin32 = std::sin(u3_ - u2_);
     const float epsilon = cfg_.numerics.singularity_epsilon;
@@ -252,7 +253,7 @@ void VMCsolver::calc_spring_force()
     const float spring_force = jt_inv_mat_[0] * tau_s1 + jt_inv_mat_[1] * tau_s4;
     if (std::isfinite(spring_force))
     {
-        state_.fs = spring_force;
+        state_.Fs = spring_force;
     }
 }
 
@@ -276,12 +277,12 @@ void VMCsolver::calc_support_force(float az, float dt)
 
     const float cos_alpha = std::cos(state_.alpha);
     const float sin_alpha = std::sin(state_.alpha);
-    const float projected_force = (state_.freal + state_.fs) * cos_alpha;
+    const float projected_force = (state_.fdb.F + state_.Fs) * cos_alpha;
     const float wheel_vertical_acceleration =
         (az - cfg_.gravity) - ddlen * cos_alpha + 2.0f * state_.dlen * state_.dalpha * sin_alpha +
         state_.len * ddalpha * sin_alpha + state_.len * state_.dalpha * state_.dalpha * cos_alpha;
 
-    state_.n = projected_force + cfg_.wheel_side_mass * cfg_.gravity +
+    state_.N = projected_force + cfg_.wheel_side_mass * cfg_.gravity +
                cfg_.wheel_side_mass * wheel_vertical_acceleration;
 }
 

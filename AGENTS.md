@@ -58,7 +58,7 @@ six-motor feedback snapshot
     -> lpendulum/rpendulum solve
     -> current-cycle validity
     -> ChassisController state switch
-    -> virtual_force + wheel torque
+    -> left/right leg_wrench targets + wheel torque
     -> VMC
     -> safety insertion point and torque limits
     -> six command buffers

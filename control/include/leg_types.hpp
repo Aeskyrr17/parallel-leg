@@ -13,13 +13,13 @@ struct joint_state
     bool valid = false;
 };
 
-struct virtual_force
+struct leg_wrench //广义力
 {
     // Virtual leg-axis force in N; positive extends the leg.
-    float f = 0.0f;
+    float F = 0.0f;
 
     // Virtual hip torque in N*m; positive is counter-clockwise.
-    float tp = 0.0f;
+    float Tp = 0.0f;
 };
 
 struct joint_torque
@@ -47,13 +47,12 @@ struct link_state
     float len = 0.0f;
     float dlen = 0.0f;
 
-    // Reconstructed virtual force/torque in N and N*m.
-    float freal = 0.0f;
-    float treal = 0.0f;
+    // Generalized leg load reconstructed from joint torque feedback.
+    leg_wrench fdb{};
 
     // Equivalent spring force and support force in N.
-    float fs = 0.0f;
-    float n = 0.0f;
+    float Fs = 0.0f;
+    float N = 0.0f;
 
     bool reachable = false;
     bool near_singularity = false;

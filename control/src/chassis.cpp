@@ -151,8 +151,8 @@ chassis_output ChassisController::step(const chassis_command& command,
             if (!sensed_offground)
             {
                 // wbr_2026 cmd.extending: Fl = Fr = 400 N.
-                output.left_leg_force.f = cfg_.jump.extend_force;
-                output.right_leg_force.f = cfg_.jump.extend_force;
+                output.left_target.F = cfg_.jump.extend_force;
+                output.right_target.F = cfg_.jump.extend_force;
             }
             if (mean_len > cfg_.jump.extend_reached_len)
             {
@@ -165,8 +165,8 @@ chassis_output ChassisController::step(const chassis_command& command,
             if (!sensed_offground)
             {
                 // wbr_2026 only applies -200 N in its contacted branch.
-                output.left_leg_force.f = cfg_.jump.retract_force;
-                output.right_leg_force.f = cfg_.jump.retract_force;
+                output.left_target.F = cfg_.jump.retract_force;
+                output.right_target.F = cfg_.jump.retract_force;
             }
             if (mean_len < cfg_.jump.retract_reached_len)
             {
@@ -236,8 +236,8 @@ chassis_output ChassisController::normal_control(const chassis_command& command,
     roll_pd_.update(attitude.gyro_r);
 
     const float base_leg_len = command.len + cfg_.state.leg_len_bias;
-    output.left_leg_force.f = lpendulum.len_control(base_leg_len + roll_pd_.result);
-    output.right_leg_force.f = rpendulum.len_control(base_leg_len - roll_pd_.result);
+    output.left_target.F = lpendulum.len_control(base_leg_len + roll_pd_.result);
+    output.right_target.F = rpendulum.len_control(base_leg_len - roll_pd_.result);
 
     clear_vector(reference_);
     reference_[0] = command.x;
@@ -252,8 +252,8 @@ chassis_output ChassisController::normal_control(const chassis_command& command,
         return {};
     }
 
-    output.left_leg_force.tp = lqr.left_hip;
-    output.right_leg_force.tp = lqr.right_hip;
+    output.left_target.Tp = lqr.left_hip;
+    output.right_target.Tp = lqr.right_hip;
     output.left_wheel_torque = lqr.left_wheel;
     output.right_wheel_torque = lqr.right_wheel;
     output.relax = false;
@@ -268,8 +268,8 @@ chassis_output ChassisController::offground_control(const odometry_state& odomet
     chassis_output output{};
     fill_observed(odometry, attitude, lpendulum, rpendulum);
 
-    output.left_leg_force.f = lpendulum.len_control(cfg_.state.offground_leg_len);
-    output.right_leg_force.f = rpendulum.len_control(cfg_.state.offground_leg_len);
+    output.left_target.F = lpendulum.len_control(cfg_.state.offground_leg_len);
+    output.right_target.F = rpendulum.len_control(cfg_.state.offground_leg_len);
 
     reference_[0] = observed_[0];
     reference_[1] = observed_[1];
@@ -289,8 +289,8 @@ chassis_output ChassisController::offground_control(const odometry_state& odomet
         return {};
     }
 
-    output.left_leg_force.tp = lqr.left_hip;
-    output.right_leg_force.tp = lqr.right_hip;
+    output.left_target.Tp = lqr.left_hip;
+    output.right_target.Tp = lqr.right_hip;
     output.left_wheel_torque = 0.0f;
     output.right_wheel_torque = 0.0f;
     output.reset_odometry = true;
@@ -332,16 +332,15 @@ bool ChassisController::valid_input(const chassis_command& command,
 
 bool ChassisController::finite_output(const chassis_output& output)
 {
-    return std::isfinite(output.left_leg_force.f) && std::isfinite(output.left_leg_force.tp) &&
-           std::isfinite(output.right_leg_force.f) &&
-           std::isfinite(output.right_leg_force.tp) &&
+    return std::isfinite(output.left_target.F) && std::isfinite(output.left_target.Tp) &&
+           std::isfinite(output.right_target.F) && std::isfinite(output.right_target.Tp) &&
            std::isfinite(output.left_wheel_torque) &&
            std::isfinite(output.right_wheel_torque);
 }
 
 float ChassisController::support_force(const Pendulum& lpendulum, const Pendulum& rpendulum)
 {
-    return lpendulum.link().n + rpendulum.link().n;
+    return lpendulum.link().N + rpendulum.link().N;
 }
 
 chassis_state

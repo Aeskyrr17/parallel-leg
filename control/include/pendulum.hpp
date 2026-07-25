@@ -21,7 +21,7 @@ public:
 
     float len_control(float reference);
 
-    bool resolve_torque(const virtual_force& force, float& joint1_tau, float& joint4_tau) const;
+    bool resolve_torque(const leg_wrench& target, float& joint1_tau, float& joint4_tau) const;
     void write_torque(float joint1_tau, float joint4_tau);
 
     void reset_control();

@@ -30,8 +30,8 @@ enum class jump_stage : std::uint8_t
 
 struct chassis_output
 {
-    virtual_force left_leg_force{};
-    virtual_force right_leg_force{};
+    leg_wrench left_target{};
+    leg_wrench right_target{};
     float left_wheel_torque = 0.0f;
     float right_wheel_torque = 0.0f;
 

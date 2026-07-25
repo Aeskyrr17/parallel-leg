@@ -203,9 +203,9 @@ bool write_actuator_commands(const chassis_output& request)
     float left_joint4_torque = 0.0f;
     float right_joint1_torque = 0.0f;
     float right_joint4_torque = 0.0f;
-    if (!lpendulum.resolve_torque(request.left_leg_force, left_joint1_torque, left_joint4_torque) ||
-        !rpendulum.resolve_torque(request.right_leg_force, right_joint1_torque,
-                                  right_joint4_torque))
+    if (!lpendulum.resolve_torque(request.left_target, left_joint1_torque, left_joint4_torque) ||
+        !rpendulum.resolve_torque(request.right_target, right_joint1_torque,
+                                 right_joint4_torque))
     {
         return false;
     }
@@ -382,7 +382,7 @@ void control_entry(ULONG /*arg*/)
         }
 
         const float support_force = lpendulum.link().valid && rpendulum.link().valid
-                                        ? lpendulum.link().n + rpendulum.link().n
+                                        ? lpendulum.link().N + rpendulum.link().N
                                         : 0.0f;
         telemetry.ahrs_fresh = attitude_valid;
         telemetry.remoter_fresh = remote_fresh;

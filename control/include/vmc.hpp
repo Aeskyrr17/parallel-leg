@@ -13,7 +13,7 @@ public:
 
     bool solve(const joint_state& joint, float pitch, float dpitch, float az, float dt);
 
-    joint_torque vmc_cal(const virtual_force& force) const;
+    joint_torque vmc_cal(const leg_wrench& target) const;
 
     const link_state& state() const { return state_; }
 

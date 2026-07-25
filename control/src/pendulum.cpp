@@ -50,12 +50,13 @@ float Pendulum::len_control(float reference)
     return std::isfinite(len_pd_.result) ? len_pd_.result : 0.0f;
 }
 
-bool Pendulum::resolve_torque(const virtual_force& force, float& joint1_tau, float& joint4_tau) const
+bool Pendulum::resolve_torque(const leg_wrench& target, float& joint1_tau,
+                              float& joint4_tau) const
 {
     joint1_tau = 0.0f;
     joint4_tau = 0.0f;
 
-    const joint_torque torque = vmc_solver_.vmc_cal(force);
+    const joint_torque torque = vmc_solver_.vmc_cal(target);
     if (!torque.valid)
     {
         return false;
