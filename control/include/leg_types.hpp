@@ -13,7 +13,7 @@ struct joint_state
     bool valid = false;
 };
 
-struct link_force
+struct virtual_force
 {
     // Virtual leg-axis force in N; positive extends the leg.
     float f = 0.0f;
@@ -39,11 +39,9 @@ struct link_state
 
     float phi = 0.0f;
     float dphi = 0.0f;
-    float total_phi = 0.0f;
 
     float alpha = 0.0f;
     float dalpha = 0.0f;
-    float alpha_eq = 0.0f;
 
     // Leg length and velocity in m and m/s.
     float len = 0.0f;
@@ -56,9 +54,6 @@ struct link_state
     // Equivalent spring force and support force in N.
     float fs = 0.0f;
     float n = 0.0f;
-
-    bool flat = false;
-    bool neutral = false;
 
     bool reachable = false;
     bool near_singularity = false;

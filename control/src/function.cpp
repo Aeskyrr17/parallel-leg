@@ -11,10 +11,8 @@ Function::Function(const command_config& cfg)
     reset();
 }
 
-const chassis_command& Function::update(const remoter::state& remote,
-                                        const function_feedback& feedback, float dt)
+const chassis_command& Function::update(const remoter::state& remote, float odometry_x, float dt)
 {
-    command_.event = command_event::none;
     const bool dt_valid = std::isfinite(dt) && dt > 0.0f;
     if (dt_valid)
     {
@@ -36,7 +34,7 @@ const chassis_command& Function::update(const remoter::state& remote,
         {
         case remoter::sw_state::low:
             command_.mode = command_mode::relax;
-            command_.action = command_action::none;
+            command_.jump = jump_command::none;
             command_.v = 0.0f;
             command_.w = 0.0f;
             command_.len = cfg_.normal_len;
@@ -48,7 +46,7 @@ const chassis_command& Function::update(const remoter::state& remote,
             switch (remote.right_sw)
             {
             case remoter::sw_state::low:
-                command_.action = command_action::none;
+                command_.jump = jump_command::none;
                 command_.dyaw = yaw_updater_.update(-remote.right_x * cfg_.yaw_scale);
                 command_.v = velocity_updater_.update(remote.left_y * cfg_.velocity_scale);
                 command_.roll = 0.0f;
@@ -58,34 +56,26 @@ const chassis_command& Function::update(const remoter::state& remote,
                 break;
 
             case remoter::sw_state::mid:
-                command_.action = command_action::prepare_jump;
+                command_.jump = jump_command::prepare;
                 command_.len = cfg_.normal_len;
                 command_.v = velocity_updater_.update(remote.left_y * cfg_.velocity_scale);
                 command_.dyaw = yaw_updater_.update(-remote.right_x * cfg_.yaw_scale);
                 command_.roll = 0.0f;
                 command_.w = 0.0f;
-                if (!previous_switches_valid_ || previous_action_ != remoter::sw_state::mid)
-                {
-                    command_.event = command_event::prepare_jump;
-                }
                 break;
 
             case remoter::sw_state::up:
-                command_.action = command_action::execute_jump;
+                command_.jump = jump_command::execute;
                 command_.v = 0.0f;
                 command_.dyaw = 0.0f;
                 command_.w = 0.0f;
-                if (!previous_switches_valid_ || previous_action_ != remoter::sw_state::up)
-                {
-                    command_.event = command_event::start_jump;
-                }
                 break;
             }
             break;
 
         case remoter::sw_state::up:
             command_.mode = command_mode::spin;
-            command_.action = command_action::none;
+            command_.jump = jump_command::none;
             command_.w = cfg_.spin_rate;
             command_.dyaw = 0.0f;
             command_.v = 0.0f;
@@ -94,15 +84,11 @@ const chassis_command& Function::update(const remoter::state& remote,
     }
 
     const bool spin = command_.mode == command_mode::spin && !transition;
-    update_position(spin, feedback.odometry_x, dt);
+    update_position(spin, odometry_x, dt);
 
     if (!remote.offline)
     {
         previous_control_ = remote.left_sw;
-        if (!transition)
-        {
-            previous_action_ = remote.right_sw;
-        }
         previous_switches_valid_ = true;
         transition_cooldown_ = transition;
     }
@@ -120,7 +106,6 @@ void Function::reset()
 
     maintained_x_ = 0.0f;
     previous_control_ = remoter::sw_state::low;
-    previous_action_ = remoter::sw_state::low;
     maintaining_x_ = false;
     previous_switches_valid_ = false;
     transition_cooldown_ = false;

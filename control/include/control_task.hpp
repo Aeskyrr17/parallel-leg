@@ -27,7 +27,7 @@ struct control_task_telemetry
     bool odometry_valid = false;
     bool left_leg_valid = false;
     bool right_leg_valid = false;
-    bool fsm_valid = false;
+    bool chassis_valid = false;
     bool offground = false;
 
     // All control requests are calculated, but nonzero output stays disabled
@@ -50,7 +50,7 @@ struct control_task_telemetry
     jump_stage jump = jump_stage::DONT;
     odometry_state odometry{};
     chassis_command command{};
-    fsm_output request{};
+    chassis_output request{};
     motor_feedback_frame motor_feedback{};
     link_state left_link{};
     link_state right_link{};

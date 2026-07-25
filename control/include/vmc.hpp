@@ -13,9 +13,7 @@ public:
 
     bool solve(const joint_state& joint, float pitch, float dpitch, float az, float dt);
 
-    joint_torque vmc_cal(const link_force& force) const;
-    link_force vmc_rev_cal(const joint_torque& torque) const;
-    void vmc_vel_cal(const float qdot[2], float xdot[2]) const;
+    joint_torque vmc_cal(const virtual_force& force) const;
 
     const link_state& state() const { return state_; }
 
@@ -39,11 +37,9 @@ private:
 
     float prev_dlen_ = 0.0f;
     float prev_dalpha_ = 0.0f;
-    float last_phi_ = 0.0f;
 
     bool jacobian_valid_ = false;
     bool derivative_history_valid_ = false;
-    bool phi_history_valid_ = false;
 };
 
 } // namespace wbr::control

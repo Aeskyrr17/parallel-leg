@@ -13,10 +13,7 @@ class Function
 public:
     explicit Function(const command_config& cfg);
 
-    const chassis_command& update(const remoter::state& remote, const function_feedback& feedback,
-                                  float dt);
-
-    const chassis_command& command() const { return command_; }
+    const chassis_command& update(const remoter::state& remote, float odometry_x, float dt);
     void reset();
 
 private:
@@ -32,7 +29,6 @@ private:
 
     float maintained_x_ = 0.0f;
     remoter::sw_state previous_control_ = remoter::sw_state::low;
-    remoter::sw_state previous_action_ = remoter::sw_state::low;
 
     bool maintaining_x_ = false;
     bool previous_switches_valid_ = false;

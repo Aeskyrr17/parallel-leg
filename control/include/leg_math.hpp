@@ -69,12 +69,8 @@ public:
         return value_;
     }
 
-    float value() const { return value_; }
-
 private:
     float value_ = 0.0f;
-
-    // Angle increment per phi_control() call, in rad/call.
     float inc_path_ = 0.0f;
     float dec_path_ = 0.0f;
 };

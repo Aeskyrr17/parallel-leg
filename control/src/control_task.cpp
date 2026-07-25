@@ -32,7 +32,7 @@ namespace
 constexpr std::size_t k_input_stack_size = 2048U;
 constexpr std::size_t k_control_stack_size = 6144U;
 
-constexpr chassis_config chassis_cfg = k_default_chassis;
+const chassis_config& chassis_cfg = k_default_chassis;
 
 motors::lk8016 left_joint4{robot::motors::ljoint4};
 motors::lk8016 left_joint1{robot::motors::ljoint1};
@@ -192,7 +192,7 @@ float wheel_torque_limit(const motors::lk9025& wheel)
                                        : 0.0f;
 }
 
-bool write_actuator_commands(const fsm_output& request, const power_state& power)
+bool write_actuator_commands(const chassis_output& request)
 {
     if (!request.valid || request.relax)
     {
@@ -210,35 +210,23 @@ bool write_actuator_commands(const fsm_output& request, const power_state& power
         return false;
     }
 
-    // Power/referee limiting is inserted here, after VMC and before the six
-    // motor command buffers. No power model is invented in this migration.
-    const float torque_scale = power.valid && std::isfinite(power.torque_scale)
-                                   ? clamp(power.torque_scale, 0.0f, 1.0f)
-                                   : 1.0f;
-    left_joint1_torque *= torque_scale;
-    left_joint4_torque *= torque_scale;
-    right_joint1_torque *= torque_scale;
-    right_joint4_torque *= torque_scale;
-
+    // Power/referee limiting belongs here, after VMC and before all six motor
+    // command buffers. No unverified power model is applied.
     lpendulum.write_torque(left_joint1_torque, left_joint4_torque);
     rpendulum.write_torque(right_joint1_torque, right_joint4_torque);
 
     const float left_limit = wheel_torque_limit(left_wheel);
     const float right_limit = wheel_torque_limit(right_wheel);
     left_wheel.set_torque(chassis_cfg.motor_calibration.left_wheel_direction *
-                          clamp(request.left_wheel_torque * torque_scale, -left_limit, left_limit));
+                          clamp(request.left_wheel_torque, -left_limit, left_limit));
     right_wheel.set_torque(
         chassis_cfg.motor_calibration.right_wheel_direction *
-        clamp(request.right_wheel_torque * torque_scale, -right_limit, right_limit));
+        clamp(request.right_wheel_torque, -right_limit, right_limit));
     return true;
 }
 
 bool register_motors()
 {
-    left_joint4.offset = static_cast<float>(chassis_cfg.motor_calibration.left_joint4_offset);
-    left_joint1.offset = static_cast<float>(chassis_cfg.motor_calibration.left_joint1_offset);
-    right_joint4.offset = static_cast<float>(chassis_cfg.motor_calibration.right_joint4_offset);
-    right_joint1.offset = static_cast<float>(chassis_cfg.motor_calibration.right_joint1_offset);
     relax_motor_outputs();
 
     auto& handler = motors::lkmotorhandler::instance();
@@ -339,8 +327,7 @@ void control_entry(ULONG /*arg*/)
         {
             safe_remote.offline = true;
         }
-        const function_feedback command_feedback{odometry.state().x};
-        const chassis_command command = function.update(safe_remote, command_feedback, dt);
+        const chassis_command command = function.update(safe_remote, odometry.state().x, dt);
 
         const float chassis_wheel_velocity = wheel_velocity(motor_feedback);
         odometry_input odometry_sample{};
@@ -366,23 +353,17 @@ void control_entry(ULONG /*arg*/)
                         motor_feedback.right_joint1_valid && motor_feedback.right_joint4_valid,
                         attitude.pitch, attitude.gyro_p, odometry.state().a_z, dt);
 
-        health_state health{};
-        health.motors_online = telemetry.motors_online && motor_feedback.valid;
-        health.attitude_fresh = attitude_valid;
-        health.command_fresh = remote_fresh && command.valid;
-        health.valid = health.motors_online && health.attitude_fresh && health.command_fresh &&
-                       odometry_valid && lpendulum.link().valid && rpendulum.link().valid;
+        const bool control_valid =
+            telemetry.motors_online && motor_feedback.valid && attitude_valid && remote_fresh &&
+            command.valid && odometry_valid && lpendulum.link().valid && rpendulum.link().valid;
 
-        power_state power{};
-        fsm_input input{
-            command, odometry.state(), attitude, lpendulum, rpendulum, health, power,
-            dt,      health.valid,
-        };
-        const fsm_output request = chassis.step(input);
+        const chassis_output request =
+            chassis.step(command, odometry.state(), attitude, lpendulum, rpendulum, dt,
+                         control_valid);
 
         const bool output_written = chassis_cfg.runtime.actuation_enabled && request.valid &&
-                                    !request.relax && health.valid &&
-                                    write_actuator_commands(request, power);
+                                    !request.relax && control_valid &&
+                                    write_actuator_commands(request);
         if (!output_written)
         {
             relax_motor_outputs();
@@ -409,7 +390,7 @@ void control_entry(ULONG /*arg*/)
         telemetry.odometry_valid = odometry_valid;
         telemetry.left_leg_valid = lpendulum.link().valid;
         telemetry.right_leg_valid = rpendulum.link().valid;
-        telemetry.fsm_valid = request.valid;
+        telemetry.chassis_valid = request.valid;
         telemetry.offground =
             request.state == chassis_state::OFFGROUND ||
             (request.state == chassis_state::JUMP && request.jump == jump_stage::INAIR);
@@ -427,7 +408,7 @@ void control_entry(ULONG /*arg*/)
         telemetry.motor_feedback = motor_feedback;
         telemetry.left_link = lpendulum.link();
         telemetry.right_link = rpendulum.link();
-        if (!health.valid || !request.valid)
+        if (!control_valid || !request.valid)
         {
             ++telemetry.invalid_cycle_count;
         }

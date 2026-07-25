@@ -26,11 +26,10 @@ bool finite_joint(const joint_state& joint)
 bool finite_state(const link_state& state)
 {
     return std::isfinite(state.phi1) && std::isfinite(state.phi4) && std::isfinite(state.phi) &&
-           std::isfinite(state.dphi) && std::isfinite(state.total_phi) &&
-           std::isfinite(state.alpha) && std::isfinite(state.dalpha) &&
-           std::isfinite(state.alpha_eq) && std::isfinite(state.len) && std::isfinite(state.dlen) &&
-           std::isfinite(state.freal) && std::isfinite(state.treal) && std::isfinite(state.fs) &&
-           std::isfinite(state.n);
+           std::isfinite(state.dphi) && std::isfinite(state.alpha) &&
+           std::isfinite(state.dalpha) && std::isfinite(state.len) &&
+           std::isfinite(state.dlen) && std::isfinite(state.freal) &&
+           std::isfinite(state.treal) && std::isfinite(state.fs) && std::isfinite(state.n);
 }
 
 } // namespace
@@ -61,31 +60,13 @@ bool VMCsolver::solve(const joint_state& joint, float pitch, float dpitch, float
     state_.dlen = j_mat_[0] * joint.dq[0] + j_mat_[1] * joint.dq[1];
     state_.dphi = j_mat_[2] * joint.dq[0] + j_mat_[3] * joint.dq[1];
 
-    if (!phi_history_valid_)
-    {
-        state_.total_phi = state_.phi;
-        last_phi_ = state_.phi;
-        phi_history_valid_ = true;
-    }
-    else
-    {
-        state_.total_phi += loop_clamp(state_.phi - last_phi_, -k_pi, k_pi);
-        last_phi_ = state_.phi;
-    }
-
     state_.alpha = loop_clamp(state_.phi - 0.5f * k_pi + pitch, -k_pi, k_pi);
     state_.dalpha = state_.dphi + dpitch;
-    state_.alpha_eq = cfg_.alpha_eq_coeff[0] + cfg_.alpha_eq_coeff[1] * state_.len +
-                      cfg_.alpha_eq_coeff[2] * state_.len * state_.len;
 
     state_.freal = jt_inv_mat_[0] * joint.tau[0] + jt_inv_mat_[1] * joint.tau[1];
     state_.treal = jt_inv_mat_[2] * joint.tau[0] + jt_inv_mat_[3] * joint.tau[1];
 
     calc_support_force(az, dt);
-
-    state_.neutral = std::fabs(state_.alpha) < cfg_.numerics.neutral_alpha_rad;
-    state_.flat = state_.phi >= cfg_.numerics.flat_phi_min_rad &&
-                  state_.phi <= cfg_.numerics.flat_phi_max_rad;
 
     if (!finite_state(state_))
     {
@@ -97,7 +78,7 @@ bool VMCsolver::solve(const joint_state& joint, float pitch, float dpitch, float
     return true;
 }
 
-joint_torque VMCsolver::vmc_cal(const link_force& force) const
+joint_torque VMCsolver::vmc_cal(const virtual_force& force) const
 {
     joint_torque torque{};
     if (!state_.valid || !jacobian_valid_ || !std::isfinite(force.f) || !std::isfinite(force.tp))
@@ -116,48 +97,6 @@ joint_torque VMCsolver::vmc_cal(const link_force& force) const
     return torque;
 }
 
-link_force VMCsolver::vmc_rev_cal(const joint_torque& torque) const
-{
-    link_force force{};
-    if (!state_.valid || !jacobian_valid_ || !torque.valid || !std::isfinite(torque.t1) ||
-        !std::isfinite(torque.t4))
-    {
-        return force;
-    }
-
-    force.f = jt_inv_mat_[0] * torque.t1 + jt_inv_mat_[1] * torque.t4;
-    force.tp = jt_inv_mat_[2] * torque.t1 + jt_inv_mat_[3] * torque.t4;
-    if (!std::isfinite(force.f) || !std::isfinite(force.tp))
-    {
-        return {};
-    }
-    return force;
-}
-
-void VMCsolver::vmc_vel_cal(const float qdot[2], float xdot[2]) const
-{
-    if (xdot == nullptr)
-    {
-        return;
-    }
-    xdot[0] = 0.0f;
-    xdot[1] = 0.0f;
-
-    if (!state_.valid || !jacobian_valid_ || qdot == nullptr || !std::isfinite(qdot[0]) ||
-        !std::isfinite(qdot[1]))
-    {
-        return;
-    }
-
-    const float dlen = j_mat_[0] * qdot[0] + j_mat_[1] * qdot[1];
-    const float dphi = j_mat_[2] * qdot[0] + j_mat_[3] * qdot[1];
-    if (std::isfinite(dlen) && std::isfinite(dphi))
-    {
-        xdot[0] = dlen;
-        xdot[1] = dphi;
-    }
-}
-
 void VMCsolver::reset()
 {
     state_ = {};
@@ -168,10 +107,8 @@ void VMCsolver::reset()
     u3_ = 0.0f;
     prev_dlen_ = 0.0f;
     prev_dalpha_ = 0.0f;
-    last_phi_ = 0.0f;
     jacobian_valid_ = false;
     derivative_history_valid_ = false;
-    phi_history_valid_ = false;
 }
 
 bool VMCsolver::resolve(float phi1, float phi4)
@@ -355,10 +292,8 @@ void VMCsolver::invalidate(bool reachable, bool near_singularity)
     state_.near_singularity = near_singularity;
     jacobian_valid_ = false;
     derivative_history_valid_ = false;
-    phi_history_valid_ = false;
     prev_dlen_ = 0.0f;
     prev_dalpha_ = 0.0f;
-    last_phi_ = 0.0f;
 }
 
 } // namespace wbr::control

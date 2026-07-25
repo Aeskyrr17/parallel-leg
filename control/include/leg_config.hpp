@@ -7,34 +7,8 @@
 namespace wbr::control
 {
 
-struct pid_params
-{
-    float kp = 0.0f;
-    float ki = 0.0f;
-    float kd = 0.0f;
-    float max_out = 0.0f;
-    float max_i_out = 0.0f;
-    ::control::pid_mode mode = ::control::pid_mode::position;
-};
-
-struct leg_pid_config
-{
-    // Active wbr_2026 real-robot values. Length output is N and derivative input
-    // is m/s.
-    pid_params len{5000.0f, 0.0f, -8000.0f, 200.0f, 0.0f, ::control::pid_mode::delta};
-
-    // MuJoCo-derived phi controller. Output is N*m and derivative input is rad/s.
-    // Its use remains gated until the special-state targets are validated.
-    pid_params phi{0.7f, 0.0f, 1.4f, 20.0f, 0.005f, ::control::pid_mode::delta};
-    float phi_slope_step = 0.005f;
-};
-
 struct leg_calibration
 {
-    // Motor feedback zero positions, in rad.
-    float joint1_zero_rad = 0.0f;
-    float joint4_zero_rad = 0.0f;
-
     // Motor-to-mechanical coordinate direction. Calibrated values must be +1 or
     // -1.
     float joint1_direction = 1.0f;
@@ -43,14 +17,8 @@ struct leg_calibration
 
 struct motor_calibration_config
 {
-    // Raw LK encoder offsets copied from the active wbr_2026 robot.
-    std::uint16_t left_joint4_offset = 0x11FFU;
-    std::uint16_t left_joint1_offset = 0x25FFU;
-    std::uint16_t right_joint4_offset = 0xC6C3U;
-    std::uint16_t right_joint1_offset = 0x8419U;
-
-    leg_calibration left_leg{0.0f, 0.0f, -1.0f, -1.0f};
-    leg_calibration right_leg{0.0f, 0.0f, 1.0f, 1.0f};
+    leg_calibration left_leg{-1.0f, -1.0f};
+    leg_calibration right_leg{1.0f, 1.0f};
 
     // Command direction from chassis convention to motor convention.
     float left_wheel_direction = 1.0f;
@@ -97,12 +65,6 @@ struct lqr_config
     float leg_len_resolution = 0.01f;
 };
 
-struct fsm_pid_config
-{
-    // Active wbr_2026 SJTU_MODEL roll PID.
-    pid_params roll{0.5f, 0.0f, -0.5f, 3.0f, 0.0f, ::control::pid_mode::position};
-};
-
 struct jump_config
 {
     // Active wbr_2026 jump force and geometry thresholds: N and m.
@@ -117,7 +79,7 @@ struct jump_config
     float action_timeout_s = 1.5f;
 };
 
-struct fsm_guards
+struct state_config
 {
     float offground_support_force = 20.0f;
     float offground_leg_len = 0.27f;
@@ -126,12 +88,6 @@ struct fsm_guards
     // Preserve the old immediate contact transition by default while expressing
     // time in seconds.
     float contact_confirm_s = 0.0f;
-
-    // No validated old-real-robot thresholds/targets exist for these states yet.
-    bool recover_enabled = false;
-    bool flatten_enabled = false;
-    bool neutral_enabled = false;
-    bool gostair_enabled = false;
 };
 
 struct solver_numerics_config
@@ -139,11 +95,6 @@ struct solver_numerics_config
     // Geometry is in m; sine terms are dimensionless.
     float singularity_epsilon = 1.0e-5f;
     float spring_singularity_epsilon = 5.0e-2f;
-
-    // State labels retained for future FSM entry guards.
-    float neutral_alpha_rad = 0.6f;
-    float flat_phi_min_rad = 2.0f;
-    float flat_phi_max_rad = 3.1f;
 };
 
 struct runtime_config
@@ -188,25 +139,25 @@ struct chassis_config
     float dspring2 = 0.05f;
     float ang_spring = 0.2164f;
 
-    // alpha_eq = c0 + c1 * len + c2 * len^2, result in rad.
-    float alpha_eq_coeff[3] = {0.280918f, -1.101757f, 1.232768f};
-
     // Actuator limits in N*m.
     float max_hip_torque = 40.0f;
     float max_wheel_torque = 15.0f;
 
-    leg_pid_config leg_pid{};
+    // Active wbr_2026 real-robot PID values.
+    ::control::pid leg_len_pid{5000.0f, 0.0f, -8000.0f, 200.0f, 0.0f,
+                           ::control::pid_mode::delta};
+    ::control::pid roll_pid{0.5f, 0.0f, -0.5f, 3.0f, 0.0f, ::control::pid_mode::position};
+
     motor_calibration_config motor_calibration{};
     command_config command{};
     odometry_config odometry{};
     lqr_config lqr{};
-    fsm_pid_config fsm_pid{};
-    fsm_guards fsm{};
+    state_config state{};
     jump_config jump{};
     solver_numerics_config numerics{};
     runtime_config runtime{};
 };
 
-inline constexpr chassis_config k_default_chassis{};
+inline const chassis_config k_default_chassis{};
 
 } // namespace wbr::control

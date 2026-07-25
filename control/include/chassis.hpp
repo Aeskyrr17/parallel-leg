@@ -17,7 +17,6 @@ enum class chassis_state : std::uint8_t
     NORMAL,
     OFFGROUND,
     SPIN,
-    GOSTAIR,
     JUMP,
 };
 
@@ -29,23 +28,10 @@ enum class jump_stage : std::uint8_t
     LANDING,
 };
 
-struct fsm_input
+struct chassis_output
 {
-    const chassis_command& command;
-    const odometry_state& odometry;
-    const ahrs::message& attitude;
-    Pendulum& lpendulum;
-    Pendulum& rpendulum;
-    health_state health{};
-    power_state power{};
-    float dt = 0.0f;
-    bool valid = false;
-};
-
-struct fsm_output
-{
-    link_force left_leg_force{};
-    link_force right_leg_force{};
+    virtual_force left_leg_force{};
+    virtual_force right_leg_force{};
     float left_wheel_torque = 0.0f;
     float right_wheel_torque = 0.0f;
 
@@ -63,25 +49,32 @@ class ChassisController
 public:
     explicit ChassisController(const chassis_config& cfg);
 
-    fsm_output step(const fsm_input& input);
-    void reset();
+    chassis_output step(const chassis_command& command, const odometry_state& odometry,
+                        const ahrs::message& attitude, Pendulum& lpendulum, Pendulum& rpendulum,
+                        float dt, bool control_valid);
 
-    chassis_state state() const { return state_; }
-    jump_stage jump_state() const { return jump_stage_; }
     float state_elapsed_s() const { return state_elapsed_s_; }
 
 private:
-    fsm_output run_lqr(const fsm_input& input, bool offground, bool apply_roll);
-    void fill_observed(const fsm_input& input);
-    void fill_normal_reference(const fsm_input& input);
-    void fill_offground_reference(const fsm_input& input);
-    void update_roll(const fsm_input& input);
+    void reset();
 
-    bool valid_input(const fsm_input& input) const;
-    static bool finite_output(const fsm_output& output);
-    float support_force(const fsm_input& input) const;
+    chassis_output normal_control(const chassis_command& command,
+                                  const odometry_state& odometry,
+                                  const ahrs::message& attitude, Pendulum& lpendulum,
+                                  Pendulum& rpendulum, float dt);
+    chassis_output offground_control(const odometry_state& odometry,
+                                     const ahrs::message& attitude, Pendulum& lpendulum,
+                                     Pendulum& rpendulum);
+    void fill_observed(const odometry_state& odometry, const ahrs::message& attitude,
+                       const Pendulum& lpendulum, const Pendulum& rpendulum);
+
+    bool valid_input(const chassis_command& command, const odometry_state& odometry,
+                     const ahrs::message& attitude, const Pendulum& lpendulum,
+                     const Pendulum& rpendulum, float dt, bool control_valid) const;
+    static bool finite_output(const chassis_output& output);
+    static float support_force(const Pendulum& lpendulum, const Pendulum& rpendulum);
     chassis_state requested_motion_state(const chassis_command& command) const;
-    void enter_state(chassis_state next, const fsm_input& input);
+    void enter_state(chassis_state next, Pendulum& lpendulum, Pendulum& rpendulum);
     void enter_jump_stage(jump_stage next);
 
     chassis_config cfg_{};

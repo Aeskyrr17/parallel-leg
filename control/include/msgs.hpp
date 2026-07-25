@@ -14,19 +14,11 @@ enum class command_mode : std::uint8_t
     spin,
 };
 
-enum class command_event : std::uint8_t
+enum class jump_command : std::uint8_t
 {
     none = 0,
-    prepare_jump,
-    start_jump,
-    gostair,
-};
-
-enum class command_action : std::uint8_t
-{
-    none = 0,
-    prepare_jump,
-    execute_jump,
+    prepare,
+    execute,
 };
 
 struct chassis_command
@@ -44,14 +36,8 @@ struct chassis_command
     float roll = 0.0f;
 
     command_mode mode = command_mode::relax;
-    command_action action = command_action::none;
-    command_event event = command_event::none;
+    jump_command jump = jump_command::none;
     bool valid = false;
-};
-
-struct function_feedback
-{
-    float odometry_x = 0.0f;
 };
 
 struct odometry_state
@@ -79,21 +65,6 @@ struct motor_feedback_frame
     bool right_joint4_valid = false;
     bool left_wheel_valid = false;
     bool right_wheel_valid = false;
-    bool valid = false;
-};
-
-struct power_state
-{
-    // Reserved insertion point for referee/supercapacitor limiting.
-    float torque_scale = 1.0f;
-    bool valid = false;
-};
-
-struct health_state
-{
-    bool motors_online = false;
-    bool attitude_fresh = false;
-    bool command_fresh = false;
     bool valid = false;
 };
 
