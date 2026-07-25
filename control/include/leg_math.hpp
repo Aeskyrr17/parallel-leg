@@ -7,7 +7,6 @@ namespace wbr::control
 
 inline constexpr float k_pi = 3.14159265358979f;
 inline constexpr float k_two_pi = 6.28318530717959f;
-inline constexpr float k_gravity = 9.78f;
 
 inline float clamp(float value, float min_value, float max_value)
 {

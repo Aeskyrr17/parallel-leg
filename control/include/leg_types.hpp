@@ -1,7 +1,20 @@
 #pragma once
 
+#include <cstdint>
+
 namespace wbr::control
 {
+
+struct motor_feedback_sample
+{
+    // Snapshot of one motor feedback update: rad, rad/s, and N*m.
+    float position = 0.0f;
+    float velocity = 0.0f;
+    float torque = 0.0f;
+    std::uint8_t error_code = 0U;
+    bool online = false;
+    bool valid = false;
+};
 
 struct joint_state
 {

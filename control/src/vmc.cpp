@@ -1,9 +1,10 @@
-#include "leg.hpp"
+#include "vmc.hpp"
 
-#include "lkmotors.hpp"
+#include "leg_math.hpp"
 
 #include <algorithm>
 #include <cmath>
+#include <iterator>
 
 namespace wbr::control
 {
@@ -34,15 +35,16 @@ bool finite_state(const link_state& state)
 
 } // namespace
 
-link_solver::link_solver(const chassis_config& cfg) : cfg_(cfg) {}
+VMCsolver::VMCsolver(const chassis_config& cfg) : cfg_(cfg) {}
 
-bool link_solver::solve(const joint_state& joint, float pitch, float dpitch, float az, float dt)
+bool VMCsolver::solve(const joint_state& joint, float pitch, float dpitch, float az, float dt)
 {
     state_.valid = false;
     jacobian_valid_ = false;
 
     if (!joint.valid || !finite_joint(joint) || !std::isfinite(pitch) || !std::isfinite(dpitch) ||
-        !std::isfinite(az) || !std::isfinite(dt) || dt < k_min_dt_seconds || dt > k_max_dt_seconds)
+        !std::isfinite(az) || !std::isfinite(dt) || dt < cfg_.runtime.min_dt_s ||
+        dt > cfg_.runtime.max_dt_s)
     {
         invalidate();
         return false;
@@ -81,8 +83,9 @@ bool link_solver::solve(const joint_state& joint, float pitch, float dpitch, flo
 
     calc_support_force(az, dt);
 
-    state_.neutral = std::fabs(state_.alpha) < 0.6f;
-    state_.flat = state_.phi >= 2.0f && state_.phi <= 3.1f;
+    state_.neutral = std::fabs(state_.alpha) < cfg_.numerics.neutral_alpha_rad;
+    state_.flat = state_.phi >= cfg_.numerics.flat_phi_min_rad &&
+                  state_.phi <= cfg_.numerics.flat_phi_max_rad;
 
     if (!finite_state(state_))
     {
@@ -94,7 +97,7 @@ bool link_solver::solve(const joint_state& joint, float pitch, float dpitch, flo
     return true;
 }
 
-joint_torque link_solver::vmc_cal(const link_force& force) const
+joint_torque VMCsolver::vmc_cal(const link_force& force) const
 {
     joint_torque torque{};
     if (!state_.valid || !jacobian_valid_ || !std::isfinite(force.f) || !std::isfinite(force.tp))
@@ -113,7 +116,7 @@ joint_torque link_solver::vmc_cal(const link_force& force) const
     return torque;
 }
 
-link_force link_solver::vmc_rev_cal(const joint_torque& torque) const
+link_force VMCsolver::vmc_rev_cal(const joint_torque& torque) const
 {
     link_force force{};
     if (!state_.valid || !jacobian_valid_ || !torque.valid || !std::isfinite(torque.t1) ||
@@ -131,7 +134,7 @@ link_force link_solver::vmc_rev_cal(const joint_torque& torque) const
     return force;
 }
 
-void link_solver::vmc_vel_cal(const float qdot[2], float xdot[2]) const
+void VMCsolver::vmc_vel_cal(const float qdot[2], float xdot[2]) const
 {
     if (xdot == nullptr)
     {
@@ -155,7 +158,7 @@ void link_solver::vmc_vel_cal(const float qdot[2], float xdot[2]) const
     }
 }
 
-void link_solver::reset()
+void VMCsolver::reset()
 {
     state_ = {};
     std::fill(std::begin(j_mat_), std::end(j_mat_), 0.0f);
@@ -171,7 +174,7 @@ void link_solver::reset()
     phi_history_valid_ = false;
 }
 
-bool link_solver::resolve(float phi1, float phi4)
+bool VMCsolver::resolve(float phi1, float phi4)
 {
     state_.phi1 = phi1;
     state_.phi4 = phi4;
@@ -225,16 +228,15 @@ bool link_solver::resolve(float phi1, float phi4)
     return std::isfinite(state_.fs);
 }
 
-bool link_solver::calc_jacobian()
+bool VMCsolver::calc_jacobian()
 {
     const float sin32 = std::sin(u3_ - u2_);
     const float sin12 = std::sin(state_.phi1 - u2_);
     const float sin34 = std::sin(u3_ - state_.phi4);
 
-    if (std::fabs(sin32) <= k_singularity_epsilon || std::fabs(sin12) <= k_singularity_epsilon ||
-        std::fabs(sin34) <= k_singularity_epsilon ||
-        std::fabs(state_.len) <= k_singularity_epsilon ||
-        std::fabs(cfg_.l1) <= k_singularity_epsilon)
+    const float epsilon = cfg_.numerics.singularity_epsilon;
+    if (std::fabs(sin32) <= epsilon || std::fabs(sin12) <= epsilon || std::fabs(sin34) <= epsilon ||
+        std::fabs(state_.len) <= epsilon || std::fabs(cfg_.l1) <= epsilon)
     {
         return false;
     }
@@ -263,13 +265,14 @@ bool link_solver::calc_jacobian()
     return jacobian_valid_;
 }
 
-void link_solver::calc_spring_force()
+void VMCsolver::calc_spring_force()
 {
     state_.fs = 0.0f;
 
     const float sin32 = std::sin(u3_ - u2_);
-    if (std::fabs(sin32) < k_spring_singularity_epsilon ||
-        std::fabs(cfg_.l2) <= k_singularity_epsilon)
+    const float epsilon = cfg_.numerics.singularity_epsilon;
+    if (std::fabs(sin32) < cfg_.numerics.spring_singularity_epsilon ||
+        std::fabs(cfg_.l2) <= epsilon)
     {
         return;
     }
@@ -288,8 +291,7 @@ void link_solver::calc_spring_force()
     const float dpqx = qx - px;
     const float dpqy = qy - py;
     const float spring_len_sq = dpqx * dpqx + dpqy * dpqy;
-    if (!std::isfinite(spring_len_sq) ||
-        spring_len_sq <= k_singularity_epsilon * k_singularity_epsilon)
+    if (!std::isfinite(spring_len_sq) || spring_len_sq <= epsilon * epsilon)
     {
         return;
     }
@@ -317,7 +319,7 @@ void link_solver::calc_spring_force()
     }
 }
 
-void link_solver::calc_support_force(float az, float dt)
+void VMCsolver::calc_support_force(float az, float dt)
 {
     float ddlen = 0.0f;
     float ddalpha = 0.0f;
@@ -339,14 +341,14 @@ void link_solver::calc_support_force(float az, float dt)
     const float sin_alpha = std::sin(state_.alpha);
     const float projected_force = (state_.freal + state_.fs) * cos_alpha;
     const float wheel_vertical_acceleration =
-        (az - k_gravity) - ddlen * cos_alpha + 2.0f * state_.dlen * state_.dalpha * sin_alpha +
+        (az - cfg_.gravity) - ddlen * cos_alpha + 2.0f * state_.dlen * state_.dalpha * sin_alpha +
         state_.len * ddalpha * sin_alpha + state_.len * state_.dalpha * state_.dalpha * cos_alpha;
 
-    state_.n =
-        projected_force + cfg_.mwheel * k_gravity + cfg_.mwheel * wheel_vertical_acceleration;
+    state_.n = projected_force + cfg_.wheel_side_mass * cfg_.gravity +
+               cfg_.wheel_side_mass * wheel_vertical_acceleration;
 }
 
-void link_solver::invalidate(bool reachable, bool near_singularity)
+void VMCsolver::invalidate(bool reachable, bool near_singularity)
 {
     state_ = {};
     state_.reachable = reachable;
@@ -358,8 +360,5 @@ void link_solver::invalidate(bool reachable, bool near_singularity)
     prev_dalpha_ = 0.0f;
     last_phi_ = 0.0f;
 }
-
-// Compile the complete template interface against the actual hip motor type.
-template class leg_controller<motors::lk8016>;
 
 } // namespace wbr::control
