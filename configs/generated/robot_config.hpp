@@ -8,10 +8,10 @@
 
 namespace robot::motors {
 
-inline constexpr std::size_t motor_count = 2;
-inline constexpr bool has_dji = 1;
-inline constexpr bool has_dm = 1;
-inline constexpr bool has_lk = 0;
+inline constexpr std::size_t motor_count = 6;
+inline constexpr bool has_dji = 0;
+inline constexpr bool has_dm = 0;
+inline constexpr bool has_lk = 1;
 inline constexpr bool has_xv2 = 0;
 inline constexpr bool has_other = 0;
 
@@ -33,22 +33,58 @@ inline constexpr std::uint32_t master_id_base = 0x05U;
 inline constexpr std::size_t max_motors = 4;
 } // namespace dm
 
-// dji_gm6020
-inline constexpr model motor1_model = model::dji_gm6020;
-inline constexpr ::motors::config motor1{
-    bsp::can::bus::fdcan2,
+// lk_lk8016
+inline constexpr model left_joint_4_model = model::lk_lk8016;
+inline constexpr ::motors::config left_joint_4{
+    bsp::can::bus::fdcan1,
     bsp::can::bus_type::classic,
-    0x205U,
+    0x141U,
     ::motors::mode::relax,
 };
 
-// dm_dm4310
-inline constexpr model motor2_model = model::dm_dm4310;
-inline constexpr ::motors::config motor2{
+// lk_lk8016
+inline constexpr model left_joint_1_model = model::lk_lk8016;
+inline constexpr ::motors::config left_joint_1{
     bsp::can::bus::fdcan1,
-    bsp::can::bus_type::fd,
-    0x01U,
-    ::motors::mode::mit,
+    bsp::can::bus_type::classic,
+    0x142U,
+    ::motors::mode::relax,
+};
+
+// lk_lk8016
+inline constexpr model right_joint_4_model = model::lk_lk8016;
+inline constexpr ::motors::config right_joint_4{
+    bsp::can::bus::fdcan1,
+    bsp::can::bus_type::classic,
+    0x143U,
+    ::motors::mode::relax,
+};
+
+// lk_lk8016
+inline constexpr model right_joint_1_model = model::lk_lk8016;
+inline constexpr ::motors::config right_joint_1{
+    bsp::can::bus::fdcan1,
+    bsp::can::bus_type::classic,
+    0x144U,
+    ::motors::mode::relax,
+};
+
+// lk_lk9025
+inline constexpr model left_wheel_model = model::lk_lk9025;
+inline constexpr ::motors::config left_wheel{
+    bsp::can::bus::fdcan3,
+    bsp::can::bus_type::classic,
+    0x141U,
+    ::motors::mode::relax,
+};
+
+// lk_lk9025
+inline constexpr model right_wheel_model = model::lk_lk9025;
+inline constexpr ::motors::config right_wheel{
+    bsp::can::bus::fdcan3,
+    bsp::can::bus_type::classic,
+    0x142U,
+    ::motors::mode::relax,
 };
 
 } // namespace robot::motors

@@ -48,12 +48,7 @@ file(GLOB_RECURSE PNX_EMBEDDED_SOURCES CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/pnx_devices/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/pnx_modules/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/pnx_libs/*.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/demo/*.cpp"
 )
-
-# The production application owns app_start(). Keep the individual demo
-# implementations available, but do not link the demo selector entry point.
-list(FILTER PNX_EMBEDDED_SOURCES EXCLUDE REGEX "[/\\\\]demo[/\\\\]app\\.cpp$")
 
 if(NOT ENABLE_USBX)
     list(FILTER PNX_EMBEDDED_SOURCES EXCLUDE REGEX "[/\\\\]pnx_bsp[/\\\\]usb[/\\\\]")
@@ -70,7 +65,6 @@ file(GLOB_RECURSE PNX_EMBEDDED_HEADERS CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/pnx_modules/*.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/pnx_libs/*.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/pnx_libs/*.hpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/demo/*.hpp"
 )
 
 set(PNX_EMBEDDED_INCLUDE_DIRS)
