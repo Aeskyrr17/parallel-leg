@@ -4,7 +4,7 @@
     "motors": {
       "dji": true,
       "dm": true,
-      "lk": false
+      "lk": true
     }
   },
   "bindings": {

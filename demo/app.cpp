@@ -7,9 +7,9 @@
 
 extern "C" void app_start()
 {
-    demo::imu::run();
+    // demo::imu::run();
     // demo::motor::run();
-    demo::remoter::run();
+    // demo::remoter::run();
     // demo::referee_ui::run();
     // demo::usart::start();
     // demo::usb::start();

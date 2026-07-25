@@ -41,6 +41,8 @@ unset(ROBOT_CONFIG)
 unset(OUT_DIR)
 
 file(GLOB_RECURSE PNX_EMBEDDED_SOURCES CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/application/*.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/application/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/pnx_bsp/*.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/pnx_bsp/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/pnx_devices/*.cpp"
@@ -49,11 +51,17 @@ file(GLOB_RECURSE PNX_EMBEDDED_SOURCES CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/demo/*.cpp"
 )
 
+# The production application owns app_start(). Keep the individual demo
+# implementations available, but do not link the demo selector entry point.
+list(FILTER PNX_EMBEDDED_SOURCES EXCLUDE REGEX "[/\\\\]demo[/\\\\]app\\.cpp$")
+
 if(NOT ENABLE_USBX)
     list(FILTER PNX_EMBEDDED_SOURCES EXCLUDE REGEX "[/\\\\]pnx_bsp[/\\\\]usb[/\\\\]")
 endif()
 
 file(GLOB_RECURSE PNX_EMBEDDED_HEADERS CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/application/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/application/*.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/pnx_bsp/*.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/pnx_bsp/*.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/pnx_devices/*.h"
