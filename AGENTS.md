@@ -34,7 +34,8 @@ hardware-validated.
 - `wbr_control` copies that snapshot with `TX_NO_WAIT`. It never calls `msg::read()` and never uses
   `TX_WAIT_FOREVER`.
 - The control path consumes the module-owned `ahrs::message` directly. Freshness and finite checks
-  stay in Control/health rather than being represented by a duplicate attitude message type.
+  stay in `control_entry()`/`ChassisController` rather than being represented by duplicate
+  attitude or health message types.
 - The Control cycle directly calls `Function`, `Odometry`, both `Pendulum` objects,
   `ChassisController`, `LQR`, `VMCsolver`, limits, six motor-buffer writes, and one final LK batch
   commit. Intermediate control products do not use the message bus.
@@ -55,11 +56,11 @@ six-motor feedback snapshot
     -> Function
     -> Odometry
     -> lpendulum/rpendulum solve
-    -> health/current-cycle state
+    -> current-cycle validity
     -> ChassisController state switch
-    -> link_force + wheel torque
+    -> virtual_force + wheel torque
     -> VMC
-    -> power/safety insertion point and limits
+    -> safety insertion point and torque limits
     -> six command buffers
     -> one lkmotorhandler::send_control()
 ```
@@ -70,7 +71,7 @@ Control file map:
 control/include/vmc.hpp + control/src/vmc.cpp
     VMCsolver pure five-bar/VMC math
 control/include/pendulum.hpp + control/src/pendulum.cpp
-    Pendulum motor binding, signs/zeros, PID/slope, and command-buffer writes
+    Pendulum motor binding, signs/zeros, length PID, VMC output, and command-buffer writes
 control/include/odometry.hpp + control/src/odometry.cpp
     Odometry state estimation
 control/include/lqr.hpp + control/src/lqr.cpp
@@ -109,21 +110,22 @@ did not merge, split, or otherwise redesign the existing `wbr_input`/`wbr_contro
 - `Function`
   - nested left/right switch interpretation
   - one-update control-switch transition behavior
-  - one-shot jump prepare/start events
+  - one persistent `none/prepare/execute` jump command matching the right switch
   - `dt`-scaled velocity/yaw slopes and manual leg-length rate, plus position hold
 - `Odometry`
   - fixed-size `[x, v, a]` Kalman filter
   - quaternion body-to-world acceleration rotation
   - DWT-derived explicit `dt`
 - `VMCsolver`
-  - five-bar forward solve, Jacobian, velocity mapping, VMC both ways
+  - five-bar forward solve, Jacobian, velocity mapping, feedback-force reconstruction, and VMC
+    output mapping
   - spring and support-force estimate
   - discriminant, singularity, `dt`, and finite guards
 - `Pendulum`
   - non-template binding to two existing `motors::api&` objects
   - direct `motors::feedback` snapshot input
   - zero/direction conversion
-  - length/phi PID and phi slope
+  - one active old-real-robot length PID
   - VMC torque resolution and motor-buffer write
 - `LQR`
   - exact single-copy 40x6 old coefficient source in `control/include/lqr_coeffs.hpp`
@@ -132,7 +134,8 @@ did not merge, split, or otherwise redesign the existing `wbr_input`/`wbr_contro
   - one enum/switch class; no state classes or factories
   - state time in seconds
   - Relax/Normal/Spin/Offground and Jump control paths
-  - safe-zero placeholders for Recover/Flatten/Neutral/Gostair
+  - direct `normal_control()` and `offground_control()` paths producing leg force, virtual hip
+    torque, and wheel torque
 - `control_entry`
   - same-cycle composition, freshness checks, coherent feedback copy, safety gate, and one commit
 
@@ -140,7 +143,7 @@ No dynamic memory, new controller interface hierarchy, factory, direct CAN call,
 call was added to the math/control objects. `Pendulum` reuses the existing `motors::api`; it does
 not introduce another runtime-polymorphic hierarchy.
 
-## Actual FSM transitions
+## Actual chassis transitions
 
 ```text
 invalid / stale / motor offline / Relax command
@@ -157,10 +160,10 @@ OFFGROUND
     -> NORMAL or SPIN after contact is restored
 
 NORMAL
-    -> JUMP on the one-shot prepare event
+    -> JUMP while the right switch commands prepare
 
 JUMP::dont
-    -> JUMP::extending on the one-shot start event
+    -> JUMP::extending while the right switch commands execute
     -> NORMAL/SPIN when preparation is cancelled
 
 JUMP::extending
@@ -176,23 +179,18 @@ JUMP::landing
     -> RELAX on timeout/invalid input
 ```
 
-`RECOVER`, `FLATTEN`, `NEUTRAL`, and `GOSTAIR` exist in the enum and switch, but have no reachable
-entry transition. If invoked after future changes, their current invalid output falls back to
-RELAX. This is deliberate: the required real-robot targets and thresholds are not validated.
+`RECOVER`, `FLATTEN`, `NEUTRAL`, and `GOSTAIR` are not declared states. They were removed because
+the active `wbr_2026` branch does not provide validated behavior for them.
 
 ## State control status
 
 | State | Current implementation |
 | --- | --- |
-| Relax | No LQR/VMC request; resets leg PID/slope/solver and odometry; six motors relax |
-| Recover | Frozen safe placeholder; no normal LQR; target phi/IMU guards unresolved |
-| Flatten | Frozen safe placeholder; no normal LQR; direction/target/wheel assist unresolved |
-| Neutral | Frozen safe placeholder; length/phi control targets and exits unresolved |
+| Relax | No LQR/VMC request; resets leg PID/solver and odometry; six motors relax |
 | Normal | Verified 10-state LQR, left/right length PID, roll PID, wheel + hip request |
 | Spin | Same verified LQR table with spin yaw reference, length PID, roll PID |
 | Offground | Sparse hip LQR + length PID; wheel torque forced to zero; odometry reset request |
 | Jump | `dont/extending/inair/landing`; old 400 N/-200 N semantics, sensed-offground override, wheel zero in sensed-offground and inair, 1.5 s new safety timeout |
-| Gostair | Frozen safe placeholder; old `STAIRUP` was disabled and current TOF chain is absent |
 
 Sensed `OFFGROUND` and commanded `JUMP::inair` are separate variables. During any Jump stage, a
 sensed off-ground condition forces wheel torque to zero and uses the off-ground leg/hip branch.
@@ -203,20 +201,20 @@ All current control-layer tuning enters through:
 
 ```text
 control/include/leg_config.hpp
-    -> inline constexpr chassis_config k_default_chassis
+    -> inline const chassis_config k_default_chassis
 ```
 
 It owns:
 
-- five-bar geometry/bounds, wheel radius/mass, gravity, spring, alpha equilibrium
+- five-bar geometry/bounds, wheel radius/mass, gravity, and spring
 - hip/wheel torque limits
-- raw encoder offsets, leg directions, wheel directions
+- leg directions and wheel directions
 - command scales/slopes/reference limits
 - odometry covariance/noise
 - LQR length range/resolution
 - leg and roll PID values
 - off-ground, landing, jump force/length/time guards
-- singularity/flat/neutral thresholds
+- singularity thresholds
 - AHRS/command freshness, `dt`, alive-check period, thread priorities, and actuation gate
 
 The 40x6 generated/tuned LQR table remains only in `control/include/lqr_coeffs.hpp`. Structural
@@ -236,7 +234,7 @@ config; motor CAN IDs stay in generated `robot_config.hpp`.
 - Invalid/stale/offline data produces RELAX and all six command buffers are relaxed.
 - Offground and Jump inair wheel requests are explicitly zero.
 - Jump has a seconds-based abnormal timeout and invalid/Relax clears its stage.
-- FSM never accesses CAN, a motor manager, or commit.
+- `ChassisController` never accesses CAN, a motor manager, or commit.
 - Power limiting has one explicit insertion point after VMC and before motor buffers.
 - The actuation gate remains false.
 
@@ -259,10 +257,10 @@ Do not invent or silently choose these values.
    - Confirm gearbox scaling and whether it is suitable for reverse-VMC/support-force estimation.
 
 4. **Mechanical zero ownership**
-   - Old raw encoder offsets are installed in the LK driver.
-   - Leg radian zero fields remain zero.
-   - Confirm that zero is applied exactly once and whether persistent calibration belongs in the
-     driver or control layer.
+   - Control no longer assigns LK raw encoder offsets or subtracts joint-radian zero values.
+   - The unchanged LK driver still owns its generic `offset` field, which remains at its default
+     zero value in this application.
+   - Confirm the motor-side mechanical-zero procedure before enabling output.
 
 5. **Left/right signs**
    - Old behavior implies left hip `-1/-1`, right hip `+1/+1`, left wheel `+1`, right wheel `-1`.
@@ -275,11 +273,13 @@ Do not invent or silently choose these values.
 7. **Recover/Flatten/Neutral**
    - Required behavior is known, but entry/exit thresholds, target phi, slope/PD gains, kick torque,
      confirmation times, flatten wheel assist, and timeout values are not.
-   - These states remain frozen rather than borrowing unverified MuJoCo tuning.
+   - These states are absent rather than declared as frozen placeholders or populated with
+     unverified MuJoCo tuning.
 
 8. **GOSTAIR/TOF**
    - The verified old build had `STAIRUP` disabled.
-   - No current TOF latest-snapshot chain or validated state logic exists.
+   - No current TOF latest-snapshot chain or validated state logic exists; `GOSTAIR` is not a
+     declared state.
 
 9. **Jump safety timeout**
    - The 1.5 s timeout is a new conservative software guard, not a `wbr_2026` tuning value.
@@ -305,27 +305,9 @@ Do not invent or silently choose these values.
     - Keep `runtime.actuation_enabled=false` until geometry, units, zero positions, signs, and
       captured-data comparisons are reviewed together.
 
-15. **FSM enum/source mismatch**
-    - `control/src/chassis.cpp` still contains `RECOVER`, `FLATTEN`, and `NEUTRAL` cases, while
-      `control/include/chassis.hpp::chassis_state` no longer declares those values.
-    - This mismatch predates the module-feedback type cleanup and currently blocks a full build.
-      Resolve the intended state set separately; do not silently change control behavior as part of
-      an unrelated refactor.
-
 ## Verification
 
-Latest attempted check after removing the duplicate motor/AHRS feedback wrappers:
-
-```text
-cmake --build --preset Debug --parallel
-```
-
-- `control_task.cpp` and `pendulum.cpp` compile with direct `motors::feedback` and `ahrs::message`
-  use.
-- The build stops in `chassis.cpp` because of the pre-existing FSM enum/source mismatch documented
-  above.
-
-Last fully completed checks before that mismatch was introduced:
+Latest completed checks after the interface/readability cleanup:
 
 ```text
 cmake --preset Debug
@@ -334,16 +316,20 @@ cmake --preset Release
 cmake --build --preset Release --parallel
 ```
 
-- Debug and Release both linked successfully at that earlier revision.
-- Debug uses 81,800 B DTCM and 206,012 B flash.
-- Release uses 81,744 B DTCM and 104,884 B flash.
+- Debug and Release both link successfully.
+- Debug uses 82,128 B DTCM and 207,552 B flash.
+- Release uses 82,064 B DTCM and 106,064 B flash.
 - The old and migrated 40x6 LQR tables compare exactly across all 240 coefficients.
-- Obsolete `link_solver`, `leg_controller`, `lqr_solver`, `command_fusion`, and `chassis_fsm`
-  names have no remaining control-layer matches.
+- `chassis_state` declarations and switch cases are synchronized. The only declared states are
+  Relax, Normal, Spin, Offground, and Jump.
+- `command_action`, `command_event`, `fsm_input`, `fsm_output`, `function_feedback`,
+  `health_state`, and `power_state` have no remaining control-layer matches.
+- Unused public phi-control/tuning/relax methods and duplicate public VMC reverse/velocity entry
+  points were removed; their active calculations remain in `Pendulum::solve()`/`VMCsolver::solve()`.
 - No dynamic allocation was added under `control/`.
 - No staged internal-control topic chain remains.
 - Only the input adapter contains `TX_WAIT_FOREVER`; Control uses a no-wait snapshot copy.
 - Only Control accesses the two leg objects.
 - Only one application-level LK `send_control()` exists.
-- All modified C/C++ control files were passed explicitly to clang-format; no whole-tree format was
-  run and `AGENTS.md` was not formatted.
+- `git diff --check` passes. No `clang-format` executable is available in the current environment,
+  so formatting was kept consistent manually and no whole-tree formatter was run.
