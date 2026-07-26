@@ -69,4 +69,28 @@ private:
     bool started_ = false;
 };
 
+class pendulum_task
+{
+public:
+    static pendulum_task& instance() noexcept;
+
+    bool start() noexcept;
+    [[nodiscard]] bool started() const noexcept { return started_; }
+
+private:
+    pendulum_task() = default;
+
+    static void thread_entry(ULONG input);
+    void run() noexcept;
+
+    TX_THREAD thread_{};
+    alignas(8) std::uint8_t stack_[leg_config::control_thread::stack_size]{};
+    msg::topic* control_target_topic_ = nullptr;
+    msg::subscriber ahrs_sub_{};
+    msg::subscriber command_sub_{};
+    msg::subscriber solver_sub_{};
+    msg::subscriber odometry_sub_{};
+    bool started_ = false;
+};
+
 } // namespace app

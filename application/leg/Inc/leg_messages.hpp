@@ -23,6 +23,8 @@ struct command
     float leg_length_m = 0.0f;
     float roll_rad = 0.0f;
     jump_state jump_status = jump_state::idle;
+    bool enabled = false;
+    bool spin_mode = false;
     std::uint32_t tick = 0U;
     bool valid = false;
 };
@@ -31,10 +33,12 @@ struct solver_feedback
 {
     float left_leg_length_m = 0.0f;
     float right_leg_length_m = 0.0f;
+    // LQR alpha = VMC leg angle - pi/2 + body pitch.
     float left_leg_angle_rad = 0.0f;
     float right_leg_angle_rad = 0.0f;
     float left_leg_length_velocity_mps = 0.0f;
     float right_leg_length_velocity_mps = 0.0f;
+    // LQR alpha_dot = VMC leg angular velocity + body pitch rate.
     float left_leg_angular_velocity_rad_s = 0.0f;
     float right_leg_angular_velocity_rad_s = 0.0f;
     float support_force_n = 0.0f;

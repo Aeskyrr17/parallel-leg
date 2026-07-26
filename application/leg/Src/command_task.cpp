@@ -81,6 +81,7 @@ leg_messages::command command_interpreter::stop_command(
     command.leg_length_m = leg_config::normal_leg_length_m;
     command.jump_status = jump_state_;
     command.tick = tick;
+    command.enabled = false;
     command.valid = true;
     update_position(command, odometry, true);
     return command;
@@ -163,6 +164,7 @@ leg_messages::command command_interpreter::update(
 
     leg_messages::command command{};
     command.tick = tick;
+    command.enabled = true;
     command.valid = true;
 
     if (remote.left_sw == ::remoter::sw_state::up)
@@ -171,6 +173,7 @@ leg_messages::command command_interpreter::update(
         yaw_rate_ramp_.reset(0.0f);
         begin_jump_stage(leg_messages::jump_state::idle);
         manual_leg_length_m_ = leg_config::normal_leg_length_m;
+        command.spin_mode = true;
         command.yaw_rate_rad_s = leg_config::command::spin_yaw_rate_rad_s;
         command.leg_length_m =
             leg_length_ramp_.update(leg_config::normal_leg_length_m);

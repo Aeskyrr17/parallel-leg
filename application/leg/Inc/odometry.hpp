@@ -32,8 +32,7 @@ public:
 
     [[nodiscard]] leg_messages::odometry update(const odometry_input& input) noexcept
     {
-        if (input.off_ground ||
-            !all_finite(input.quaternion_wxyz) ||
+        if (!all_finite(input.quaternion_wxyz) ||
             !all_finite(input.acceleration_body_mps2) ||
             !std::isfinite(input.yaw_rad) ||
             !std::isfinite(input.left_wheel_velocity_rad_s) ||
@@ -73,6 +72,23 @@ public:
                 (1.0f - 2.0f * (x * x + y * y)) * az,
         };
 
+        if (!all_finite(acceleration_world))
+        {
+            return invalidate(input.tick);
+        }
+
+        if (input.off_ground)
+        {
+            reset();
+            return {
+                0.0f,
+                0.0f,
+                acceleration_world[2],
+                input.tick,
+                true,
+            };
+        }
+
         const float left_velocity =
             input.left_wheel_velocity_rad_s *
             static_cast<float>(leg_config::left_wheel_direction) *
@@ -86,8 +102,7 @@ public:
             acceleration_world[0] * std::cos(input.yaw_rad) +
             acceleration_world[1] * std::sin(input.yaw_rad);
 
-        if (!all_finite(acceleration_world) ||
-            !std::isfinite(wheel_velocity) ||
+        if (!std::isfinite(wheel_velocity) ||
             !std::isfinite(forward_acceleration) ||
             !update_filter(wheel_velocity, forward_acceleration))
         {

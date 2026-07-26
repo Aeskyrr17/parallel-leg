@@ -72,6 +72,7 @@ inline constexpr std::size_t stack_size = 4096U;
 namespace control_thread
 {
 inline constexpr std::uint32_t period_ticks = 1U;
+inline constexpr float period_s = 0.001f;
 inline constexpr std::uint32_t priority = 6U;
 inline constexpr std::size_t stack_size = 4096U;
 } // namespace control_thread
