@@ -120,11 +120,11 @@ bool leg::start() noexcept
         return false;
     }
 
-    auto& command = command_task::instance();
+    auto& control = control_task::instance();
     auto& pendulum = pendulum_task::instance();
     auto& solver = solver_task::instance();
 
-    bool tasks_ready = command.prepare();
+    bool tasks_ready = control.prepare();
     tasks_ready &= pendulum.prepare();
     tasks_ready &= solver.prepare();
     if (!tasks_ready)
@@ -132,7 +132,7 @@ bool leg::start() noexcept
         return false;
     }
 
-    if (!command.start() || !pendulum.start() || !solver.start())
+    if (!control.start() || !pendulum.start() || !solver.start())
     {
         return false;
     }

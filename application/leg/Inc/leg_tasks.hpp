@@ -29,8 +29,15 @@ private:
     [[nodiscard]] leg_messages::command stop_command(
         const leg_messages::odometry& odometry,
         std::uint32_t tick) noexcept;
-    void apply_manual_motion(const ::remoter::state& remote,
-                             leg_messages::command& command) noexcept;
+    void apply_drive_input(const ::remoter::state& remote,
+                           leg_messages::command& command) noexcept;
+    void apply_spin_mode(leg_messages::command& command) noexcept;
+    void apply_manual_mode(const ::remoter::state& remote,
+                           leg_messages::command& command) noexcept;
+    void apply_jump_ready_mode(const ::remoter::state& remote,
+                               leg_messages::command& command) noexcept;
+    void apply_jump_mode(const leg_messages::solver_feedback& solver,
+                         leg_messages::command& command) noexcept;
     void update_position(leg_messages::command& command,
                          const leg_messages::odometry& odometry,
                          bool force_hold) noexcept;
@@ -45,23 +52,23 @@ private:
     bool holding_position_ = false;
 };
 
-class command_task
+class control_task
 {
 public:
-    static command_task& instance() noexcept;
+    static control_task& instance() noexcept;
 
     bool prepare() noexcept;
     bool start() noexcept;
     [[nodiscard]] bool started() const noexcept { return started_; }
 
 private:
-    command_task() = default;
+    control_task() = default;
 
     static void thread_entry(ULONG input);
     void run() noexcept;
 
     TX_THREAD thread_{};
-    alignas(8) std::uint8_t stack_[leg_config::command_thread::stack_size]{};
+    alignas(8) std::uint8_t stack_[leg_config::control_task_thread::stack_size]{};
     msg::topic* command_topic_ = nullptr;
     msg::subscriber remoter_sub_{};
     msg::subscriber solver_sub_{};
