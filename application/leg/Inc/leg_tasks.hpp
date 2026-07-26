@@ -93,4 +93,27 @@ private:
     bool started_ = false;
 };
 
+class solver_task
+{
+public:
+    static solver_task& instance() noexcept;
+
+    bool start() noexcept;
+    [[nodiscard]] bool started() const noexcept { return started_; }
+
+private:
+    solver_task() = default;
+
+    static void thread_entry(ULONG input);
+    void run() noexcept;
+
+    TX_THREAD thread_{};
+    alignas(8) std::uint8_t stack_[leg_config::solver_thread::stack_size]{};
+    msg::topic* solver_feedback_topic_ = nullptr;
+    msg::topic* odometry_topic_ = nullptr;
+    msg::subscriber ahrs_sub_{};
+    msg::subscriber control_target_sub_{};
+    bool started_ = false;
+};
+
 } // namespace app
