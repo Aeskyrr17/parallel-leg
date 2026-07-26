@@ -33,6 +33,20 @@ inline constexpr float jump_air_leg_length_m = 0.140f;
 inline constexpr float normal_leg_step_m = 0.001f;
 inline constexpr float jump_leg_step_m = 0.007f;
 
+namespace command
+{
+inline constexpr float max_speed_mps = 2.5f;
+inline constexpr float max_yaw_rate_rad_s = 1.5f;
+inline constexpr float spin_yaw_rate_rad_s = 3.0f;
+inline constexpr float speed_step_mps = 0.005f;
+inline constexpr float yaw_rate_step_rad_s = 0.01f;
+inline constexpr float manual_leg_step_m = 0.0008f;
+inline constexpr float speed_deadband_mps = 0.002f;
+inline constexpr float yaw_rate_deadband_rad_s = 0.0001f;
+inline constexpr float jump_extended_threshold_m = 0.32f;
+inline constexpr float jump_retracted_threshold_m = 0.14f;
+} // namespace command
+
 // Output torque limits, in N*m.
 inline constexpr float max_joint_torque_nm = 40.0f;
 inline constexpr float max_wheel_torque_nm = 15.0f;
@@ -65,6 +79,7 @@ inline constexpr std::size_t stack_size = 4096U;
 namespace command_thread
 {
 inline constexpr std::uint32_t period_ticks = 1U;
+inline constexpr float period_s = 0.001f;
 inline constexpr std::uint32_t priority = 7U;
 inline constexpr std::size_t stack_size = 2048U;
 } // namespace command_thread

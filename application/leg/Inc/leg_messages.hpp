@@ -18,6 +18,7 @@ enum class jump_state : std::uint8_t
 struct command
 {
     float speed_mps = 0.0f;
+    float yaw_rate_rad_s = 0.0f;
     float position_m = 0.0f;
     float leg_length_m = 0.0f;
     float roll_rad = 0.0f;
