@@ -22,6 +22,9 @@ public:
 
 private:
     leg();
+    void set_motor_offsets() noexcept;
+    bool register_motors() noexcept;
+    void send_relax_command() noexcept;
 
     motors::lk8016 left_joint_4_;
     motors::lk8016 left_joint_1_;

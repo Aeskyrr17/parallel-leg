@@ -284,9 +284,9 @@ command_task& command_task::instance() noexcept
     return task;
 }
 
-bool command_task::start() noexcept
+bool command_task::prepare() noexcept
 {
-    if (started_)
+    if (prepared_)
     {
         return true;
     }
@@ -305,7 +305,22 @@ bool command_task::start() noexcept
     if (tx_thread_create(&thread_, const_cast<CHAR*>("leg_command"), thread_entry, 0U,
                          stack_, sizeof(stack_), leg_config::command_thread::priority,
                          leg_config::command_thread::priority, TX_NO_TIME_SLICE,
-                         TX_AUTO_START) != TX_SUCCESS)
+                         TX_DONT_START) != TX_SUCCESS)
+    {
+        return false;
+    }
+
+    prepared_ = true;
+    return true;
+}
+
+bool command_task::start() noexcept
+{
+    if (started_)
+    {
+        return true;
+    }
+    if (!prepared_ || tx_thread_resume(&thread_) != TX_SUCCESS)
     {
         return false;
     }

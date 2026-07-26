@@ -50,6 +50,7 @@ class command_task
 public:
     static command_task& instance() noexcept;
 
+    bool prepare() noexcept;
     bool start() noexcept;
     [[nodiscard]] bool started() const noexcept { return started_; }
 
@@ -66,6 +67,7 @@ private:
     msg::subscriber solver_sub_{};
     msg::subscriber odometry_sub_{};
     command_interpreter interpreter_{};
+    bool prepared_ = false;
     bool started_ = false;
 };
 
@@ -74,6 +76,7 @@ class pendulum_task
 public:
     static pendulum_task& instance() noexcept;
 
+    bool prepare() noexcept;
     bool start() noexcept;
     [[nodiscard]] bool started() const noexcept { return started_; }
 
@@ -90,6 +93,7 @@ private:
     msg::subscriber command_sub_{};
     msg::subscriber solver_sub_{};
     msg::subscriber odometry_sub_{};
+    bool prepared_ = false;
     bool started_ = false;
 };
 
@@ -98,6 +102,7 @@ class solver_task
 public:
     static solver_task& instance() noexcept;
 
+    bool prepare() noexcept;
     bool start() noexcept;
     [[nodiscard]] bool started() const noexcept { return started_; }
 
@@ -113,6 +118,7 @@ private:
     msg::topic* odometry_topic_ = nullptr;
     msg::subscriber ahrs_sub_{};
     msg::subscriber control_target_sub_{};
+    bool prepared_ = false;
     bool started_ = false;
 };
 

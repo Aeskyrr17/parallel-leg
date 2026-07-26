@@ -78,15 +78,11 @@ solver_task& solver_task::instance() noexcept
     return task;
 }
 
-bool solver_task::start() noexcept
+bool solver_task::prepare() noexcept
 {
-    if (started_)
+    if (prepared_)
     {
         return true;
-    }
-    if (!leg::instance().started())
-    {
-        return false;
     }
 
     solver_feedback_topic_ = msg::create<leg_messages::solver_feedback>();
@@ -111,7 +107,22 @@ bool solver_task::start() noexcept
             leg_config::solver_thread::priority,
             leg_config::solver_thread::priority,
             TX_NO_TIME_SLICE,
-            TX_AUTO_START) != TX_SUCCESS)
+            TX_DONT_START) != TX_SUCCESS)
+    {
+        return false;
+    }
+
+    prepared_ = true;
+    return true;
+}
+
+bool solver_task::start() noexcept
+{
+    if (started_)
+    {
+        return true;
+    }
+    if (!prepared_ || tx_thread_resume(&thread_) != TX_SUCCESS)
     {
         return false;
     }
