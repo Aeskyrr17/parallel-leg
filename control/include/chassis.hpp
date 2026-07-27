@@ -1,9 +1,10 @@
 #pragma once
 
 #include "ahrs.hpp"
+#include "control_config.hpp"
+#include "leg.hpp"
 #include "lqr.hpp"
 #include "msgs.hpp"
-#include "pendulum.hpp"
 #include "pid.hpp"
 
 #include <cstdint>
@@ -28,20 +29,27 @@ enum class jump_stage : std::uint8_t
     LANDING,
 };
 
+struct chassis_context
+{
+    const ahrs::message& ins;
+    const chassis_command& cmd;
+    const odometry_state& odom;
+
+    leg_controller& left;
+    leg_controller& right;
+
+    bool control_ok = false;
+};
+
 struct chassis_output
 {
-    leg_wrench left_target{};
-    leg_wrench right_target{};
-    float left_wheel_torque = 0.0f;
-    float right_wheel_torque = 0.0f;
+    virtual_force left_target{};
+    virtual_force right_target{};
 
-    chassis_state state = chassis_state::RELAX;
-    jump_stage jump = jump_stage::DONT;
+    float tau_w_l = 0.0f;
+    float tau_w_r = 0.0f;
 
-    bool reset_odometry = false;
-    bool reset_command = false;
     bool relax = true;
-    bool valid = false;
 };
 
 class ChassisController
@@ -49,47 +57,32 @@ class ChassisController
 public:
     explicit ChassisController(const chassis_config& cfg);
 
-    chassis_output step(const chassis_command& command, const odometry_state& odometry,
-                        const ahrs::message& attitude, Pendulum& lpendulum, Pendulum& rpendulum,
-                        float dt, bool control_valid);
-
-    float state_elapsed_s() const { return state_elapsed_s_; }
+    chassis_output step(const chassis_context& ctx);
 
 private:
     void reset();
 
-    chassis_output normal_control(const chassis_command& command,
-                                  const odometry_state& odometry,
-                                  const ahrs::message& attitude, Pendulum& lpendulum,
-                                  Pendulum& rpendulum, float dt);
-    chassis_output offground_control(const odometry_state& odometry,
-                                     const ahrs::message& attitude, Pendulum& lpendulum,
-                                     Pendulum& rpendulum);
-    void fill_observed(const odometry_state& odometry, const ahrs::message& attitude,
-                       const Pendulum& lpendulum, const Pendulum& rpendulum);
+    void transition_to(chassis_state next);
+    void transition_jump_to(jump_stage next);
 
-    bool valid_input(const chassis_command& command, const odometry_state& odometry,
-                     const ahrs::message& attitude, const Pendulum& lpendulum,
-                     const Pendulum& rpendulum, float dt, bool control_valid) const;
-    static bool finite_output(const chassis_output& output);
-    static float support_force(const Pendulum& lpendulum, const Pendulum& rpendulum);
-    chassis_state requested_motion_state(const chassis_command& command) const;
-    void enter_state(chassis_state next, Pendulum& lpendulum, Pendulum& rpendulum);
-    void enter_jump_stage(jump_stage next);
+    void step_relax(const chassis_context& ctx, chassis_output& out);
+    void step_normal(const chassis_context& ctx, chassis_output& out);
+    void step_offground(const chassis_context& ctx, chassis_output& out);
+    void step_spin(const chassis_context& ctx, chassis_output& out);
+    void step_jump(const chassis_context& ctx, chassis_output& out);
 
-    chassis_config cfg_{};
+    lqr_state build_obs(const chassis_context& ctx) const;
+
+    lqr_state build_normal_ref(const chassis_context& ctx) const;
+    lqr_state build_offground_ref(const chassis_context& ctx) const;
+    lqr_state build_spin_ref(const chassis_context& ctx) const;
+
+private:
     LQR lqr_;
     ::control::pid roll_pd_;
 
     chassis_state state_ = chassis_state::RELAX;
     jump_stage jump_stage_ = jump_stage::DONT;
-    float state_elapsed_s_ = 0.0f;
-    float jump_elapsed_s_ = 0.0f;
-    bool reset_odometry_pending_ = true;
-    bool reset_command_pending_ = true;
-
-    float observed_[10] = {};
-    float reference_[10] = {};
 };
 
 } // namespace wbr::control

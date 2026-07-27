@@ -1,36 +1,7 @@
 #pragma once
 
-#include <algorithm>
-
 namespace wbr::control
 {
-
-inline constexpr float k_pi = 3.14159265358979f;
-inline constexpr float k_two_pi = 6.28318530717959f;
-
-inline float clamp(float value, float min_value, float max_value)
-{
-    return std::max(min_value, std::min(value, max_value));
-}
-
-inline float loop_clamp(float value, float min_value, float max_value)
-{
-    const float range = max_value - min_value;
-    if (range <= 0.0f)
-    {
-        return min_value;
-    }
-
-    while (value > max_value)
-    {
-        value -= range;
-    }
-    while (value < min_value)
-    {
-        value += range;
-    }
-    return value;
-}
 
 class slope
 {

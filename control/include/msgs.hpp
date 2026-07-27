@@ -12,13 +12,15 @@ enum class command_mode : std::uint8_t
     relax = 0,
     normal,
     spin,
+    jump,
 };
 
 enum class jump_command : std::uint8_t
 {
     none = 0,
-    prepare,
-    execute,
+    extending,
+    inair,
+    landing,
 };
 
 struct chassis_command
@@ -42,15 +44,13 @@ struct chassis_command
 
 struct odometry_state
 {
-    // Longitudinal position, velocity, and world vertical acceleration.
     float x = 0.0f;
     float v = 0.0f;
-    float a_z = 0.0f;
 
-    bool valid = false;
+    float a_z = 0.0f; // m/s^2, world z specific force; stationary is about +g
 };
 
-struct motor_feedback_frame
+struct motor_fdb_frame
 {
     motors::feedback left_joint1{};
     motors::feedback left_joint4{};
@@ -58,14 +58,6 @@ struct motor_feedback_frame
     motors::feedback right_joint4{};
     motors::feedback left_wheel{};
     motors::feedback right_wheel{};
-
-    bool left_joint1_valid = false;
-    bool left_joint4_valid = false;
-    bool right_joint1_valid = false;
-    bool right_joint4_valid = false;
-    bool left_wheel_valid = false;
-    bool right_wheel_valid = false;
-    bool valid = false;
 };
 
 } // namespace wbr::control
