@@ -1,0 +1,15 @@
+L=0.140, R=0.140: A=(10, 10), B=(10, 4), rank=10, max_real=-0.691231, |K|max=94.337355
+L=0.245, R=0.245: A=(10, 10), B=(10, 4), rank=10, max_real=-0.788681, |K|max=99.525837
+L=0.350, R=0.350: A=(10, 10), B=(10, 4), rank=10, max_real=-0.841320, |K|max=101.661291
+L=0.140, R=0.350: A=(10, 10), B=(10, 4), rank=10, max_real=-0.807303, |K|max=110.495212
+L=0.350, R=0.140: A=(10, 10), B=(10, 4), rank=10, max_real=-0.807303, |K|max=110.495212
+fit samples: 484
+fit max abs error: 0.26849856
+fit mean abs error: 0.0189859004
+fit RMS error: 0.0337392739
+
+generated: control/include/lqr_coeffs.hpp
+samples: 484
+max abs fit error: 0.26849856
+RMS fit error: 0.0337392739
+worst exact-grid closed-loop max real eigenvalue: -0.691231099

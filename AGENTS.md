@@ -86,7 +86,9 @@ control/include/odometry.hpp
 control/include/lqr.hpp
     lqr_state/lqr_output types and header-only LQR evaluation
 control/include/lqr_coeffs.hpp
-    the only 40x6 LQR coefficient source
+    generated 40x6 parallel-leg LQR coefficient output consumed by firmware
+parallel_leg_lqr/
+    offline parallel-leg model, gain fitting, verification, and CMake-connected header generator
 control/include/function.hpp + control/src/function.cpp
     Function remote-command logic
 control/include/chassis.hpp + control/src/chassis.cpp
@@ -149,7 +151,8 @@ threads.
   - VMC torque resolution and motor-buffer write
   - no unused equivalent-leg-angle controller
 - `LQR`
-  - exact single-copy 40x6 old coefficient source in `control/include/lqr_coeffs.hpp`
+  - single generated 40x6 parallel-leg coefficient output in `control/include/lqr_coeffs.hpp`
+  - `parallel_leg_lqr/lqr_codegen.cmake` regenerates that header before the firmware target
   - normal and old sparse off-ground gain behavior
   - typed `lqr_state` input and four direct torque outputs
   - active Normal control calls `LQR::solve()` with the verified 10-state ordering
@@ -225,8 +228,9 @@ It owns:
 - singularity thresholds
 - fixed `dt`, control-thread priority, and actuation gate
 
-The 40x6 generated/tuned LQR table remains only in `control/include/lqr_coeffs.hpp`. Structural
-constants such as vector dimensions, matrix indices, zero, one, and pi remain in algorithm code.
+The 40x6 runtime LQR table remains only in `control/include/lqr_coeffs.hpp` and is generated from
+`parallel_leg_lqr/`; no preview-header copy remains in the generator directory. Structural constants
+such as vector dimensions, matrix indices, zero, one, and pi remain in algorithm code.
 
 `link_solver` and `leg_controller` retain only `const leg_config&`. `ChassisController` retains
 `const chassis_config&` so state logic can read chassis-owned targets such as `cmd.min_len`; it
@@ -318,8 +322,14 @@ Do not invent or silently choose these values.
       slew limiter is implemented.
 
 11. **LQR applicability**
-    - Coefficients and state ordering match the old SJTU model.
-    - Confirm current geometry, mass, axes, and actuator signs before treating the output as valid.
+    - The active coefficients are generated from the new parallel-leg model over a
+      `0.14~0.35 m` two-leg grid; they no longer match the old SJTU coefficient table.
+    - MCU runtime interpolation still clamps to `0.15~0.35 m`; the generated `0.14 m` row is
+      currently unused.
+    - Equivalent-leg COM/inertia still use the approximation documented in
+      `parallel_leg_lqr/leg_data.py`.
+    - Confirm CAD/identified leg properties, current geometry, mass, axes, and actuator signs before
+      treating the output as hardware-valid.
 
 12. **Inverse kinematics**
     - Target leg pose to joint angles remains intentionally unimplemented.
@@ -330,7 +340,7 @@ Do not invent or silently choose these values.
 
 ## Verification
 
-Latest completed checks after configuring the four LK8016 raw encoder zero points:
+Latest completed checks after connecting the parallel-leg LQR generator:
 
 ```text
 cmake --build --preset Debug --target pnx_embedded --clean-first --parallel 4
@@ -340,7 +350,9 @@ cmake --build --preset Release --target pnx_embedded --parallel 4
 - Debug and Release both link successfully.
 - Debug uses 77,064 B DTCM and 197,616 B flash.
 - Release uses 77,008 B DTCM and 100,032 B flash.
-- The old and migrated 40x6 LQR tables compare exactly across all 240 coefficients.
+- The generator writes the only coefficient header directly to
+  `control/include/lqr_coeffs.hpp`: 484 samples, max absolute fit error `0.26849856`, RMS error
+  `0.0337392739`, and worst exact-grid closed-loop max real eigenvalue `-0.691231099`.
 - `chassis_state` declarations and switch cases are synchronized. The only declared states are
   Relax, Normal, Spin, Offground, and Jump.
 - `command_action`, `command_event`, `fsm_input`, `fsm_output`, `function_feedback`,

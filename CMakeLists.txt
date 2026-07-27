@@ -86,6 +86,14 @@ set(CMSIS_DSP_SOURCES
 
 add_executable(${PROJECT_NAME})
 
+set(LQR_TOOL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/parallel_leg_lqr")
+set(LQR_COEFFS_HPP "${CMAKE_CURRENT_SOURCE_DIR}/control/include/lqr_coeffs.hpp")
+set(FIRMWARE_TARGET "${PROJECT_NAME}")
+include("${LQR_TOOL_DIR}/lqr_codegen.cmake")
+unset(LQR_TOOL_DIR)
+unset(LQR_COEFFS_HPP)
+unset(FIRMWARE_TARGET)
+
 add_subdirectory(board/cmake/stm32cubemx)
 
 target_sources(${PROJECT_NAME} PRIVATE
