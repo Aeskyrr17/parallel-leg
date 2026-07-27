@@ -33,6 +33,10 @@ struct chassis_command
     float w = 0.0f;
     float dyaw = 0.0f;
 
+    // Final continuous-yaw references, in rad and rad/s.
+    float yaw = 0.0f;
+    float yaw_rate = 0.0f;
+
     // Leg length and roll references, in m and rad.
     float len = 0.0f;
     float roll = 0.0f;

@@ -122,7 +122,11 @@ threads.
   - nested left/right switch interpretation
   - one-update control-switch transition behavior
   - right-switch jump request mapping
-  - `dt`-scaled velocity/yaw slopes and manual leg-length rate, plus position hold
+  - remote axes produce velocity/yaw-rate commands
+  - moving x reference uses one-step feedback prediction `odom.x + cmd.v * dt`; zero velocity
+    captures and holds the current odometry position
+  - active yaw reference uses one-step continuous-angle prediction
+    `total_yaw + cmd.yaw_rate * dt`; zero yaw rate captures and holds `total_yaw`
 - `Odometry`
   - fixed-size `[x, v, a]` Kalman filter
   - quaternion body-to-world acceleration rotation
@@ -148,11 +152,15 @@ threads.
   - exact single-copy 40x6 old coefficient source in `control/include/lqr_coeffs.hpp`
   - normal and old sparse off-ground gain behavior
   - typed `lqr_state` input and four direct torque outputs
-  - current active `chassis.cpp` does not yet call `LQR::solve()`
+  - active Normal control calls `LQR::solve()` with the verified 10-state ordering
 - `ChassisController`
   - one enum/switch class; no state classes or factories
   - `step(chassis_context)` with explicit Relax/Normal/Spin/Offground/Jump methods
-  - Normal/Spin/Offground/Jump currently keep safe-relax placeholder output
+  - Normal applies LQR wheel/leg torque, roll-compensated length PD, old `+0.03 m` length preload,
+    optional spring-force subtraction, and the verified 20 N off-ground transition
+  - Normal and Spin map the Function-owned continuous yaw/yaw-rate command directly; the observed
+    LQR yaw state uses `ahrs::message::total_yaw`
+  - Spin/Offground/Jump currently keep safe-relax placeholder output
 - `control_entry`
   - same-cycle composition, direct input reads, fixed configured `dt`, actuator gate, and one
     commit
@@ -170,7 +178,13 @@ does not introduce another runtime-polymorphic hierarchy.
 invalid module result / Relax command
     -> RELAX
 
-RELAX has no implemented exit transition.
+RELAX
+    -> NORMAL for a valid Normal or Jump command
+    -> SPIN for a valid Spin command
+
+NORMAL
+    -> SPIN for a Spin command
+    -> OFFGROUND when combined support force is below 20 N
 ```
 
 `RECOVER`, `FLATTEN`, `NEUTRAL`, and `GOSTAIR` are not declared states. They were removed because
@@ -180,8 +194,8 @@ the active `wbr_2026` branch does not provide validated behavior for them.
 
 | State | Current implementation |
 | --- | --- |
-| Relax | Safe relaxed output |
-| Normal | Safe-relax placeholder; observed/reference scaffolding only |
+| Relax | Resets both legs, requests odometry/position-hold reset, keeps safe relaxed output, and routes valid Normal/Jump/Spin commands |
+| Normal | Active 10-state LQR, roll-compensated length PD, spring-force subtraction, and wheel/leg outputs |
 | Spin | Safe-relax placeholder; observed/reference scaffolding only |
 | Offground | Safe-relax placeholder; observed/reference scaffolding only |
 | Jump | Safe-relax placeholder |
@@ -202,7 +216,7 @@ It owns:
 - leg_config: legacy five-bar geometry, explicit spring enable/model, solver numerics, length PID,
   and hip limit
 - chassis_config: wheel radius/mass, gravity, roll PID, wheel limit, directions, LQR fit range,
-  command mapping, and runtime
+  command mapping, Normal-state preload/off-ground threshold, and runtime
 - hip/wheel torque limits
 - leg directions and wheel directions
 - command scales/slopes/reference limits
@@ -214,8 +228,9 @@ It owns:
 The 40x6 generated/tuned LQR table remains only in `control/include/lqr_coeffs.hpp`. Structural
 constants such as vector dimensions, matrix indices, zero, one, and pi remain in algorithm code.
 
-`link_solver` and `leg_controller` retain only `const leg_config&`. `ChassisController` copies the
-LQR configuration and constructs its roll PID; it retains no complete chassis configuration.
+`link_solver` and `leg_controller` retain only `const leg_config&`. `ChassisController` retains
+`const chassis_config&` so state logic can read chassis-owned targets such as `cmd.min_len`; it
+also copies the LQR configuration and constructs its roll PID.
 Wheel-side mass and gravity remain chassis-owned and are passed as scalar cycle inputs to the leg
 solve path for the existing support-force calculation. `runtime_config::dt` is fixed at `0.001 s`
 and is passed through Function, Odometry, leg_controller, and link_solver without runtime range
@@ -314,7 +329,7 @@ Do not invent or silently choose these values.
 
 ## Verification
 
-Latest completed checks after switching Control to the fixed configured `0.001 s` step:
+Latest completed checks after moving continuous-yaw command generation into Function:
 
 ```text
 cmake --build --preset Debug --target pnx_embedded --clean-first --parallel 4
@@ -322,8 +337,8 @@ cmake --build --preset Release --target pnx_embedded --parallel 4
 ```
 
 - Debug and Release both link successfully.
-- Debug uses 77,032 B DTCM and 193,864 B flash.
-- Release uses 76,968 B DTCM and 97,680 B flash.
+- Debug uses 77,056 B DTCM and 197,512 B flash.
+- Release uses 77,000 B DTCM and 99,944 B flash.
 - The old and migrated 40x6 LQR tables compare exactly across all 240 coefficients.
 - `chassis_state` declarations and switch cases are synchronized. The only declared states are
   Relax, Normal, Spin, Offground, and Jump.

@@ -50,6 +50,7 @@ struct chassis_output
     float tau_w_r = 0.0f;
 
     bool relax = true;
+    bool reset_odom = false;
 };
 
 class ChassisController
@@ -78,6 +79,7 @@ private:
     lqr_state build_spin_ref(const chassis_context& ctx) const;
 
 private:
+    const chassis_config& cfg_;
     LQR lqr_;
     ::control::pid roll_pd_;
 

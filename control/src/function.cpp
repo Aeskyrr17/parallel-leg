@@ -13,7 +13,8 @@ Function::Function(const command_config& cfg)
     reset();
 }
 
-const chassis_command& Function::update(const remoter::state& remote, float odom_x, float dt)
+const chassis_command& Function::update(const remoter::state& remote, float odom_x,
+                                        float total_yaw, float dt)
 {
     yaw_updater_.set_path(cfg_.yaw_slope_rate * dt);
     vel_updater_.set_path(cfg_.vel_slope_rate * dt);
@@ -87,6 +88,8 @@ const chassis_command& Function::update(const remoter::state& remote, float odom
 
     const bool spin = cmd_.mode == command_mode::spin && !transition;
     update_position(spin, odom_x, dt);
+    cmd_.yaw_rate = cmd_.w + cmd_.dyaw;
+    update_yaw(total_yaw, dt);
 
     if (!remote.offline)
     {
@@ -107,8 +110,10 @@ void Function::reset()
     vel_updater_.reset();
 
     maintained_x_ = 0.0f;
+    maintained_yaw_ = 0.0f;
     prev_ctrl_ = remoter::sw_state::low;
     maintaining_x_ = false;
+    maintaining_yaw_ = false;
     prev_sw_valid_ = false;
     transition_cooldown_ = false;
 }
@@ -136,6 +141,37 @@ void Function::update_position(bool spin, float odom_x, float dt)
 
     maintaining_x_ = false;
     cmd_.x = odom_x + cmd_.v * dt;
+}
+
+void Function::reset_position(float x)
+{
+    maintained_x_ = x;
+    cmd_.x = x;
+    maintaining_x_ = true;
+}
+
+void Function::reset_yaw(float total_yaw)
+{
+    maintained_yaw_ = total_yaw;
+    cmd_.yaw = total_yaw;
+    maintaining_yaw_ = true;
+}
+
+void Function::update_yaw(float total_yaw, float dt)
+{
+    if (cmd_.yaw_rate != 0.0f)
+    {
+        maintaining_yaw_ = false;
+        cmd_.yaw = total_yaw + cmd_.yaw_rate * dt;
+        return;
+    }
+
+    if (!maintaining_yaw_)
+    {
+        maintained_yaw_ = total_yaw;
+        maintaining_yaw_ = true;
+    }
+    cmd_.yaw = maintained_yaw_;
 }
 
 } // namespace wbr::control

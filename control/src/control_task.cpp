@@ -130,7 +130,8 @@ void control_entry(ULONG /*arg*/)
         (void)msg::read(remote_sub, remote);
         const motor_fdb_frame motor_fdb = read_motor_fdb();
 
-        const chassis_command cmd = function.update(remote, odom.state().x, dt);
+        const chassis_command cmd =
+            function.update(remote, odom.state().x, attitude.total_yaw, dt);
 
         odometry_input odom_input{};
         odom_input.quaternion[0] = attitude.quaternion[0];
@@ -180,6 +181,13 @@ void control_entry(ULONG /*arg*/)
 #endif
 
         handler.send_control();
+
+        if (out.reset_odom)
+        {
+            odom.reset();
+            function.reset_position(0.0f);
+        }
+
         tx_thread_sleep(1);
     }
 }
@@ -208,7 +216,7 @@ void update_control_debug(float dt, const ahrs::message& attitude,
 
     debug.command_x = cmd.x;
     debug.command_v = cmd.v;
-    debug.command_yaw_rate = cmd.dyaw;
+    debug.command_yaw_rate = cmd.yaw_rate;
     debug.command_leg_length = cmd.len;
     debug.wheel_torque_left_ref = out.tau_w_l;
     debug.wheel_torque_right_ref = out.tau_w_r;

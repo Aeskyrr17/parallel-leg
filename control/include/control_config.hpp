@@ -66,6 +66,13 @@ struct lqr_config
     float leg_len_resolution = 0.01f;
 };
 
+struct state_config
+{
+    // wbr_2026 Normal control values: N, m.
+    float offground_support_force = 20.0f;
+    float leg_len_bias = 0.03f;
+};
+
 struct leg_config
 {
     ::control::pid len_pid{5000.0f, 0.0f, -8000.0f, 200.0f, 0.0f,
@@ -102,6 +109,7 @@ struct chassis_config
 
     motor_dir_config motor_dir{};
     lqr_config lqr{};
+    state_config state{};
 };
 
 struct control_config
