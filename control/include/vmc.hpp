@@ -215,10 +215,10 @@ inline void link_solver::calc_spring_force()
         return;
     }
 
-    // TODO: 开启弹簧补偿前核对 phi2 隐式导数的符号。
-    const float sin32 = std::sin(u3_ - u2_);
+    // phi2 implicit derivative uses sin(phi2 - phi3).
+    const float sin23 = std::sin(u2_ - u3_);
     const float epsilon = cfg_.numerics.singularity_epsilon;
-    if (std::fabs(sin32) < cfg_.numerics.spring_singularity_epsilon)
+    if (std::fabs(sin23) < cfg_.numerics.spring_singularity_epsilon)
     {
         return;
     }
@@ -245,9 +245,9 @@ inline void link_solver::calc_spring_force()
     const float spring_len = std::sqrt(spring_len_sq);
     const float fsx = cfg_.spring_force * dpqx / spring_len;
     const float fsy = cfg_.spring_force * dpqy / spring_len;
-    const float inv_l2_sin32 = 1.0f / (cfg_.l2 * sin32);
-    const float dphi2_dphi1 = cfg_.l1 * std::sin(u3_ - state_.phi1) * inv_l2_sin32;
-    const float dphi2_dphi4 = cfg_.l1 * std::sin(state_.phi4 - u3_) * inv_l2_sin32;
+    const float inv_l2_sin23 = 1.0f / (cfg_.l2 * sin23);
+    const float dphi2_dphi1 = cfg_.l1 * std::sin(u3_ - state_.phi1) * inv_l2_sin23;
+    const float dphi2_dphi4 = cfg_.l1 * std::sin(state_.phi4 - u3_) * inv_l2_sin23;
 
     const float dpx_d1 = -cfg_.spring_offset_1 * std::sin(ang_p);
     const float dpy_d1 = cfg_.spring_offset_1 * std::cos(ang_p);

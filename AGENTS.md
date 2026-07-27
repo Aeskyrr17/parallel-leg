@@ -236,6 +236,8 @@ default config; motor CAN IDs stay in generated `robot_config.hpp`.
   corresponding division or square root requires them.
 - The restored legacy geometry uses `l1=0.150 m`, `l2=0.270 m`, and a `0.150 m` motor-pivot
   distance. Software spring compensation is explicitly disabled by default.
+- The spring model's `phi2` implicit derivatives use `sin(phi2 - phi3)`; the ordinary VMC
+  Jacobian continues to use its original `sin(phi3 - phi2)` form.
 - Link acceleration differences use `(current - previous) / dt`; initial history is guarded.
 - Remoter offline behavior is handled by `Function`; Odometry failure, invalid links, or an invalid
   command produces RELAX through the current-cycle `control_ok` value.
@@ -275,9 +277,9 @@ Do not invent or silently choose these values.
 
 6. **Spring/support-force model**
    - Software spring compensation defaults off to match active `wbr_2026`.
-   - Before enabling it, confirm the `phi2` implicit-derivative sign against the target model and
-     validate spring constants/geometry. Independently validate AHRS acceleration axes and gravity
-     content, wheel-side mass, and support-force sign.
+   - The `phi2` implicit-derivative sign has been corrected and verified by central differences.
+     Before enabling compensation, validate spring constants/geometry. Independently validate AHRS
+     acceleration axes and gravity content, wheel-side mass, and support-force sign.
 
 7. **Recover/Flatten/Neutral**
    - Required behavior is known, but entry/exit thresholds, target phi, slope/PD gains, kick torque,
@@ -345,6 +347,9 @@ cmake --build --preset Release --target pnx_embedded --parallel 4
   `chassis_config` no longer owns a duplicate odometry configuration block.
 - Three finite joint-angle comparisons against the legacy geometry matched `u2/u3/phi/len`,
   `J`, `JT`, and `JT_inv` to at most `2.22e-16` in a double-precision script.
+- At `phi1=1.3`, `phi4=0.3`, and `delta=1e-4 rad`, central differences for the spring model's
+  `dphi2/dphi1` and `dphi2/dphi4` matched the `sin(phi2 - phi3)` analytic expressions within
+  `1.1e-9`.
 - There is no `wbr_input` thread, input stack, shared input snapshot, or input mutex. `wbr_control`
   directly reads the module-owned AHRS/remoter topics.
 - Only Control accesses the two leg objects.
