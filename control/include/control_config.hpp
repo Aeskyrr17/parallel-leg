@@ -52,6 +52,15 @@ struct motor_dir_config
     float right_wheel_dir = -1.0f;
 };
 
+struct joint_offset_config
+{
+    // LK8016 raw encoder zero points.
+    std::uint16_t left_joint4 = 0x11FFU;
+    std::uint16_t left_joint1 = 0x25FFU;
+    std::uint16_t right_joint4 = 0xC6C3U;
+    std::uint16_t right_joint1 = 0x8419U;
+};
+
 struct solver_numerics_config
 {
     float singularity_epsilon = 1.0e-5f;
@@ -108,6 +117,7 @@ struct chassis_config
     float gravity = 9.78f;
 
     motor_dir_config motor_dir{};
+    joint_offset_config joint_offset{};
     lqr_config lqr{};
     state_config state{};
 };

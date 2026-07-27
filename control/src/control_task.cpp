@@ -104,6 +104,11 @@ bool register_motors()
 {
     relax_motors();
 
+    left_joint4.offset = static_cast<float>(chassis_cfg.joint_offset.left_joint4);
+    left_joint1.offset = static_cast<float>(chassis_cfg.joint_offset.left_joint1);
+    right_joint4.offset = static_cast<float>(chassis_cfg.joint_offset.right_joint4);
+    right_joint1.offset = static_cast<float>(chassis_cfg.joint_offset.right_joint1);
+
     auto& handler = motors::lkmotorhandler::instance();
     const bool left_joint4_ok = handler.register_motor(left_joint4);
     const bool left_joint1_ok = handler.register_motor(left_joint1);

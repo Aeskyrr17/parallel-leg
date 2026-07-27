@@ -207,7 +207,9 @@ lqr_state ChassisController::build_normal_ref(const chassis_context& ctx) const
     ref.phi = ctx.cmd.yaw;
     ref.dphi = ctx.cmd.yaw_rate;
 
+    ref.theta_l_l = 0.0f;
     ref.dtheta_l_l = 0.0f;
+    ref.theta_l_r = 0.0f;
     ref.dtheta_l_r = 0.0f;
 
     ref.theta_b = 0.0f;

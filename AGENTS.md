@@ -218,7 +218,7 @@ It owns:
 - chassis_config: wheel radius/mass, gravity, roll PID, wheel limit, directions, LQR fit range,
   command mapping, Normal-state preload/off-ground threshold, and runtime
 - hip/wheel torque limits
-- leg directions and wheel directions
+- leg directions, wheel directions, and four LK8016 raw encoder zero points
 - command scales/slopes/reference limits
 - LQR length range/resolution
 - leg and roll PID values
@@ -240,9 +240,10 @@ ThreadX is configured for 1000 ticks/s. The control thread uses the configured `
 sleeps one tick after each cycle. Control does not use DWT for cycle timing and has no
 application-level release deadline or period-conversion state.
 
-Device-owned values are intentionally not duplicated into either control config: LK torque
-constants and gear behavior stay in the motor driver; AHRS installation offset stays in the AHRS
-default config; motor CAN IDs stay in generated `robot_config.hpp`.
+LK torque constants and gear behavior stay in the motor driver; AHRS installation offset stays in
+the AHRS default config; motor CAN IDs stay in generated `robot_config.hpp`. The four hardware-
+specific LK8016 raw encoder zero points are chassis-owned Control configuration and are copied into
+the unchanged LK driver `offset` fields before motor registration.
 
 ## Safety properties
 
@@ -280,11 +281,11 @@ Do not invent or silently choose these values.
    - It is currently estimated from raw current and driver torque constant.
    - Confirm gearbox scaling and whether it is suitable for reverse-VMC/support-force estimation.
 
-4. **Mechanical zero ownership**
-   - Control no longer assigns LK raw encoder offsets or subtracts joint-radian zero values.
-   - The unchanged LK driver still owns its generic `offset` field, which remains at its default
-     zero value in this application.
-   - Confirm the motor-side mechanical-zero procedure before enabling output.
+4. **Mechanical zero validation**
+   - Control assigns the supplied LK8016 raw encoder zero points before motor registration:
+     `LJ4=0x11FF`, `LJ1=0x25FF`, `RJ4=0xC6C3`, and `RJ1=0x8419`.
+   - The unchanged LK driver subtracts these raw offsets before converting feedback to radians.
+   - Confirm all four values against the assembled hardware before enabling output.
 
 5. **Left/right signs**
    - Old behavior implies left hip `-1/-1`, right hip `+1/+1`, left wheel `+1`, right wheel `-1`.
@@ -329,7 +330,7 @@ Do not invent or silently choose these values.
 
 ## Verification
 
-Latest completed checks after moving continuous-yaw command generation into Function:
+Latest completed checks after configuring the four LK8016 raw encoder zero points:
 
 ```text
 cmake --build --preset Debug --target pnx_embedded --clean-first --parallel 4
@@ -337,8 +338,8 @@ cmake --build --preset Release --target pnx_embedded --parallel 4
 ```
 
 - Debug and Release both link successfully.
-- Debug uses 77,056 B DTCM and 197,512 B flash.
-- Release uses 77,000 B DTCM and 99,944 B flash.
+- Debug uses 77,064 B DTCM and 197,616 B flash.
+- Release uses 77,008 B DTCM and 100,032 B flash.
 - The old and migrated 40x6 LQR tables compare exactly across all 240 coefficients.
 - `chassis_state` declarations and switch cases are synchronized. The only declared states are
   Relax, Normal, Spin, Offground, and Jump.
