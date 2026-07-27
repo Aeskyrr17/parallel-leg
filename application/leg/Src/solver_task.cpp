@@ -3,9 +3,11 @@
 #include "ahrs.hpp"
 #include "constants.hpp"
 #include "constrain.hpp"
-#include "leg.hpp"
+#include "leg_system.hpp"
 #include "lkmotorhandler.hpp"
+#include "msg.hpp"
 #include "odometry.hpp"
+#include "tx_api.h"
 #include "vmc.hpp"
 
 #include <cmath>
@@ -16,6 +18,12 @@ namespace
 {
 
 constexpr std::uint32_t motor_feedback_check_period_ticks = 100U;
+
+msg::topic* solver_feedback_topic = nullptr;
+msg::topic* odometry_topic = nullptr;
+msg::subscriber ahrs_sub{};
+msg::subscriber control_target_sub{};
+bool initialized = false;
 
 float directed(float value, std::int8_t direction) noexcept
 {
@@ -60,7 +68,7 @@ float estimate_support_force(const leg_force& measured_force,
                (vertical_acceleration - length_velocity_change * std::cos(leg_angle));
 }
 
-void relax_all(leg& robot) noexcept
+void relax_all(leg_system& robot) noexcept
 {
     robot.left_joint_4().relax();
     robot.left_joint_1().relax();
@@ -72,73 +80,35 @@ void relax_all(leg& robot) noexcept
 
 } // namespace
 
-solver_task& solver_task::instance() noexcept
+namespace solver_task
 {
-    static solver_task task;
-    return task;
-}
 
-bool solver_task::prepare() noexcept
+bool init() noexcept
 {
-    if (prepared_)
+    if (initialized)
     {
         return true;
     }
 
-    solver_feedback_topic_ = msg::create<leg_messages::solver_feedback>();
-    odometry_topic_ = msg::create<leg_messages::odometry>();
-    ahrs_sub_ = msg::subscribe<::ahrs::message>();
-    control_target_sub_ = msg::subscribe<leg_messages::control_target>();
-    if (solver_feedback_topic_ == nullptr ||
-        odometry_topic_ == nullptr ||
-        !ahrs_sub_.valid() ||
-        !control_target_sub_.valid())
+    solver_feedback_topic = msg::create<leg_messages::solver_feedback>();
+    odometry_topic = msg::create<leg_messages::odometry>();
+    ahrs_sub = msg::subscribe<::ahrs::message>();
+    control_target_sub = msg::subscribe<leg_messages::control_target>();
+    if (solver_feedback_topic == nullptr ||
+        odometry_topic == nullptr ||
+        !ahrs_sub.valid() ||
+        !control_target_sub.valid())
     {
         return false;
     }
 
-    if (tx_thread_create(
-            &thread_,
-            const_cast<CHAR*>("leg_solver"),
-            thread_entry,
-            0U,
-            stack_,
-            sizeof(stack_),
-            leg_config::solver_thread::priority,
-            leg_config::solver_thread::priority,
-            TX_NO_TIME_SLICE,
-            TX_DONT_START) != TX_SUCCESS)
-    {
-        return false;
-    }
-
-    prepared_ = true;
+    initialized = true;
     return true;
 }
 
-bool solver_task::start() noexcept
+[[noreturn]] void run() noexcept
 {
-    if (started_)
-    {
-        return true;
-    }
-    if (!prepared_ || tx_thread_resume(&thread_) != TX_SUCCESS)
-    {
-        return false;
-    }
-
-    started_ = true;
-    return true;
-}
-
-void solver_task::thread_entry(ULONG /*input*/)
-{
-    instance().run();
-}
-
-void solver_task::run() noexcept
-{
-    auto& robot = leg::instance();
+    auto& robot = leg_system::instance();
     auto& left_joint_4 = robot.left_joint_4();
     auto& left_joint_1 = robot.left_joint_1();
     auto& right_joint_4 = robot.right_joint_4();
@@ -161,11 +131,11 @@ void solver_task::run() noexcept
 
     for (;;)
     {
-        if (msg::read(ahrs_sub_, attitude) == types::status::ok)
+        if (msg::read(ahrs_sub, attitude) == types::status::ok)
         {
             ahrs_received = true;
         }
-        (void)msg::read(control_target_sub_, control_target);
+        (void)msg::read(control_target_sub, control_target);
 
         const auto tick = static_cast<std::uint32_t>(tx_time_get());
         if ((tick - last_motor_check_tick) >= motor_feedback_check_period_ticks)
@@ -332,8 +302,8 @@ void solver_task::run() noexcept
             control_target.valid = false;
         }
 
-        (void)msg::publish(solver_feedback_topic_, feedback);
-        (void)msg::publish(odometry_topic_, odometry_data);
+        (void)msg::publish(solver_feedback_topic, feedback);
+        (void)msg::publish(odometry_topic, odometry_data);
 
         if (feedback.valid && control_target_usable(control_target))
         {
@@ -400,5 +370,7 @@ void solver_task::run() noexcept
         tx_thread_sleep(leg_config::solver_thread::period_ticks);
     }
 }
+
+} // namespace solver_task
 
 } // namespace app

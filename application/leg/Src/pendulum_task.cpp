@@ -2,7 +2,9 @@
 
 #include "ahrs.hpp"
 #include "lqr.hpp"
+#include "msg.hpp"
 #include "pid.hpp"
+#include "tx_api.h"
 
 namespace app
 {
@@ -14,75 +16,44 @@ constexpr float off_ground_leg_length_m = 0.27f;
 constexpr float jump_extending_force_n = 400.0f;
 constexpr float jump_airborne_force_n = -200.0f;
 
+msg::topic* control_target_topic = nullptr;
+msg::subscriber ahrs_sub{};
+msg::subscriber command_sub{};
+msg::subscriber solver_sub{};
+msg::subscriber odometry_sub{};
+bool initialized = false;
+
 } // namespace
 
-pendulum_task& pendulum_task::instance() noexcept
+namespace pendulum_task
 {
-    static pendulum_task task;
-    return task;
-}
 
-bool pendulum_task::prepare() noexcept
+bool init() noexcept
 {
-    if (prepared_)
+    if (initialized)
     {
         return true;
     }
 
-    control_target_topic_ = msg::create<leg_messages::control_target>();
-    ahrs_sub_ = msg::subscribe<::ahrs::message>();
-    command_sub_ = msg::subscribe<leg_messages::command>();
-    solver_sub_ = msg::subscribe<leg_messages::solver_feedback>();
-    odometry_sub_ = msg::subscribe<leg_messages::odometry>();
-    if (control_target_topic_ == nullptr ||
-        !ahrs_sub_.valid() ||
-        !command_sub_.valid() ||
-        !solver_sub_.valid() ||
-        !odometry_sub_.valid())
+    control_target_topic = msg::create<leg_messages::control_target>();
+    ahrs_sub = msg::subscribe<::ahrs::message>();
+    command_sub = msg::subscribe<leg_messages::command>();
+    solver_sub = msg::subscribe<leg_messages::solver_feedback>();
+    odometry_sub = msg::subscribe<leg_messages::odometry>();
+    if (control_target_topic == nullptr ||
+        !ahrs_sub.valid() ||
+        !command_sub.valid() ||
+        !solver_sub.valid() ||
+        !odometry_sub.valid())
     {
         return false;
     }
 
-    if (tx_thread_create(
-            &thread_,
-            const_cast<CHAR*>("leg_pendulum"),
-            thread_entry,
-            0U,
-            stack_,
-            sizeof(stack_),
-            leg_config::control_thread::priority,
-            leg_config::control_thread::priority,
-            TX_NO_TIME_SLICE,
-            TX_DONT_START) != TX_SUCCESS)
-    {
-        return false;
-    }
-
-    prepared_ = true;
+    initialized = true;
     return true;
 }
 
-bool pendulum_task::start() noexcept
-{
-    if (started_)
-    {
-        return true;
-    }
-    if (!prepared_ || tx_thread_resume(&thread_) != TX_SUCCESS)
-    {
-        return false;
-    }
-
-    started_ = true;
-    return true;
-}
-
-void pendulum_task::thread_entry(ULONG /*input*/)
-{
-    instance().run();
-}
-
-void pendulum_task::run() noexcept
+[[noreturn]] void run() noexcept
 {
     // Repository PID: kp, ki, kd, max output, max integral output, mode.
     control::pid left_leg_length_pid(
@@ -102,13 +73,13 @@ void pendulum_task::run() noexcept
 
     for (;;)
     {
-        if (msg::read(ahrs_sub_, attitude) == types::status::ok)
+        if (msg::read(ahrs_sub, attitude) == types::status::ok)
         {
             ahrs_received = true;
         }
-        (void)msg::read(command_sub_, command);
-        (void)msg::read(solver_sub_, solver);
-        (void)msg::read(odometry_sub_, odometry);
+        (void)msg::read(command_sub, command);
+        (void)msg::read(solver_sub, solver);
+        (void)msg::read(odometry_sub, odometry);
 
         const auto tick = static_cast<std::uint32_t>(tx_time_get());
         leg_messages::control_target target{};
@@ -248,9 +219,11 @@ void pendulum_task::run() noexcept
             }
         }
 
-        (void)msg::publish(control_target_topic_, target);
+        (void)msg::publish(control_target_topic, target);
         tx_thread_sleep(leg_config::control_thread::period_ticks);
     }
 }
+
+} // namespace pendulum_task
 
 } // namespace app

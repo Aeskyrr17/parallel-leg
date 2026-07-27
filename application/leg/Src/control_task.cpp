@@ -1,6 +1,8 @@
 #include "leg_tasks.hpp"
 
 #include "constrain.hpp"
+#include "msg.hpp"
+#include "tx_api.h"
 
 #include <cmath>
 
@@ -288,64 +290,42 @@ leg_messages::command command_interpreter::update(
     return command;
 }
 
-control_task& control_task::instance() noexcept
+namespace
 {
-    static control_task task;
-    return task;
-}
+msg::topic* command_topic = nullptr;
+msg::subscriber remoter_sub{};
+msg::subscriber solver_sub{};
+msg::subscriber odometry_sub{};
+command_interpreter interpreter{};
+bool initialized = false;
+} // namespace
 
-bool control_task::prepare() noexcept
+namespace control_task
 {
-    if (prepared_)
+
+bool init() noexcept
+{
+    if (initialized)
     {
         return true;
     }
 
-    command_topic_ = msg::create<leg_messages::command>();
-    remoter_sub_ = msg::subscribe<::remoter::state>();
-    solver_sub_ = msg::subscribe<leg_messages::solver_feedback>();
-    odometry_sub_ = msg::subscribe<leg_messages::odometry>();
-    if (command_topic_ == nullptr || !remoter_sub_.valid() ||
-        !solver_sub_.valid() || !odometry_sub_.valid())
+    command_topic = msg::create<leg_messages::command>();
+    remoter_sub = msg::subscribe<::remoter::state>();
+    solver_sub = msg::subscribe<leg_messages::solver_feedback>();
+    odometry_sub = msg::subscribe<leg_messages::odometry>();
+    if (command_topic == nullptr || !remoter_sub.valid() ||
+        !solver_sub.valid() || !odometry_sub.valid())
     {
         return false;
     }
 
-    interpreter_.reset();
-    if (tx_thread_create(&thread_, const_cast<CHAR*>("leg_control"), thread_entry, 0U,
-                         stack_, sizeof(stack_),
-                         leg_config::control_task_thread::priority,
-                         leg_config::control_task_thread::priority, TX_NO_TIME_SLICE,
-                         TX_DONT_START) != TX_SUCCESS)
-    {
-        return false;
-    }
-
-    prepared_ = true;
+    interpreter.reset();
+    initialized = true;
     return true;
 }
 
-bool control_task::start() noexcept
-{
-    if (started_)
-    {
-        return true;
-    }
-    if (!prepared_ || tx_thread_resume(&thread_) != TX_SUCCESS)
-    {
-        return false;
-    }
-
-    started_ = true;
-    return true;
-}
-
-void control_task::thread_entry(ULONG /*input*/)
-{
-    instance().run();
-}
-
-void control_task::run() noexcept
+[[noreturn]] void run() noexcept
 {
     ::remoter::state remote{};
     leg_messages::solver_feedback solver{};
@@ -353,17 +333,19 @@ void control_task::run() noexcept
 
     for (;;)
     {
-        (void)msg::read(remoter_sub_, remote);
-        (void)msg::read(solver_sub_, solver);
-        (void)msg::read(odometry_sub_, odometry);
+        (void)msg::read(remoter_sub, remote);
+        (void)msg::read(solver_sub, solver);
+        (void)msg::read(odometry_sub, odometry);
 
         const auto tick = static_cast<std::uint32_t>(tx_time_get());
         const leg_messages::command command =
-            interpreter_.update(remote, solver, odometry, tick);
-        (void)msg::publish(command_topic_, command);
+            interpreter.update(remote, solver, odometry, tick);
+        (void)msg::publish(command_topic, command);
 
         tx_thread_sleep(leg_config::control_task_thread::period_ticks);
     }
 }
+
+} // namespace control_task
 
 } // namespace app

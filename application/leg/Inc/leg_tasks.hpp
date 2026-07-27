@@ -2,10 +2,8 @@
 
 #include "leg_config.hpp"
 #include "leg_messages.hpp"
-#include "msg.hpp"
 #include "remoter.hpp"
 #include "slope.hpp"
-#include "tx_api.h"
 
 #include <cstdint>
 
@@ -52,81 +50,28 @@ private:
     bool holding_position_ = false;
 };
 
-class control_task
+namespace control_task
 {
-public:
-    static control_task& instance() noexcept;
+bool init() noexcept;
+[[noreturn]] void run() noexcept;
+} // namespace control_task
 
-    bool prepare() noexcept;
-    bool start() noexcept;
-    [[nodiscard]] bool started() const noexcept { return started_; }
-
-private:
-    control_task() = default;
-
-    static void thread_entry(ULONG input);
-    void run() noexcept;
-
-    TX_THREAD thread_{};
-    alignas(8) std::uint8_t stack_[leg_config::control_task_thread::stack_size]{};
-    msg::topic* command_topic_ = nullptr;
-    msg::subscriber remoter_sub_{};
-    msg::subscriber solver_sub_{};
-    msg::subscriber odometry_sub_{};
-    command_interpreter interpreter_{};
-    bool prepared_ = false;
-    bool started_ = false;
-};
-
-class pendulum_task
+namespace pendulum_task
 {
-public:
-    static pendulum_task& instance() noexcept;
+bool init() noexcept;
+[[noreturn]] void run() noexcept;
+} // namespace pendulum_task
 
-    bool prepare() noexcept;
-    bool start() noexcept;
-    [[nodiscard]] bool started() const noexcept { return started_; }
-
-private:
-    pendulum_task() = default;
-
-    static void thread_entry(ULONG input);
-    void run() noexcept;
-
-    TX_THREAD thread_{};
-    alignas(8) std::uint8_t stack_[leg_config::control_thread::stack_size]{};
-    msg::topic* control_target_topic_ = nullptr;
-    msg::subscriber ahrs_sub_{};
-    msg::subscriber command_sub_{};
-    msg::subscriber solver_sub_{};
-    msg::subscriber odometry_sub_{};
-    bool prepared_ = false;
-    bool started_ = false;
-};
-
-class solver_task
+namespace solver_task
 {
-public:
-    static solver_task& instance() noexcept;
+bool init() noexcept;
+[[noreturn]] void run() noexcept;
+} // namespace solver_task
 
-    bool prepare() noexcept;
-    bool start() noexcept;
-    [[nodiscard]] bool started() const noexcept { return started_; }
-
-private:
-    solver_task() = default;
-
-    static void thread_entry(ULONG input);
-    void run() noexcept;
-
-    TX_THREAD thread_{};
-    alignas(8) std::uint8_t stack_[leg_config::solver_thread::stack_size]{};
-    msg::topic* solver_feedback_topic_ = nullptr;
-    msg::topic* odometry_topic_ = nullptr;
-    msg::subscriber ahrs_sub_{};
-    msg::subscriber control_target_sub_{};
-    bool prepared_ = false;
-    bool started_ = false;
-};
+namespace leg_tasks
+{
+bool prepare() noexcept;
+bool start() noexcept;
+} // namespace leg_tasks
 
 } // namespace app
