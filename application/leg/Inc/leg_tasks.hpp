@@ -52,25 +52,21 @@ private:
 
 namespace control_task
 {
-bool init() noexcept;
 [[noreturn]] void run() noexcept;
 } // namespace control_task
 
 namespace pendulum_task
 {
-bool init() noexcept;
 [[noreturn]] void run() noexcept;
 } // namespace pendulum_task
 
 namespace solver_task
 {
-bool init() noexcept;
 [[noreturn]] void run() noexcept;
 } // namespace solver_task
 
 namespace leg_tasks
 {
-bool prepare() noexcept;
 bool start() noexcept;
 } // namespace leg_tasks
 

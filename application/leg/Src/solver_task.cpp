@@ -19,12 +19,6 @@ namespace
 
 constexpr std::uint32_t motor_feedback_check_period_ticks = 100U;
 
-msg::topic* solver_feedback_topic = nullptr;
-msg::topic* odometry_topic = nullptr;
-msg::subscriber ahrs_sub{};
-msg::subscriber control_target_sub{};
-bool initialized = false;
-
 float directed(float value, std::int8_t direction) noexcept
 {
     return value * static_cast<float>(direction);
@@ -83,31 +77,13 @@ void relax_all(leg_system& robot) noexcept
 namespace solver_task
 {
 
-bool init() noexcept
-{
-    if (initialized)
-    {
-        return true;
-    }
-
-    solver_feedback_topic = msg::create<leg_messages::solver_feedback>();
-    odometry_topic = msg::create<leg_messages::odometry>();
-    ahrs_sub = msg::subscribe<::ahrs::message>();
-    control_target_sub = msg::subscribe<leg_messages::control_target>();
-    if (solver_feedback_topic == nullptr ||
-        odometry_topic == nullptr ||
-        !ahrs_sub.valid() ||
-        !control_target_sub.valid())
-    {
-        return false;
-    }
-
-    initialized = true;
-    return true;
-}
-
 [[noreturn]] void run() noexcept
 {
+    auto* solver_feedback_topic = msg::create<leg_messages::solver_feedback>();
+    auto* odometry_topic = msg::create<leg_messages::odometry>();
+    auto ahrs_sub = msg::subscribe<::ahrs::message>();
+    auto control_target_sub = msg::subscribe<leg_messages::control_target>();
+
     auto& robot = leg_system::instance();
     auto& left_joint_4 = robot.left_joint_4();
     auto& left_joint_1 = robot.left_joint_1();

@@ -16,45 +16,19 @@ constexpr float off_ground_leg_length_m = 0.27f;
 constexpr float jump_extending_force_n = 400.0f;
 constexpr float jump_airborne_force_n = -200.0f;
 
-msg::topic* control_target_topic = nullptr;
-msg::subscriber ahrs_sub{};
-msg::subscriber command_sub{};
-msg::subscriber solver_sub{};
-msg::subscriber odometry_sub{};
-bool initialized = false;
-
 } // namespace
 
 namespace pendulum_task
 {
 
-bool init() noexcept
-{
-    if (initialized)
-    {
-        return true;
-    }
-
-    control_target_topic = msg::create<leg_messages::control_target>();
-    ahrs_sub = msg::subscribe<::ahrs::message>();
-    command_sub = msg::subscribe<leg_messages::command>();
-    solver_sub = msg::subscribe<leg_messages::solver_feedback>();
-    odometry_sub = msg::subscribe<leg_messages::odometry>();
-    if (control_target_topic == nullptr ||
-        !ahrs_sub.valid() ||
-        !command_sub.valid() ||
-        !solver_sub.valid() ||
-        !odometry_sub.valid())
-    {
-        return false;
-    }
-
-    initialized = true;
-    return true;
-}
-
 [[noreturn]] void run() noexcept
 {
+    auto* control_target_topic = msg::create<leg_messages::control_target>();
+    auto ahrs_sub = msg::subscribe<::ahrs::message>();
+    auto command_sub = msg::subscribe<leg_messages::command>();
+    auto solver_sub = msg::subscribe<leg_messages::solver_feedback>();
+    auto odometry_sub = msg::subscribe<leg_messages::odometry>();
+
     // Repository PID: kp, ki, kd, max output, max integral output, mode.
     control::pid left_leg_length_pid(
         4000.0f, 0.0f, -120.0f, 200.0f, 0.0f,

@@ -290,43 +290,17 @@ leg_messages::command command_interpreter::update(
     return command;
 }
 
-namespace
-{
-msg::topic* command_topic = nullptr;
-msg::subscriber remoter_sub{};
-msg::subscriber solver_sub{};
-msg::subscriber odometry_sub{};
-command_interpreter interpreter{};
-bool initialized = false;
-} // namespace
-
 namespace control_task
 {
 
-bool init() noexcept
-{
-    if (initialized)
-    {
-        return true;
-    }
-
-    command_topic = msg::create<leg_messages::command>();
-    remoter_sub = msg::subscribe<::remoter::state>();
-    solver_sub = msg::subscribe<leg_messages::solver_feedback>();
-    odometry_sub = msg::subscribe<leg_messages::odometry>();
-    if (command_topic == nullptr || !remoter_sub.valid() ||
-        !solver_sub.valid() || !odometry_sub.valid())
-    {
-        return false;
-    }
-
-    interpreter.reset();
-    initialized = true;
-    return true;
-}
-
 [[noreturn]] void run() noexcept
 {
+    auto* command_topic = msg::create<leg_messages::command>();
+    auto remoter_sub = msg::subscribe<::remoter::state>();
+    auto solver_sub = msg::subscribe<leg_messages::solver_feedback>();
+    auto odometry_sub = msg::subscribe<leg_messages::odometry>();
+    command_interpreter interpreter;
+
     ::remoter::state remote{};
     leg_messages::solver_feedback solver{};
     leg_messages::odometry odometry{};

@@ -79,7 +79,7 @@ public:
             return false;
         }
 
-        if (!leg_tasks::prepare() || !leg_tasks::start())
+        if (!leg_tasks::start())
         {
             return false;
         }

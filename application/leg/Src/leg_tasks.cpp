@@ -26,7 +26,6 @@ bool solver_created = false;
 bool control_started = false;
 bool pendulum_started = false;
 bool solver_started = false;
-bool prepared = false;
 bool started = false;
 
 [[noreturn]] void control_entry(ULONG /*input*/)
@@ -88,19 +87,11 @@ bool start_task_thread(TX_THREAD& thread, bool& thread_started) noexcept
 namespace leg_tasks
 {
 
-bool prepare() noexcept
+bool start() noexcept
 {
-    if (prepared)
+    if (started)
     {
         return true;
-    }
-
-    bool initialized = control_task::init();
-    initialized &= pendulum_task::init();
-    initialized &= solver_task::init();
-    if (!initialized)
-    {
-        return false;
     }
 
     if (!create_task_thread(
@@ -131,18 +122,7 @@ bool prepare() noexcept
         return false;
     }
 
-    prepared = true;
-    return true;
-}
-
-bool start() noexcept
-{
-    if (started)
-    {
-        return true;
-    }
-    if (!prepared ||
-        !start_task_thread(control_thread_object, control_started) ||
+    if (!start_task_thread(control_thread_object, control_started) ||
         !start_task_thread(pendulum_thread_object, pendulum_started) ||
         !start_task_thread(solver_thread_object, solver_started))
     {
