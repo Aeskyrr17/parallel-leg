@@ -98,13 +98,11 @@ namespace pendulum_task
             {
                 left_leg_length_pid.ref = off_ground_leg_length_m;
                 left_leg_length_pid.fdb = solver.left_leg_length_m;
-                left_leg_length_pid.update(
-                    solver.left_leg_length_velocity_mps);
+                left_leg_length_pid.update(solver.left_leg_length_velocity_mps);
 
                 right_leg_length_pid.ref = off_ground_leg_length_m;
                 right_leg_length_pid.fdb = solver.right_leg_length_m;
-                right_leg_length_pid.update(
-                    solver.right_leg_length_velocity_mps);
+                right_leg_length_pid.update(solver.right_leg_length_velocity_mps);
 
                 target.left_leg_force_n = left_leg_length_pid.result;
                 target.right_leg_force_n = right_leg_length_pid.result;
@@ -120,24 +118,20 @@ namespace pendulum_task
             }
             else
             {
-                const float base_length =
-                    command.leg_length_m + grounded_leg_length_bias_m;
+                const float base_length = command.leg_length_m + grounded_leg_length_bias_m;
 
                 left_leg_length_pid.ref = base_length + roll_pid.result;
                 left_leg_length_pid.fdb = solver.left_leg_length_m;
-                left_leg_length_pid.update(
-                    solver.left_leg_length_velocity_mps);
+                left_leg_length_pid.update(solver.left_leg_length_velocity_mps);
 
                 right_leg_length_pid.ref = base_length - roll_pid.result;
                 right_leg_length_pid.fdb = solver.right_leg_length_m;
-                right_leg_length_pid.update(
-                    solver.right_leg_length_velocity_mps);
+                right_leg_length_pid.update(solver.right_leg_length_velocity_mps);
 
                 target.left_leg_force_n = left_leg_length_pid.result;
                 target.right_leg_force_n = right_leg_length_pid.result;
 
-                if (command.jump_status ==
-                    leg_messages::jump_state::extending)
+                if (command.jump_status == leg_messages::jump_state::extending)
                 {
                     target.left_leg_force_n = jump_extending_force_n;
                     target.right_leg_force_n = jump_extending_force_n;
@@ -170,16 +164,12 @@ namespace pendulum_task
 
             if (lqr_output.valid)
             {
-                target.left_leg_torque_nm =
-                    lqr_output.left_leg_torque_nm;
-                target.right_leg_torque_nm =
-                    lqr_output.right_leg_torque_nm;
+                target.left_leg_torque_nm = lqr_output.left_leg_torque_nm;
+                target.right_leg_torque_nm = lqr_output.right_leg_torque_nm;
                 if (!off_ground)
                 {
-                    target.left_wheel_torque_nm =
-                        lqr_output.left_wheel_torque_nm;
-                    target.right_wheel_torque_nm =
-                        lqr_output.right_wheel_torque_nm;
+                    target.left_wheel_torque_nm = lqr_output.left_wheel_torque_nm;
+                    target.right_wheel_torque_nm = lqr_output.right_wheel_torque_nm;
                 }
                 target.valid = true;
             }

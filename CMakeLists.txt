@@ -22,6 +22,54 @@ set(PNX_EMBEDDED_CONFIG_DIR "${CMAKE_CURRENT_SOURCE_DIR}/configs")
 set(PNX_EMBEDDED_GENERATED_DIR "${PNX_EMBEDDED_CONFIG_DIR}/generated")
 set(PNX_EMBEDDED_ROBOT_CONFIG "${PNX_EMBEDDED_CONFIG_DIR}/robot.json")
 
+option(PNX_AUTO_GENERATE_LQR
+    "Regenerate application/leg/Inc/lqr.hpp from the MATLAB LQR parameters"
+    ON
+)
+
+if(PNX_AUTO_GENERATE_LQR)
+    find_program(PNX_MATLAB_EXECUTABLE NAMES matlab matlab.exe)
+    if(NOT PNX_MATLAB_EXECUTABLE)
+        message(FATAL_ERROR
+            "MATLAB was not found. Install MATLAB or configure with "
+            "-DPNX_AUTO_GENERATE_LQR=OFF to use the coefficients already in lqr.hpp."
+        )
+    endif()
+
+    set(PNX_LQR_MATLAB_DIR
+        "${CMAKE_CURRENT_SOURCE_DIR}/application/leg/Matlab"
+    )
+    set(PNX_LQR_CONFIG "${PNX_LQR_MATLAB_DIR}/lqr_config.m")
+    set(PNX_LQR_GENERATOR "${PNX_LQR_MATLAB_DIR}/lqr_tuner.m")
+    set(PNX_LQR_HEADER
+        "${CMAKE_CURRENT_SOURCE_DIR}/application/leg/Inc/lqr.hpp"
+    )
+    set(PNX_LQR_STAMP
+        "${CMAKE_CURRENT_BINARY_DIR}/generated/lqr_coefficients.stamp"
+    )
+
+    file(TO_CMAKE_PATH "${PNX_LQR_MATLAB_DIR}" PNX_LQR_MATLAB_DIR_ARG)
+    file(TO_CMAKE_PATH "${PNX_LQR_HEADER}" PNX_LQR_HEADER_ARG)
+    set(PNX_LQR_BATCH_COMMAND
+        "addpath('${PNX_LQR_MATLAB_DIR_ARG}'); lqr_tuner(true, '${PNX_LQR_HEADER_ARG}');"
+    )
+
+    add_custom_command(
+        OUTPUT "${PNX_LQR_STAMP}"
+        COMMAND "${CMAKE_COMMAND}" -E make_directory
+                "${CMAKE_CURRENT_BINARY_DIR}/generated"
+        COMMAND "${PNX_MATLAB_EXECUTABLE}" -batch "${PNX_LQR_BATCH_COMMAND}"
+        COMMAND "${CMAKE_COMMAND}" -E touch "${PNX_LQR_STAMP}"
+        DEPENDS
+            "${PNX_LQR_CONFIG}"
+            "${PNX_LQR_GENERATOR}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/application/leg/Inc/leg_config.hpp"
+        COMMENT "Generating LQR coefficients from application/leg/Matlab/lqr_config.m"
+        VERBATIM
+    )
+    add_custom_target(pnx_lqr_coefficients DEPENDS "${PNX_LQR_STAMP}")
+endif()
+
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/board/board.ioc"
     "${PNX_EMBEDDED_CONFIG_DIR}/params.json"
@@ -85,6 +133,10 @@ set(CMSIS_DSP_SOURCES
 )
 
 add_executable(${PROJECT_NAME})
+
+if(PNX_AUTO_GENERATE_LQR)
+    add_dependencies(${PROJECT_NAME} pnx_lqr_coefficients)
+endif()
 
 add_subdirectory(board/cmake/stm32cubemx)
 

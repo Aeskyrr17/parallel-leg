@@ -18,8 +18,7 @@ float clamp_stick(float value) noexcept
 
 bool dr16_online(const ::remoter::state& remote) noexcept
 {
-    return !remote.offline &&
-           remote.active_source == ::remoter::source::dr16;
+    return !remote.offline && remote.active_source == ::remoter::source::dr16;
 }
 
 } // namespace
@@ -69,8 +68,7 @@ void command_interpreter::apply_drive_input(const ::remoter::state& remote,
                                              leg_messages::command& command) noexcept
 {
     float speed_target = clamp_stick(remote.left_y) * leg_config::command::max_speed_mps;
-    float yaw_rate_target =
-        -clamp_stick(remote.left_x) * leg_config::command::max_yaw_rate_rad_s;
+    float yaw_rate_target = -clamp_stick(remote.left_x) * leg_config::command::max_yaw_rate_rad_s;
 
     if (std::fabs(speed_target) < leg_config::command::speed_deadband_mps)
     {
@@ -106,8 +104,7 @@ void command_interpreter::update_position(leg_messages::command& command,
         else
         {
             position_target_m_ = odometry.position_m +
-                                 command.speed_mps *
-                                     leg_config::control_task_thread::period_s;
+                                 command.speed_mps * leg_config::control_task_thread::period_s;
             holding_position_ = false;
         }
     }
@@ -139,8 +136,7 @@ void command_interpreter::apply_spin_mode(
 
     command.spin_mode = true;
     command.yaw_rate_rad_s = leg_config::command::spin_yaw_rate_rad_s;
-    command.leg_length_m =
-        leg_length_ramp_.update(leg_config::normal_leg_length_m);
+    command.leg_length_m = leg_length_ramp_.update(leg_config::normal_leg_length_m);
 }
 
 void command_interpreter::apply_manual_mode(
@@ -156,8 +152,7 @@ void command_interpreter::apply_manual_mode(
     jump_state_ = leg_messages::jump_state::idle;
     apply_drive_input(remote, command);
 
-    manual_leg_length_m_ +=
-        clamp_stick(remote.right_y) * leg_config::command::manual_leg_step_m;
+    manual_leg_length_m_ += clamp_stick(remote.right_y) * leg_config::command::manual_leg_step_m;
     manual_leg_length_m_ =
         math::clamp(manual_leg_length_m_,
                     leg_config::min_control_leg_length_m,
@@ -173,8 +168,7 @@ void command_interpreter::apply_jump_ready_mode(
     apply_drive_input(remote, command);
     manual_leg_length_m_ = leg_config::normal_leg_length_m;
     begin_jump_stage(leg_messages::jump_state::starting);
-    command.leg_length_m =
-        leg_length_ramp_.update(leg_config::normal_leg_length_m);
+    command.leg_length_m = leg_length_ramp_.update(leg_config::normal_leg_length_m);
 }
 
 void command_interpreter::apply_jump_mode(
@@ -312,8 +306,7 @@ namespace control_task
         (void)msg::read(odometry_sub, odometry);
 
         const auto tick = static_cast<std::uint32_t>(tx_time_get());
-        const leg_messages::command command =
-            interpreter.update(remote, solver, odometry, tick);
+        const leg_messages::command command = interpreter.update(remote, solver, odometry, tick);
         (void)msg::publish(command_topic, command);
 
         tx_thread_sleep(leg_config::control_task_thread::period_ticks);
