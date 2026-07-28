@@ -84,7 +84,7 @@ struct state_config
 
 struct leg_config
 {
-    ::control::pid len_pid{3500.0f, 0.0f, -500.0f, 200.0f, 0.0f,
+    ::control::pid len_pid{3000.0f, 0.0f, -500.0f, 200.0f, 0.0f,
                            ::control::pid_mode::delta};
     float max_hip_tau = 40.0f;
 
@@ -105,7 +105,7 @@ struct leg_config
 
 struct chassis_config
 {
-    ::control::pid roll_pid{0.5f, 0.0f, 0.5f, 3.0f, 0.0f,
+    ::control::pid roll_pid{0.1f, 0.0f, 0.0f, 0.1f, 0.0f,
                             ::control::pid_mode::delta};
     float max_wheel_tau = 15.0f;
 

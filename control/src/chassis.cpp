@@ -126,6 +126,8 @@ void ChassisController::step_normal(const chassis_context& ctx, chassis_output& 
     const float len_ref = cfg_.cmd.normal_len + cfg_.state.leg_len_bias;
     out.left_target.F = ctx.left.len_control(len_ref + roll_pd_.result) - left.Fs;
     out.right_target.F = ctx.right.len_control(len_ref - roll_pd_.result) - right.Fs;
+    // out.left_target.F = ctx.left.len_control(len_ref);
+    // out.right_target.F = ctx.right.len_control(len_ref);
     out.left_target.Tp = lqr.tau_l_l;
     out.right_target.Tp = lqr.tau_l_r;
     out.tau_w_l = lqr.tau_w_l;
