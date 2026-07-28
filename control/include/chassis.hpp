@@ -9,7 +9,7 @@
 
 #include <cstdint>
 
-namespace wbr::control
+namespace wbr
 {
 
 enum class chassis_state : std::uint8_t
@@ -59,6 +59,9 @@ public:
     explicit ChassisController(const chassis_config& cfg);
 
     chassis_output step(const chassis_context& ctx);
+    chassis_state state() const { return state_; }
+
+    ::control::pid& roll_pid_for_tuning() noexcept { return roll_pd_; }
 
 private:
     void reset();
@@ -76,7 +79,6 @@ private:
 
     lqr_state build_normal_ref(const chassis_context& ctx) const;
     lqr_state build_offground_ref(const chassis_context& ctx) const;
-    lqr_state build_spin_ref(const chassis_context& ctx) const;
 
 private:
     const chassis_config& cfg_;
@@ -87,4 +89,4 @@ private:
     jump_stage jump_stage_ = jump_stage::DONT;
 };
 
-} // namespace wbr::control
+} // namespace wbr

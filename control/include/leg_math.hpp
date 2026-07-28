@@ -1,6 +1,6 @@
 #pragma once
 
-namespace wbr::control
+namespace wbr
 {
 
 class slope
@@ -46,4 +46,4 @@ private:
     float dec_path_ = 0.0f;
 };
 
-} // namespace wbr::control
+} // namespace wbr

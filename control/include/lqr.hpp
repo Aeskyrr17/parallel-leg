@@ -6,7 +6,7 @@
 
 #include <cmath>
 
-namespace wbr::control
+namespace wbr
 {
 
 struct lqr_state
@@ -107,4 +107,4 @@ private:
     lqr_config cfg_{};
 };
 
-} // namespace wbr::control
+} // namespace wbr

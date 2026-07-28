@@ -4,7 +4,7 @@
 
 #include <cmath>
 
-namespace wbr::control
+namespace wbr
 {
 
 Function::Function(const command_config& cfg)
@@ -174,4 +174,4 @@ void Function::update_yaw(float total_yaw, float dt)
     cmd_.yaw = maintained_yaw_;
 }
 
-} // namespace wbr::control
+} // namespace wbr

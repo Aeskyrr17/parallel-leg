@@ -27,7 +27,7 @@ hardware-validated.
 ## Current application architecture
 
 - `demo/` is excluded from CMake; `control/` is included recursively.
-- `control/app.cpp::app_start()` calls `wbr::control::start_control_task()`.
+- `control/app.cpp::app_start()` calls `wbr::start_control_task()`.
 - AHRS and remoter are initialized with their module-default, no-argument `init()` calls. Their
   libraries were not modified.
 - There is one high-frequency business-control thread, `wbr_control`, at priority 5.
@@ -50,8 +50,11 @@ hardware-validated.
 - Four LK8016 hips and two LK9025 wheels are constructed from generated device-tree configs and
   registered with `lkmotorhandler`.
 - Each cycle calls `send_control()` once at the end of `control_entry()`.
-- Debug builds expose the single POD `wbr::control::control_debug_data` IDE-Watch snapshot. Its
+- Debug builds expose the single POD `wbr::control_debug_data` IDE-Watch snapshot. Its
   definition is in `control_task.cpp`; it owns no thread, lock, pointer, or control behavior.
+- `control_task.cpp` also exposes the global `g_control_tuning` Watch entry. Its three pointers
+  refer directly to the two live leg-length PID objects and the live chassis Roll PID; there is no
+  parameter copy, `volatile` tuning object, or per-cycle tuning synchronization.
 - `k_default_control.chassis.runtime.actuation_enabled` is still `false`. Every cycle therefore
   computes requests but sends relaxed/zero-current commands.
 
@@ -365,7 +368,7 @@ cmake --build --preset Release --target pnx_embedded --parallel 4
 - No dynamic allocation was added under `control/`.
 - No staged internal-control topic chain remains.
 - The former C-linkage task telemetry remains removed. Debug builds expose only
-  `wbr::control::control_debug_data`, populated directly by the existing control thread.
+  `wbr::control_debug_data`, populated directly by the existing control thread.
 - Control-layer motor sign configuration uses `leg_dir`, `motor_dir_config`, and
   `chassis_config::motor_dir`; no legacy calibration naming remains under `control/`.
 - Single-leg targets use only `virtual_force`; motor input uses only module-owned

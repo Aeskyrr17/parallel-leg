@@ -4,7 +4,7 @@
 
 #include <cstdint>
 
-namespace wbr::control
+namespace wbr
 {
 
 enum class command_mode : std::uint8_t
@@ -64,4 +64,4 @@ struct motor_fdb_frame
     motors::feedback right_wheel{};
 };
 
-} // namespace wbr::control
+} // namespace wbr

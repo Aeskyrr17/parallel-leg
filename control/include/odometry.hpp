@@ -4,7 +4,7 @@
 
 #include <cmath>
 
-namespace wbr::control
+namespace wbr
 {
 
 struct odometry_config
@@ -249,4 +249,4 @@ inline bool Odometry::update_filter(float velocity, float acceleration, float dt
     return true;
 }
 
-} // namespace wbr::control
+} // namespace wbr

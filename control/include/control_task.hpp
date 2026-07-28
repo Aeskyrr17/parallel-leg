@@ -1,8 +1,8 @@
 #pragma once
 
-namespace wbr::control
+namespace wbr
 {
 
 bool start_control_task() noexcept;
 
-} // namespace wbr::control
+} // namespace wbr

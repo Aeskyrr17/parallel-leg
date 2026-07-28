@@ -18,7 +18,7 @@
 #include <cstddef>
 #include <cstdint>
 
-namespace wbr::control
+namespace wbr
 {
 control_debug_t control_debug_data{};
 
@@ -203,7 +203,7 @@ void update_control_debug(float dt, const ahrs::message& attitude,
                           const chassis_command& cmd, const chassis_output& out,
                           bool input_ok, bool output_ok)
 {
-    auto& debug = ::wbr::control::control_debug_data;
+    auto& debug = ::wbr::control_debug_data;
     ++debug.cycle_count;
     debug.dt = dt;
 
@@ -221,6 +221,7 @@ void update_control_debug(float dt, const ahrs::message& attitude,
 
     debug.command_x = cmd.x;
     debug.command_v = cmd.v;
+    debug.command_yaw = cmd.yaw;
     debug.command_yaw_rate = cmd.yaw_rate;
     debug.command_leg_length = cmd.len;
     debug.wheel_torque_left_ref = out.tau_w_l;
@@ -244,6 +245,9 @@ void update_control_debug(float dt, const ahrs::message& attitude,
     debug.left_leg.support_force = left_link.N;
     debug.left_leg.spring_force = left_link.Fs;
     debug.left_leg.valid = left_link.valid;
+
+    debug.wheel_left_fdb = motor_fdb.left_wheel;
+    debug.wheel_right_fdb = motor_fdb.right_wheel;
 
     const link_state& right_link = right_leg.link();
     debug.right_leg.motor1_position = motor_fdb.right_joint1.position;
@@ -271,6 +275,7 @@ void update_control_debug(float dt, const ahrs::message& attitude,
     debug.motor_torque[4] = left_wheel.cmd.torque;
     debug.motor_torque[5] = right_wheel.cmd.torque;
 
+    debug.state = chassis.state();
     debug.input_valid = input_ok;
     debug.output_valid = output_ok;
     debug.actuation_enabled = chassis_cfg.runtime.actuation_enabled;
@@ -315,4 +320,17 @@ bool start_control_task() noexcept
     return tasks_started;
 }
 
-} // namespace wbr::control
+} // namespace wbr
+
+struct control_tuning_handles
+{
+    ::control::pid* left_len_pid;
+    ::control::pid* right_len_pid;
+    ::control::pid* roll_pid;
+};
+
+control_tuning_handles g_control_tuning{
+    &wbr::left_leg.len_pid_for_tuning(),
+    &wbr::right_leg.len_pid_for_tuning(),
+    &wbr::chassis.roll_pid_for_tuning(),
+};

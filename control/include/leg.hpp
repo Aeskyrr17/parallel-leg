@@ -5,7 +5,7 @@
 #include "motor.hpp"
 #include "vmc.hpp"
 
-namespace wbr::control
+namespace wbr
 {
 
 class leg_controller
@@ -28,6 +28,8 @@ public:
     void reset();
     void relax();
 
+    ::control::pid& len_pid_for_tuning() noexcept { return len_pd_; }
+
 private:
     motors::api& joint1_;
     motors::api& joint4_;
@@ -38,4 +40,4 @@ private:
     ::control::pid len_pd_;
 };
 
-} // namespace wbr::control
+} // namespace wbr

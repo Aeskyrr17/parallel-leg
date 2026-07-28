@@ -3,7 +3,7 @@
 #include "constants.hpp"
 #include "constrain.hpp"
 
-namespace wbr::control
+namespace wbr
 {
 
 leg_controller::leg_controller(motors::api& joint1, motors::api& joint4,
@@ -87,4 +87,4 @@ void leg_controller::relax()
     joint4_.relax();
 }
 
-} // namespace wbr::control
+} // namespace wbr

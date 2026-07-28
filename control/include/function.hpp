@@ -5,7 +5,7 @@
 #include "msgs.hpp"
 #include "types.hpp"
 
-namespace wbr::control
+namespace wbr
 {
 
 class Function
@@ -40,4 +40,4 @@ private:
     bool transition_cooldown_ = false;
 };
 
-} // namespace wbr::control
+} // namespace wbr

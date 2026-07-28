@@ -76,10 +76,10 @@
 			<member name="item31" type="CObject_ptr">ObjId0103</member>
 		</object>
 		<object name="ObjId0004" type="CVariable">
-			<member name="name" type="string">wbr::control::control_debug_data.pitch</member>
+			<member name="name" type="string">wbr::control_debug_data.pitch</member>
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
-			<member name="address" type="string">wbr::control::control_debug_data.pitch</member>
+			<member name="address" type="string">wbr::control_debug_data.pitch</member>
 			<member name="last_addr" type="uint32">0x20005BA4</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
@@ -125,10 +125,10 @@
 			<member name="modif_last_addr" type="uint32">0x0</member>
 		</object>
 		<object name="ObjId0005" type="CVariable">
-			<member name="name" type="string">wbr::control::control_debug_data.dpitch</member>
+			<member name="name" type="string">wbr::control_debug_data.dpitch</member>
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
-			<member name="address" type="string">wbr::control::control_debug_data.dpitch</member>
+			<member name="address" type="string">wbr::control_debug_data.dpitch</member>
 			<member name="last_addr" type="uint32">0x20005BA8</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
@@ -174,10 +174,10 @@
 			<member name="modif_last_addr" type="uint32">0x0</member>
 		</object>
 		<object name="ObjId0006" type="CVariable">
-			<member name="name" type="string">wbr::control::control_debug_data.left_leg.alpha</member>
+			<member name="name" type="string">wbr::control_debug_data.left_leg.alpha</member>
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
-			<member name="address" type="string">wbr::control::control_debug_data.left_leg.alpha</member>
+			<member name="address" type="string">wbr::control_debug_data.left_leg.alpha</member>
 			<member name="last_addr" type="uint32">0x20005C2C</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
@@ -223,10 +223,10 @@
 			<member name="modif_last_addr" type="uint32">0x0</member>
 		</object>
 		<object name="ObjId0007" type="CVariable">
-			<member name="name" type="string">wbr::control::control_debug_data.left_leg.dalpha</member>
+			<member name="name" type="string">wbr::control_debug_data.left_leg.dalpha</member>
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
-			<member name="address" type="string">wbr::control::control_debug_data.left_leg.dalpha</member>
+			<member name="address" type="string">wbr::control_debug_data.left_leg.dalpha</member>
 			<member name="last_addr" type="uint32">0x20005C30</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
@@ -272,10 +272,10 @@
 			<member name="modif_last_addr" type="uint32">0x0</member>
 		</object>
 		<object name="ObjId0008" type="CVariable">
-			<member name="name" type="string">wbr::control::control_debug_data.left_leg.dphi</member>
+			<member name="name" type="string">wbr::control_debug_data.left_leg.dphi</member>
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
-			<member name="address" type="string">wbr::control::control_debug_data.left_leg.dphi</member>
+			<member name="address" type="string">wbr::control_debug_data.left_leg.dphi</member>
 			<member name="last_addr" type="uint32">0x20005C28</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
@@ -321,10 +321,10 @@
 			<member name="modif_last_addr" type="uint32">0x0</member>
 		</object>
 		<object name="ObjId0009" type="CVariable">
-			<member name="name" type="string">wbr::control::control_debug_data.odometry_v</member>
+			<member name="name" type="string">wbr::control_debug_data.odometry_v</member>
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
-			<member name="address" type="string">wbr::control::control_debug_data.odometry_v</member>
+			<member name="address" type="string">wbr::control_debug_data.odometry_v</member>
 			<member name="last_addr" type="uint32">0x20005BC0</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
@@ -370,10 +370,10 @@
 			<member name="modif_last_addr" type="uint32">0x0</member>
 		</object>
 		<object name="ObjId0010" type="CVariable">
-			<member name="name" type="string">wbr::control::control_debug_data.odometry_x</member>
+			<member name="name" type="string">wbr::control_debug_data.odometry_x</member>
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
-			<member name="address" type="string">wbr::control::control_debug_data.odometry_x</member>
+			<member name="address" type="string">wbr::control_debug_data.odometry_x</member>
 			<member name="last_addr" type="uint32">0x20005BBC</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
@@ -419,10 +419,10 @@
 			<member name="modif_last_addr" type="uint32">0x0</member>
 		</object>
 		<object name="ObjId0011" type="CVariable">
-			<member name="name" type="string">wbr::control::control_debug_data.right_leg.alpha</member>
+			<member name="name" type="string">wbr::control_debug_data.right_leg.alpha</member>
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
-			<member name="address" type="string">wbr::control::control_debug_data.right_leg.alpha</member>
+			<member name="address" type="string">wbr::control_debug_data.right_leg.alpha</member>
 			<member name="last_addr" type="uint32">0x20005C70</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
@@ -468,10 +468,10 @@
 			<member name="modif_last_addr" type="uint32">0x0</member>
 		</object>
 		<object name="ObjId0012" type="CVariable">
-			<member name="name" type="string">wbr::control::control_debug_data.right_leg.dalpha</member>
+			<member name="name" type="string">wbr::control_debug_data.right_leg.dalpha</member>
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
-			<member name="address" type="string">wbr::control::control_debug_data.right_leg.dalpha</member>
+			<member name="address" type="string">wbr::control_debug_data.right_leg.dalpha</member>
 			<member name="last_addr" type="uint32">0x20005C74</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
@@ -517,10 +517,10 @@
 			<member name="modif_last_addr" type="uint32">0x0</member>
 		</object>
 		<object name="ObjId0013" type="CVariable">
-			<member name="name" type="string">wbr::control::control_debug_data.right_leg.dphi</member>
+			<member name="name" type="string">wbr::control_debug_data.right_leg.dphi</member>
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
-			<member name="address" type="string">wbr::control::control_debug_data.right_leg.dphi</member>
+			<member name="address" type="string">wbr::control_debug_data.right_leg.dphi</member>
 			<member name="last_addr" type="uint32">0x20005C6C</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
@@ -566,10 +566,10 @@
 			<member name="modif_last_addr" type="uint32">0x0</member>
 		</object>
 		<object name="ObjId0014" type="CVariable">
-			<member name="name" type="string">wbr::control::control_debug_data.right_leg.phi</member>
+			<member name="name" type="string">wbr::control_debug_data.right_leg.phi</member>
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
-			<member name="address" type="string">wbr::control::control_debug_data.right_leg.phi</member>
+			<member name="address" type="string">wbr::control_debug_data.right_leg.phi</member>
 			<member name="last_addr" type="uint32">0x20005C68</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
@@ -615,10 +615,10 @@
 			<member name="modif_last_addr" type="uint32">0x0</member>
 		</object>
 		<object name="ObjId0015" type="CVariable">
-			<member name="name" type="string">wbr::control::control_debug_data.yaw</member>
+			<member name="name" type="string">wbr::control_debug_data.yaw</member>
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
-			<member name="address" type="string">wbr::control::control_debug_data.yaw</member>
+			<member name="address" type="string">wbr::control_debug_data.yaw</member>
 			<member name="last_addr" type="uint32">0x20005BB4</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
@@ -664,10 +664,10 @@
 			<member name="modif_last_addr" type="uint32">0x0</member>
 		</object>
 		<object name="ObjId0016" type="CVariable">
-			<member name="name" type="string">wbr::control::control_debug_data.command_v</member>
+			<member name="name" type="string">wbr::control_debug_data.command_v</member>
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
-			<member name="address" type="string">wbr::control::control_debug_data.command_v</member>
+			<member name="address" type="string">wbr::control_debug_data.command_v</member>
 			<member name="last_addr" type="uint32">0x20005BCC</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
@@ -713,10 +713,10 @@
 			<member name="modif_last_addr" type="uint32">0x0</member>
 		</object>
 		<object name="ObjId0017" type="CVariable">
-			<member name="name" type="string">wbr::control::control_debug_data.command_x</member>
+			<member name="name" type="string">wbr::control_debug_data.command_x</member>
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
-			<member name="address" type="string">wbr::control::control_debug_data.command_x</member>
+			<member name="address" type="string">wbr::control_debug_data.command_x</member>
 			<member name="last_addr" type="uint32">0x20005BC8</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
@@ -762,10 +762,10 @@
 			<member name="modif_last_addr" type="uint32">0x0</member>
 		</object>
 		<object name="ObjId0018" type="CVariable">
-			<member name="name" type="string">wbr::control::control_debug_data.left_leg.phi</member>
+			<member name="name" type="string">wbr::control_debug_data.left_leg.phi</member>
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
-			<member name="address" type="string">wbr::control::control_debug_data.left_leg.phi</member>
+			<member name="address" type="string">wbr::control_debug_data.left_leg.phi</member>
 			<member name="last_addr" type="uint32">0x20005C24</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
@@ -811,10 +811,10 @@
 			<member name="modif_last_addr" type="uint32">0x0</member>
 		</object>
 		<object name="ObjId0019" type="CVariable">
-			<member name="name" type="string">wbr::control::k_default_control.leg.len_pid.ref</member>
+			<member name="name" type="string">wbr::k_default_control.leg.len_pid.ref</member>
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
-			<member name="address" type="string">wbr::control::k_default_control.leg.len_pid.ref</member>
+			<member name="address" type="string">wbr::k_default_control.leg.len_pid.ref</member>
 			<member name="last_addr" type="uint32">0x20000084</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
@@ -860,10 +860,10 @@
 			<member name="modif_last_addr" type="uint32">0x0</member>
 		</object>
 		<object name="ObjId0020" type="CVariable">
-			<member name="name" type="string">wbr::control::control_debug_data.command_yaw_rate</member>
+			<member name="name" type="string">wbr::control_debug_data.command_yaw_rate</member>
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
-			<member name="address" type="string">wbr::control::control_debug_data.command_yaw_rate</member>
+			<member name="address" type="string">wbr::control_debug_data.command_yaw_rate</member>
 			<member name="last_addr" type="uint32">0x20005BD4</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
@@ -909,10 +909,10 @@
 			<member name="modif_last_addr" type="uint32">0x0</member>
 		</object>
 		<object name="ObjId0021" type="CVariable">
-			<member name="name" type="string">wbr::control::control_debug_data.dyaw</member>
+			<member name="name" type="string">wbr::control_debug_data.dyaw</member>
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
-			<member name="address" type="string">wbr::control::control_debug_data.dyaw</member>
+			<member name="address" type="string">wbr::control_debug_data.dyaw</member>
 			<member name="last_addr" type="uint32">0x20005BB8</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
@@ -958,10 +958,10 @@
 			<member name="modif_last_addr" type="uint32">0x0</member>
 		</object>
 		<object name="ObjId0022" type="CVariable">
-			<member name="name" type="string">wbr::control::control_debug_data.command_leg_length</member>
+			<member name="name" type="string">wbr::control_debug_data.command_leg_length</member>
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
-			<member name="address" type="string">wbr::control::control_debug_data.command_leg_length</member>
+			<member name="address" type="string">wbr::control_debug_data.command_leg_length</member>
 			<member name="last_addr" type="uint32">0x20005BD8</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
@@ -1007,10 +1007,10 @@
 			<member name="modif_last_addr" type="uint32">0x0</member>
 		</object>
 		<object name="ObjId0023" type="CVariable">
-			<member name="name" type="string">wbr::control::control_debug_data.command_yaw</member>
+			<member name="name" type="string">wbr::control_debug_data.command_yaw</member>
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
-			<member name="address" type="string">wbr::control::control_debug_data.command_yaw</member>
+			<member name="address" type="string">wbr::control_debug_data.command_yaw</member>
 			<member name="last_addr" type="uint32">0x20005BD0</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
@@ -1105,10 +1105,10 @@
 			<member name="modif_last_addr" type="uint32">0x0</member>
 		</object>
 		<object name="ObjId0093" type="CVariable">
-			<member name="name" type="string">wbr::control::control_debug_data.left_leg.motor4_position</member>
+			<member name="name" type="string">wbr::control_debug_data.left_leg.motor4_position</member>
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
-			<member name="address" type="string">wbr::control::control_debug_data.left_leg.motor4_position</member>
+			<member name="address" type="string">wbr::control_debug_data.left_leg.motor4_position</member>
 			<member name="last_addr" type="uint32">0x20005C18</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
@@ -1154,10 +1154,10 @@
 			<member name="modif_last_addr" type="uint32">0x0</member>
 		</object>
 		<object name="ObjId0094" type="CVariable">
-			<member name="name" type="string">wbr::control::control_debug_data.right_leg.motor4_position</member>
+			<member name="name" type="string">wbr::control_debug_data.right_leg.motor4_position</member>
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
-			<member name="address" type="string">wbr::control::control_debug_data.right_leg.motor4_position</member>
+			<member name="address" type="string">wbr::control_debug_data.right_leg.motor4_position</member>
 			<member name="last_addr" type="uint32">0x20005C5C</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
@@ -1203,10 +1203,10 @@
 			<member name="modif_last_addr" type="uint32">0x0</member>
 		</object>
 		<object name="ObjId0095" type="CVariable">
-			<member name="name" type="string">wbr::control::control_debug_data.left_leg.motor1_position</member>
+			<member name="name" type="string">wbr::control_debug_data.left_leg.motor1_position</member>
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
-			<member name="address" type="string">wbr::control::control_debug_data.left_leg.motor1_position</member>
+			<member name="address" type="string">wbr::control_debug_data.left_leg.motor1_position</member>
 			<member name="last_addr" type="uint32">0x20005C14</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
@@ -1252,10 +1252,10 @@
 			<member name="modif_last_addr" type="uint32">0x0</member>
 		</object>
 		<object name="ObjId0096" type="CVariable">
-			<member name="name" type="string">wbr::control::control_debug_data.right_leg.motor1_position</member>
+			<member name="name" type="string">wbr::control_debug_data.right_leg.motor1_position</member>
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
-			<member name="address" type="string">wbr::control::control_debug_data.right_leg.motor1_position</member>
+			<member name="address" type="string">wbr::control_debug_data.right_leg.motor1_position</member>
 			<member name="last_addr" type="uint32">0x20005C58</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
@@ -1301,10 +1301,10 @@
 			<member name="modif_last_addr" type="uint32">0x0</member>
 		</object>
 		<object name="ObjId0097" type="CVariable">
-			<member name="name" type="string">wbr::control::len_pid_tuning.kd</member>
+			<member name="name" type="string">g_control_tuning.left_len_pid->kd</member>
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
-			<member name="address" type="string">wbr::control::len_pid_tuning.kd</member>
+			<member name="address" type="string">g_control_tuning.left_len_pid->kd</member>
 			<member name="last_addr" type="uint32">0x20005B54</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
@@ -1350,10 +1350,10 @@
 			<member name="modif_last_addr" type="uint32">0x0</member>
 		</object>
 		<object name="ObjId0098" type="CVariable">
-			<member name="name" type="string">wbr::control::len_pid_tuning.ki</member>
+			<member name="name" type="string">g_control_tuning.left_len_pid->ki</member>
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
-			<member name="address" type="string">wbr::control::len_pid_tuning.ki</member>
+			<member name="address" type="string">g_control_tuning.left_len_pid->ki</member>
 			<member name="last_addr" type="uint32">0x20005B50</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
@@ -1399,10 +1399,10 @@
 			<member name="modif_last_addr" type="uint32">0x0</member>
 		</object>
 		<object name="ObjId0099" type="CVariable">
-			<member name="name" type="string">wbr::control::len_pid_tuning.kp</member>
+			<member name="name" type="string">g_control_tuning.left_len_pid->kp</member>
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
-			<member name="address" type="string">wbr::control::len_pid_tuning.kp</member>
+			<member name="address" type="string">g_control_tuning.left_len_pid->kp</member>
 			<member name="last_addr" type="uint32">0x20005B4C</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
@@ -1448,10 +1448,10 @@
 			<member name="modif_last_addr" type="uint32">0x0</member>
 		</object>
 		<object name="ObjId0100" type="CVariable">
-			<member name="name" type="string">wbr::control::len_pid_tuning.fdb</member>
+			<member name="name" type="string">g_control_tuning.left_len_pid->fdb</member>
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
-			<member name="address" type="string">wbr::control::len_pid_tuning.fdb</member>
+			<member name="address" type="string">g_control_tuning.left_len_pid->fdb</member>
 			<member name="last_addr" type="uint32">0x20005B5C</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
@@ -1497,10 +1497,10 @@
 			<member name="modif_last_addr" type="uint32">0x0</member>
 		</object>
 		<object name="ObjId0101" type="CVariable">
-			<member name="name" type="string">wbr::control::len_pid_tuning.ref</member>
+			<member name="name" type="string">g_control_tuning.left_len_pid->ref</member>
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
-			<member name="address" type="string">wbr::control::len_pid_tuning.ref</member>
+			<member name="address" type="string">g_control_tuning.left_len_pid->ref</member>
 			<member name="last_addr" type="uint32">0x20005B58</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
@@ -1546,10 +1546,10 @@
 			<member name="modif_last_addr" type="uint32">0x0</member>
 		</object>
 		<object name="ObjId0102" type="CVariable">
-			<member name="name" type="string">wbr::control::control_debug_data.left_leg.length</member>
+			<member name="name" type="string">wbr::control_debug_data.left_leg.length</member>
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
-			<member name="address" type="string">wbr::control::control_debug_data.left_leg.length</member>
+			<member name="address" type="string">wbr::control_debug_data.left_leg.length</member>
 			<member name="last_addr" type="uint32">0x20005C34</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
@@ -1595,10 +1595,10 @@
 			<member name="modif_last_addr" type="uint32">0x0</member>
 		</object>
 		<object name="ObjId0103" type="CVariable">
-			<member name="name" type="string">wbr::control::control_debug_data.right_leg.length</member>
+			<member name="name" type="string">wbr::control_debug_data.right_leg.length</member>
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
-			<member name="address" type="string">wbr::control::control_debug_data.right_leg.length</member>
+			<member name="address" type="string">wbr::control_debug_data.right_leg.length</member>
 			<member name="last_addr" type="uint32">0x20005C78</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>

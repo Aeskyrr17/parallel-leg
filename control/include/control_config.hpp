@@ -4,18 +4,18 @@
 
 #include <cstdint>
 
-namespace wbr::control
+namespace wbr
 {
 
 struct command_config
 {
     // Full-stick scales: m/s, rad/s.
-    float vel_scale = 2.5f;
-    float yaw_scale = 1.5f;
+    float vel_scale = 2.0f;
+    float yaw_scale = 2.0f;
     float spin_rate = 3.0f;
 
     // (m/s)/s, (rad/s)/s.
-    float vel_slope_rate = 5.0f;
+    float vel_slope_rate = 3.0f;
     float yaw_slope_rate = 10.0f;
 
     // m/s, m.
@@ -32,7 +32,7 @@ struct runtime_config
     float dt = 0.001f;
 
     std::uint32_t control_thread_priority = 5U;
-    bool actuation_enabled = false;
+    bool actuation_enabled = true;
 };
 
 struct leg_dir
@@ -70,7 +70,7 @@ struct solver_numerics_config
 struct lqr_config
 {
     // m.
-    float min_leg_len = 0.15f;
+    float min_leg_len = 0.14f;
     float max_leg_len = 0.35f;
     float leg_len_resolution = 0.01f;
 };
@@ -78,13 +78,13 @@ struct lqr_config
 struct state_config
 {
     // wbr_2026 Normal control values: N, m.
-    float offground_support_force = 20.0f;
+    float offground_support_force = 10.0f;
     float leg_len_bias = 0.03f;
 };
 
 struct leg_config
 {
-    ::control::pid len_pid{5000.0f, 0.0f, -8000.0f, 200.0f, 0.0f,
+    ::control::pid len_pid{3500.0f, 0.0f, -500.0f, 200.0f, 0.0f,
                            ::control::pid_mode::delta};
     float max_hip_tau = 40.0f;
 
@@ -105,8 +105,8 @@ struct leg_config
 
 struct chassis_config
 {
-    ::control::pid roll_pid{0.5f, 0.0f, -0.5f, 3.0f, 0.0f,
-                            ::control::pid_mode::position};
+    ::control::pid roll_pid{0.5f, 0.0f, 0.5f, 3.0f, 0.0f,
+                            ::control::pid_mode::delta};
     float max_wheel_tau = 15.0f;
 
     command_config cmd{};
@@ -130,4 +130,4 @@ struct control_config
 
 inline const control_config k_default_control{};
 
-} // namespace wbr::control
+} // namespace wbr

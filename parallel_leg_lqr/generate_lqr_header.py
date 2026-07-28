@@ -42,7 +42,7 @@ def render_header() -> tuple[str, object]:
         f"// Worst exact-grid closed-loop max real eigenvalue: "
         f"{result.worst_closed_loop_real_part:.9g}.",
         "",
-        "namespace wbr::control",
+        "namespace wbr",
         "{",
         "",
         "inline constexpr float k_lqr_coefficients[40][6] =",
@@ -66,7 +66,7 @@ def render_header() -> tuple[str, object]:
             f"inline constexpr float k_lqr_fit_rms_error = "
             f"{format_float(result.rms_error)};",
             "",
-            "} // namespace wbr::control",
+            "} // namespace wbr",
             "",
         ]
     )

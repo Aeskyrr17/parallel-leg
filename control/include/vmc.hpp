@@ -9,7 +9,7 @@
 #include <cmath>
 #include <iterator>
 
-namespace wbr::control
+namespace wbr
 {
 
 class link_solver
@@ -299,4 +299,4 @@ inline void link_solver::invalidate()
     prev_dalpha_ = 0.0f;
 }
 
-} // namespace wbr::control
+} // namespace wbr

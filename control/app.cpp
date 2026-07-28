@@ -2,5 +2,5 @@
 
 extern "C" void app_start()
 {
-    (void)wbr::control::start_control_task();
+    (void)wbr::start_control_task();
 }

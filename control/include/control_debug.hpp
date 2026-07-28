@@ -1,8 +1,10 @@
 #pragma once
 
+#include "chassis.hpp"
+#include "msgs.hpp"
 #include <cstdint>
 
-namespace wbr::control
+namespace wbr
 {
 
 struct leg_debug_t
@@ -48,11 +50,15 @@ struct control_debug_t
 
     float command_x = 0.0f;
     float command_v = 0.0f;
+    float command_yaw = 0.0f;
     float command_yaw_rate = 0.0f;
     float command_leg_length = 0.0f;
 
     float wheel_torque_left_ref = 0.0f;
     float wheel_torque_right_ref = 0.0f;
+
+    motors::feedback wheel_left_fdb{};
+    motors::feedback wheel_right_fdb{};
 
     leg_debug_t left_leg{};
     leg_debug_t right_leg{};
@@ -60,6 +66,7 @@ struct control_debug_t
     // left joint1, left joint4, right joint1, right joint4, left wheel, right wheel
     float motor_torque[6]{};
 
+    chassis_state state = chassis_state::RELAX;
     bool input_valid = false;
     bool output_valid = false;
     bool actuation_enabled = false;
@@ -67,4 +74,4 @@ struct control_debug_t
 
 extern control_debug_t control_debug_data;
 
-} // namespace wbr::control
+} // namespace wbr

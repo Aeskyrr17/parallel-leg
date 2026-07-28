@@ -1,6 +1,6 @@
 #pragma once
 
-namespace wbr::control
+namespace wbr
 {
 
 struct joint_state
@@ -43,4 +43,4 @@ struct link_state
     bool valid = false;
 };
 
-} // namespace wbr::control
+} // namespace wbr

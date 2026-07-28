@@ -2,7 +2,7 @@
 
 #include "constrain.hpp"
 
-namespace wbr::control
+namespace wbr
 {
 
 ChassisController::ChassisController(const chassis_config& cfg)
@@ -85,8 +85,8 @@ void ChassisController::step_relax(const chassis_context& ctx, chassis_output& o
     out.relax = true;
     out.reset_odom = true;
 
-    ctx.left.reset();
-    ctx.right.reset();
+    // ctx.left.reset();
+    // ctx.right.reset();
 
     if (!ctx.control_ok)
     {
@@ -120,15 +120,18 @@ void ChassisController::step_normal(const chassis_context& ctx, chassis_output& 
     roll_pd_.update(ctx.ins.gyro_r);
 
     out = {};
-    const float len_ref =
-        math::clamp(ctx.cmd.len, cfg_.cmd.min_len, cfg_.cmd.max_len) +
-        cfg_.state.leg_len_bias;
+    // const float len_ref =
+    //     math::clamp(ctx.cmd.len, cfg_.cmd.min_len, cfg_.cmd.max_len) +
+    //     cfg_.state.leg_len_bias;
+    const float len_ref = cfg_.cmd.normal_len + cfg_.state.leg_len_bias;
     out.left_target.F = ctx.left.len_control(len_ref + roll_pd_.result) - left.Fs;
     out.right_target.F = ctx.right.len_control(len_ref - roll_pd_.result) - right.Fs;
     out.left_target.Tp = lqr.tau_l_l;
     out.right_target.Tp = lqr.tau_l_r;
     out.tau_w_l = lqr.tau_w_l;
     out.tau_w_r = lqr.tau_w_r;
+    // out.tau_w_l = 0.0;
+    // out.tau_w_r = 0.0;
     out.relax = false;
 
     if (ctx.cmd.mode == command_mode::spin)
@@ -136,10 +139,10 @@ void ChassisController::step_normal(const chassis_context& ctx, chassis_output& 
         transition_to(chassis_state::SPIN);
     }
 
-    if (left.N + right.N < cfg_.state.offground_support_force)
-    {
-        transition_to(chassis_state::OFFGROUND);
-    }
+    // if (left.N + right.N < cfg_.state.offground_support_force)
+    // {
+    //     transition_to(chassis_state::OFFGROUND);
+    // }
 }
 
 void ChassisController::step_offground(const chassis_context& ctx, chassis_output& out)
@@ -157,15 +160,11 @@ void ChassisController::step_offground(const chassis_context& ctx, chassis_outpu
 
 void ChassisController::step_spin(const chassis_context& ctx, chassis_output& out)
 {
-    const lqr_state obs = build_obs(ctx);
-
-    const lqr_state ref = build_spin_ref(ctx);
-
-    (void)obs;
-    (void)ref;
-
-    out = {};
-    out.relax = true;
+    step_normal(ctx, out);
+    if (state_ == chassis_state::SPIN && ctx.cmd.mode != command_mode::spin)
+    {
+        transition_to(chassis_state::NORMAL);
+    }
 }
 
 void ChassisController::step_jump(const chassis_context& ctx, chassis_output& out)
@@ -232,22 +231,4 @@ lqr_state ChassisController::build_offground_ref(const chassis_context& ctx) con
     return ref;
 }
 
-lqr_state ChassisController::build_spin_ref(const chassis_context& ctx) const
-{
-    lqr_state ref{};
-
-    ref.x = ctx.cmd.x;
-    ref.dx = ctx.cmd.v;
-    ref.phi = ctx.cmd.yaw;
-    ref.dphi = ctx.cmd.yaw_rate;
-
-    ref.dtheta_l_l = 0.0f;
-    ref.dtheta_l_r = 0.0f;
-
-    ref.theta_b = 0.0f;
-    ref.dtheta_b = 0.0f;
-
-    return ref;
-}
-
-} // namespace wbr::control
+} // namespace wbr
