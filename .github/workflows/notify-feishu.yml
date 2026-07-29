@@ -1,0 +1,248 @@
+name: Notify Feishu on Push
+
+on:
+  # 监听所有分支的 push
+  push:
+    branches:
+      - "**"
+
+  # 允许在 GitHub Actions 页面手动测试
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    # 排除“删除分支”产生的 push 事件
+    if: >-
+      ${{
+        github.event_name == 'workflow_dispatch' ||
+        github.event.deleted == false
+      }}
+
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+
+    steps:
+      - name: Send notification to Feishu
+        env:
+          # 对应你刚刚创建的 Repository Secret
+          FEISHU_WEBHOOK: ${{ secrets.FEISHU_WEBHOOK }}
+
+          EVENT_NAME: ${{ github.event_name }}
+          REPOSITORY: ${{ github.repository }}
+          BRANCH: ${{ github.ref_name }}
+          ACTOR: ${{ github.actor }}
+          SHA: ${{ github.sha }}
+          SERVER_URL: ${{ github.server_url }}
+          RUN_ID: ${{ github.run_id }}
+
+        shell: bash
+
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import urllib.error
+          import urllib.request
+
+
+          def first_line(message: str) -> str:
+              """获取 commit message 的第一行。"""
+              for line in message.splitlines():
+                  line = line.strip()
+                  if line:
+                      return line
+              return "(no commit message)"
+
+
+          webhook = os.environ.get("FEISHU_WEBHOOK", "").strip()
+
+          if not webhook:
+              raise RuntimeError(
+                  "FEISHU_WEBHOOK is empty. "
+                  "Please check the repository Actions secret."
+              )
+
+          event_path = os.environ["GITHUB_EVENT_PATH"]
+
+          with open(event_path, "r", encoding="utf-8") as event_file:
+              event = json.load(event_file)
+
+          event_name = os.environ["EVENT_NAME"]
+          repository = os.environ["REPOSITORY"]
+          branch = os.environ["BRANCH"]
+          actor = os.environ["ACTOR"]
+          sha = os.environ["SHA"]
+          server_url = os.environ["SERVER_URL"]
+          run_id = os.environ["RUN_ID"]
+
+          actions_url = (
+              f"{server_url}/{repository}/actions/runs/{run_id}"
+          )
+
+          if event_name == "workflow_dispatch":
+              # 在 GitHub Actions 页面手动运行时发送测试消息
+              lines = [
+                  "【New Commits】",
+                  "这是一条手动测试消息。",
+                  f"仓库：{repository}",
+                  f"执行者：{actor}",
+                  f"Actions：{actions_url}",
+              ]
+
+          else:
+              commits = event.get("commits") or []
+              head_commit = event.get("head_commit") or {}
+              compare_url = event.get("compare") or ""
+
+              commit_count = event.get("size")
+              if commit_count is None:
+                  commit_count = len(commits)
+
+              lines = [
+                  "【New Commits】",
+                  f"仓库：{repository}",
+                  f"分支：{branch}",
+                  f"推送者：{actor}",
+                  f"本次 Push：{commit_count} 个 commit",
+                  "",
+                  "提交记录：",
+              ]
+
+              # 最多展示前 5 个 commit，避免群消息太长
+              displayed_commits = commits[:5]
+
+              if displayed_commits:
+                  for commit in displayed_commits:
+                      commit_id = commit.get("id", "")[:7]
+                      message = first_line(
+                          commit.get("message", "")
+                      )
+
+                      author_data = commit.get("author") or {}
+                      author = (
+                          author_data.get("username")
+                          or author_data.get("name")
+                          or "unknown"
+                      )
+
+                      commit_url = commit.get("url", "")
+
+                      lines.append(
+                          f"- {commit_id} {message}（{author}）"
+                      )
+
+                      if commit_url:
+                          lines.append(f"  {commit_url}")
+
+                  remaining = int(commit_count) - len(
+                      displayed_commits
+                  )
+
+                  if remaining > 0:
+                      lines.append(
+                          f"- 另有 {remaining} 个 commit 未展开"
+                      )
+
+              else:
+                  # 某些特殊 push 没有 commits 数组时，
+                  # 回退到最新 commit
+                  message = first_line(
+                      head_commit.get("message", "")
+                  )
+
+                  commit_url = (
+                      head_commit.get("url")
+                      or (
+                          f"{server_url}/{repository}"
+                          f"/commit/{sha}"
+                      )
+                  )
+
+                  lines.append(
+                      f"- {sha[:7]} {message}"
+                  )
+                  lines.append(f"  {commit_url}")
+
+              if compare_url:
+                  lines.extend([
+                      "",
+                      f"查看本次 Push：{compare_url}",
+                  ])
+
+              lines.append(f"Actions：{actions_url}")
+
+          payload = {
+              "msg_type": "text",
+              "content": {
+                  "text": "\n".join(lines),
+              },
+          }
+
+          request = urllib.request.Request(
+              webhook,
+              data=json.dumps(
+                  payload,
+                  ensure_ascii=False,
+              ).encode("utf-8"),
+              headers={
+                  "Content-Type": (
+                      "application/json; charset=utf-8"
+                  ),
+                  "User-Agent": (
+                      "GitHub-Actions-Feishu-Notifier"
+                  ),
+              },
+              method="POST",
+          )
+
+          try:
+              with urllib.request.urlopen(
+                  request,
+                  timeout=15,
+              ) as response:
+                  response_body = response.read().decode(
+                      "utf-8"
+                  )
+
+          except urllib.error.HTTPError as error:
+              error_body = error.read().decode(
+                  "utf-8",
+                  errors="replace",
+              )
+
+              raise RuntimeError(
+                  f"Feishu returned HTTP "
+                  f"{error.code}: {error_body}"
+              ) from error
+
+          print(f"Feishu response: {response_body}")
+
+          try:
+              response_data = json.loads(response_body)
+          except json.JSONDecodeError:
+              raise RuntimeError(
+                  "Feishu returned a non-JSON response: "
+                  f"{response_body}"
+              )
+
+          # 兼容飞书自定义机器人的不同响应字段
+          code = response_data.get("code")
+          status_code = response_data.get("StatusCode")
+
+          if code not in (None, 0):
+              raise RuntimeError(
+                  f"Feishu returned error code "
+                  f"{code}: {response_body}"
+              )
+
+          if status_code not in (None, 0):
+              raise RuntimeError(
+                  f"Feishu returned StatusCode "
+                  f"{status_code}: {response_body}"
+              )
+
+          print("Feishu notification sent successfully.")
+          PY
