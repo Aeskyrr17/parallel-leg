@@ -112,7 +112,7 @@ namespace usart {
 
 using port = std::size_t;
 
-enum class handle_id : std::uint8_t { none = 0, uart5, uart7, usart1 };
+enum class handle_id : std::uint8_t { none = 0, uart5, uart7, usart1, usart10 };
 
 struct port_config
 {
@@ -122,9 +122,9 @@ struct port_config
     bool has_tx_dma = false;
 };
 
-inline constexpr std::size_t port_count = 3;
-inline constexpr std::array<port_config, port_count> configs = {{ { true, handle_id::uart5, true, false }, { true, handle_id::uart7, true, true }, { true, handle_id::usart1, true, true } }};
-inline constexpr std::array<bool, port_count> enabled = { true, true, true };
+inline constexpr std::size_t port_count = 4;
+inline constexpr std::array<port_config, port_count> configs = {{ { true, handle_id::uart5, true, false }, { true, handle_id::uart7, true, true }, { true, handle_id::usart1, true, true }, { true, handle_id::usart10, true, false } }};
+inline constexpr std::array<bool, port_count> enabled = { true, true, true, true };
 
 } // namespace usart
 } // namespace bsp
@@ -135,6 +135,7 @@ namespace uart {
 inline constexpr bsp::usart::port uart5 = 0;
 inline constexpr bsp::usart::port uart7 = 1;
 inline constexpr bsp::usart::port usart1 = 2;
+inline constexpr bsp::usart::port usart10 = 3;
 
 inline constexpr bsp::usart::port dr16 = uart5;
 inline constexpr bsp::usart::port vt03 = uart7;
@@ -157,7 +158,7 @@ namespace params::remoter {
   inline constexpr std::uint32_t rx_timeout_ticks = 100;
   inline constexpr std::uint32_t ps2_offline_timeout_ticks = 600;
   inline constexpr std::uint32_t ps2_frame_timeout_ticks = 20;
-  inline constexpr float ps2_deadzone = 0.080000000000000002f;
+  inline constexpr float ps2_deadzone = 0.08f;
 } // namespace params::remoter
 
 namespace params::referee {

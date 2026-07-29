@@ -14,7 +14,7 @@
 | `build.motors.dji` | bool | `true` | 是否启用 DJI 电机相关构建开关。 |
 | `build.motors.dm` | bool | `true` | 是否启用达妙电机相关构建开关。 |
 | `build.motors.lk` | bool | `false` | 是否启用 LK 电机相关构建开关。 |
-| `bindings.remoter_uart` | string | `uart5` | 遥控器串口，需要与 `board.ioc` 中存在且有 RX DMA 的 UART 名称一致。 |
+| `bindings.remoter_uart` | string | `uart5` | 遥控器串口，例如 `uart5` 或 `usart10`；需要与 `board.ioc` 中存在且有 RX DMA 的 UART 名称一致。 |
 | `bindings.referee_uart` | string | `usart1` | 裁判系统串口，需要与 `board.ioc` 中存在的 UART 名称一致。 |
 | `can.<fdcan>.id_type` | string | IOC 推导 | 指定某路 CAN 接收过滤 ID 类型，可选 `standard` 或 `extended`。例如 `can.fdcan1.id_type`。手动配置优先于 IOC 推导。 |
 | `ahrs.imu_offset_x` | number | `0.0` | IMU X 轴安装偏置。 |
@@ -40,7 +40,7 @@
 ```json
 {
   "bindings": {
-    "remoter_uart": "uart5"
+    "remoter_uart": "usart10"
   },
   "remoter": {
     "source": "ps2"
