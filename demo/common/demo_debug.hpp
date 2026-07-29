@@ -124,6 +124,42 @@ struct remoter_unit_state : unit_test_state
     float mouse_y = 0.0f;
 };
 
+struct ps2_unit_state : unit_test_state
+{
+    bool generic_offline = true;
+    std::uint32_t link = 0;
+    std::uint32_t generic_source = 0;
+    std::uint32_t generic_update_count = 0;
+    std::uint32_t raw_update_count = 0;
+    std::uint32_t connected_frame_count = 0;
+    std::uint32_t remote_disconnected_count = 0;
+    std::uint32_t receiver_offline_count = 0;
+    std::uint32_t last_update_tick = 0;
+    std::uint32_t last_frame_period_ticks = 0;
+    std::uint32_t min_frame_period_ticks = 0;
+    std::uint32_t max_frame_period_ticks = 0;
+
+    std::uint16_t buttons = 0;
+    std::uint16_t pressed = 0;
+    std::uint16_t released = 0;
+    std::uint16_t last_pressed = 0;
+    std::uint16_t last_released = 0;
+    std::uint16_t pressed_seen_mask = 0;
+    std::uint16_t released_seen_mask = 0;
+    std::uint32_t press_event_count = 0;
+    std::uint32_t release_event_count = 0;
+
+    std::uint8_t raw_left_x = 128;
+    std::uint8_t raw_left_y = 128;
+    std::uint8_t raw_right_x = 128;
+    std::uint8_t raw_right_y = 128;
+
+    float left_x = 0.0f;
+    float left_y = 0.0f;
+    float right_x = 0.0f;
+    float right_y = 0.0f;
+};
+
 struct referee_ui_state : unit_test_state
 {
     bool referee_online = false;
@@ -142,6 +178,7 @@ struct debug_instance_type
     imu_unit_state imu_unit{};
     unit_test_state motor_unit{};
     remoter_unit_state remoter_unit{};
+    ps2_unit_state ps2_unit{};
     referee_ui_state referee_ui{};
 };
 
