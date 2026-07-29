@@ -31,10 +31,7 @@
   "remoter": {
     "source": "dr16",
     "thread_priority": 2,
-    "rx_timeout_ticks": 100,
-    "ps2_offline_timeout_ticks": 600,
-    "ps2_frame_timeout_ticks": 20,
-    "ps2_deadzone": 0.08
+    "rx_timeout_ticks": 100
   },
   "referee": {
     "thread_priority": 8
