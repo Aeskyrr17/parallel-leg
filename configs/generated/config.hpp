@@ -10,8 +10,10 @@
 #define HAS_AHRS 1
 #define HAS_REMOTER 1
 #define HAS_VT03 1
+#define HAS_PS2 1
 #define ENABLE_DR16 1
 #define ENABLE_VT03 0
+#define ENABLE_PS2 0
 #define HAS_REFEREE 1
 #define HAS_UI 1
 #define HAS_LED 1
@@ -29,8 +31,10 @@ inline constexpr bool enable_usbx = 1;
 inline constexpr bool has_ahrs = 1;
 inline constexpr bool has_remoter = 1;
 inline constexpr bool has_vt03 = 1;
+inline constexpr bool has_ps2 = 1;
 inline constexpr bool enable_dr16 = 1;
 inline constexpr bool enable_vt03 = 0;
+inline constexpr bool enable_ps2 = 0;
 inline constexpr bool has_referee = 1;
 inline constexpr bool has_ui = 1;
 inline constexpr bool has_led = 1;
@@ -134,6 +138,7 @@ inline constexpr bsp::usart::port usart1 = 2;
 
 inline constexpr bsp::usart::port dr16 = uart5;
 inline constexpr bsp::usart::port vt03 = uart7;
+inline constexpr bsp::usart::port ps2 = uart5;
 inline constexpr bsp::usart::port referee = usart1;
 inline constexpr bsp::usart::port test_report = uart7;
 
@@ -150,6 +155,9 @@ namespace params::ahrs {
 namespace params::remoter {
   inline constexpr std::uint32_t thread_priority = 2;
   inline constexpr std::uint32_t rx_timeout_ticks = 100;
+  inline constexpr std::uint32_t ps2_offline_timeout_ticks = 600;
+  inline constexpr std::uint32_t ps2_frame_timeout_ticks = 20;
+  inline constexpr float ps2_deadzone = 0.080000000000000002f;
 } // namespace params::remoter
 
 namespace params::referee {

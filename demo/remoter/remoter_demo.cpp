@@ -129,6 +129,10 @@ void run() noexcept
     cfg.dr16.thread_priority = params::remoter::thread_priority;
     cfg.dr16.rx_timeout_ticks = params::remoter::rx_timeout_ticks;
     cfg.vt03.thread_priority = params::remoter::thread_priority;
+    cfg.ps2.thread_priority = params::remoter::thread_priority;
+    cfg.ps2.receiver_offline_timeout_ticks = params::remoter::ps2_offline_timeout_ticks;
+    cfg.ps2.frame_timeout_ticks = params::remoter::ps2_frame_timeout_ticks;
+    cfg.ps2.deadzone = params::remoter::ps2_deadzone;
     cfg.thread_priority = params::remoter::thread_priority + 1U;
 
     if (!::remoter::service::instance().init(cfg))
