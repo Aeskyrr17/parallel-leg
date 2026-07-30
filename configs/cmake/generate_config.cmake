@@ -107,6 +107,7 @@ if(remoter_uart_present AND remoter_has_rx_dma)
 else()
     set(HAS_REMOTER 0)
 endif()
+set(HAS_PS2 ${HAS_REMOTER})
 
 pnx_ioc_hw_in_list("${PNX_IOC_UART_HW}" "uart7" vt03_uart_present)
 pnx_ioc_uart_has_dma("${PNX_IOC_LINES}" "uart7" "RX" vt03_has_rx_dma)
@@ -133,12 +134,15 @@ if(remoter_source STREQUAL "")
     if(HAS_REMOTER)
         set(ENABLE_DR16 1)
         set(ENABLE_VT03 0)
+        set(ENABLE_PS2 0)
     elseif(HAS_VT03)
         set(ENABLE_DR16 0)
         set(ENABLE_VT03 1)
+        set(ENABLE_PS2 0)
     else()
         set(ENABLE_DR16 0)
         set(ENABLE_VT03 0)
+        set(ENABLE_PS2 0)
     endif()
 elseif(remoter_source STREQUAL "dr16")
     if(NOT HAS_REMOTER)
@@ -146,14 +150,23 @@ elseif(remoter_source STREQUAL "dr16")
     endif()
     set(ENABLE_DR16 1)
     set(ENABLE_VT03 0)
+    set(ENABLE_PS2 0)
 elseif(remoter_source STREQUAL "vt03")
     if(NOT HAS_VT03)
         message(FATAL_ERROR "params.remoter.source=vt03 requires UART7 RX DMA support in board/board.ioc")
     endif()
     set(ENABLE_DR16 0)
     set(ENABLE_VT03 1)
+    set(ENABLE_PS2 0)
+elseif(remoter_source STREQUAL "ps2")
+    if(NOT HAS_PS2)
+        message(FATAL_ERROR "params.remoter.source=ps2 requires the bound remoter UART to have RX DMA support in board/board.ioc")
+    endif()
+    set(ENABLE_DR16 0)
+    set(ENABLE_VT03 0)
+    set(ENABLE_PS2 1)
 else()
-    message(FATAL_ERROR "params.remoter.source must be one of: dr16, vt03")
+    message(FATAL_ERROR "params.remoter.source must be one of: dr16, vt03, ps2")
 endif()
 
 list(LENGTH PNX_IOC_FDCAN_HW fdcan_count)
@@ -305,6 +318,7 @@ set(pwm_config_cpp
     "{ ${pwm_tim3_ch4_enabled}, ${pwm_tim3_ch4_timer}, ${pwm_tim3_ch4_channel}, ${pwm_timer_clock_hz}U }, { ${pwm_tim12_ch2_enabled}, ${pwm_tim12_ch2_timer}, ${pwm_tim12_ch2_channel}, ${pwm_timer_clock_hz}U }")
 
 pnx_ioc_uart_index("${PNX_IOC_UART_HW}" "${remoter_uart}" dr16_port_idx)
+pnx_ioc_uart_index("${PNX_IOC_UART_HW}" "${remoter_uart}" ps2_port_idx)
 pnx_ioc_uart_index("${PNX_IOC_UART_HW}" "uart7" vt03_port_idx)
 pnx_ioc_uart_index("${PNX_IOC_UART_HW}" "${referee_uart}" referee_port_idx)
 
@@ -318,6 +332,11 @@ if(vt03_port_idx GREATER_EQUAL 0)
 else()
     set(vt03_binding "0")
 endif()
+if(ps2_port_idx GREATER_EQUAL 0)
+    set(ps2_binding "${remoter_uart}")
+else()
+    set(ps2_binding "0")
+endif()
 if(referee_port_idx GREATER_EQUAL 0)
     set(referee_binding "${referee_uart}")
 else()
@@ -329,6 +348,8 @@ if(ENABLE_DR16)
     set(active_remoter_uart "${remoter_uart}")
 elseif(ENABLE_VT03)
     set(active_remoter_uart "uart7")
+elseif(ENABLE_PS2)
+    set(active_remoter_uart "${remoter_uart}")
 endif()
 
 string(JSON test_report_uart ERROR_VARIABLE json_err GET "${params_json}" test report_uart)
@@ -398,14 +419,30 @@ endif()
 
 set(params_remoter_body "")
 _pnx_param_uint("remoter" "thread_priority" _line)
+if(_line STREQUAL "")
+    set(_line "  inline constexpr std::uint32_t thread_priority = 2${generated_semicolon_token}\n")
+endif()
 string(APPEND params_remoter_body "${_line}")
 _pnx_param_uint("remoter" "rx_timeout_ticks" _line)
-string(APPEND params_remoter_body "${_line}")
-if(params_remoter_body STREQUAL "")
-    string(CONCAT params_remoter_body
-        "  inline constexpr std::uint32_t thread_priority = 2${generated_semicolon_token}\n"
-        "  inline constexpr std::uint32_t rx_timeout_ticks = 100${generated_semicolon_token}\n")
+if(_line STREQUAL "")
+    set(_line "  inline constexpr std::uint32_t rx_timeout_ticks = 100${generated_semicolon_token}\n")
 endif()
+string(APPEND params_remoter_body "${_line}")
+_pnx_param_uint("remoter" "ps2_offline_timeout_ticks" _line)
+if(_line STREQUAL "")
+    set(_line "  inline constexpr std::uint32_t ps2_offline_timeout_ticks = 600${generated_semicolon_token}\n")
+endif()
+string(APPEND params_remoter_body "${_line}")
+_pnx_param_uint("remoter" "ps2_frame_timeout_ticks" _line)
+if(_line STREQUAL "")
+    set(_line "  inline constexpr std::uint32_t ps2_frame_timeout_ticks = 20${generated_semicolon_token}\n")
+endif()
+string(APPEND params_remoter_body "${_line}")
+_pnx_param_float("remoter" "ps2_deadzone" _line)
+if(_line STREQUAL "")
+    set(_line "  inline constexpr float ps2_deadzone = 0.08f${generated_semicolon_token}\n")
+endif()
+string(APPEND params_remoter_body "${_line}")
 
 set(params_referee_body "")
 _pnx_param_uint("referee" "thread_priority" _line)
@@ -471,8 +508,10 @@ file(WRITE "${CONFIG_HPP}"
 "#define HAS_AHRS ${HAS_AHRS}\n"
 "#define HAS_REMOTER ${HAS_REMOTER}\n"
 "#define HAS_VT03 ${HAS_VT03}\n"
+"#define HAS_PS2 ${HAS_PS2}\n"
 "#define ENABLE_DR16 ${ENABLE_DR16}\n"
 "#define ENABLE_VT03 ${ENABLE_VT03}\n"
+"#define ENABLE_PS2 ${ENABLE_PS2}\n"
 "#define HAS_REFEREE ${HAS_REFEREE}\n"
 "#define HAS_UI ${HAS_UI}\n"
 "#define HAS_LED ${HAS_LED}\n"
@@ -488,8 +527,10 @@ file(WRITE "${CONFIG_HPP}"
 "inline constexpr bool has_ahrs = ${HAS_AHRS};\n"
 "inline constexpr bool has_remoter = ${HAS_REMOTER};\n"
 "inline constexpr bool has_vt03 = ${HAS_VT03};\n"
+"inline constexpr bool has_ps2 = ${HAS_PS2};\n"
 "inline constexpr bool enable_dr16 = ${ENABLE_DR16};\n"
 "inline constexpr bool enable_vt03 = ${ENABLE_VT03};\n"
+"inline constexpr bool enable_ps2 = ${ENABLE_PS2};\n"
 "inline constexpr bool has_referee = ${HAS_REFEREE};\n"
 "inline constexpr bool has_ui = ${HAS_UI};\n"
 "inline constexpr bool has_led = ${HAS_LED};\n"
@@ -547,7 +588,7 @@ file(WRITE "${CONFIG_HPP}"
 "} // namespace pwm\n\n"
 "namespace usart {\n\n"
 "using port = std::size_t;\n\n"
-"enum class handle_id : std::uint8_t { none = 0, uart5, uart7, usart1 };\n\n"
+"enum class handle_id : std::uint8_t { none = 0, uart5, uart7, usart1, usart10 };\n\n"
 "struct port_config\n"
 "{\n"
 "    bool enabled = false;\n"
@@ -565,6 +606,7 @@ file(WRITE "${CONFIG_HPP}"
 "${uart_binding_body}\n\n"
 "inline constexpr bsp::usart::port dr16 = ${dr16_binding};\n"
 "inline constexpr bsp::usart::port vt03 = ${vt03_binding};\n"
+"inline constexpr bsp::usart::port ps2 = ${ps2_binding};\n"
 "inline constexpr bsp::usart::port referee = ${referee_binding};\n"
 "inline constexpr bsp::usart::port test_report = ${test_report_binding};\n\n"
 "} // namespace uart\n"

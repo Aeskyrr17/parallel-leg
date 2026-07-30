@@ -14,16 +14,19 @@
 | `build.motors.dji` | bool | `true` | 是否启用 DJI 电机相关构建开关。 |
 | `build.motors.dm` | bool | `true` | 是否启用达妙电机相关构建开关。 |
 | `build.motors.lk` | bool | `false` | 是否启用 LK 电机相关构建开关。 |
-| `bindings.remoter_uart` | string | `uart5` | 遥控器串口，需要与 `board.ioc` 中存在且有 RX DMA 的 UART 名称一致。 |
+| `bindings.remoter_uart` | string | `uart5` | 遥控器串口，例如 `uart5` 或 `usart10`；需要与 `board.ioc` 中存在且有 RX DMA 的 UART 名称一致。 |
 | `bindings.referee_uart` | string | `usart1` | 裁判系统串口，需要与 `board.ioc` 中存在的 UART 名称一致。 |
 | `can.<fdcan>.id_type` | string | IOC 推导 | 指定某路 CAN 接收过滤 ID 类型，可选 `standard` 或 `extended`。例如 `can.fdcan1.id_type`。手动配置优先于 IOC 推导。 |
 | `ahrs.imu_offset_x` | number | `0.0` | IMU X 轴安装偏置。 |
 | `ahrs.imu_thread_priority` | number | `3` | AHRS/IMU 线程优先级。 |
 | `ahrs.temp_thread_priority` | number | `4` | IMU 温控线程优先级。 |
 | `ahrs.target_temp` | number | `45.0` | IMU 目标温度。 |
-| `remoter.source` | string | 空 | 遥控器来源，例如 `dr16`。 |
+| `remoter.source` | string | 空 | 遥控器来源，可选 `dr16`、`vt03` 或 `ps2`。 |
 | `remoter.thread_priority` | number | `2` | 遥控器线程优先级。 |
 | `remoter.rx_timeout_ticks` | number | `100` | 遥控器接收超时 tick 数。 |
+| `remoter.ps2_offline_timeout_ticks` | number | `600` | PS2 接收器无合法帧或 `0xAB` 后判定接收器离线的超时。 |
+| `remoter.ps2_frame_timeout_ticks` | number | `20` | PS2 正常帧接收到一半时的重同步超时。 |
+| `remoter.ps2_deadzone` | number | `0.08` | PS2 摇杆归一化后的中心死区，范围为 `[0, 1)`。 |
 | `referee.thread_priority` | number | `8` | 裁判系统线程优先级。 |
 | `test.thread_priority` | number | `10` | demo/test 线程优先级。 |
 | `test.report_uart` | string | `uart7` | 测试报告串口，不能与当前遥控器 UART 冲突。 |
@@ -32,7 +35,22 @@
 | `usb.write_thread_priority` | number | `5` | USB CDC 写线程优先级。 |
 | `usb.period_ticks` | number | `2` | USB CDC 周期 tick 数。 |
 
-注意：`ahrs`、`remoter`、`referee`、`test`、`usb` 这些分组在生成脚本中按“整组缺省”补默认值。如果某个分组里只填写一部分字段，未填写的字段不会生成，使用时应保持同组字段完整。
+选择 PS2 时的最小配置如下：
+
+```json
+{
+  "bindings": {
+    "remoter_uart": "usart10"
+  },
+  "remoter": {
+    "source": "ps2"
+  }
+}
+```
+
+`bindings.remoter_uart` 负责绑定实际 UART，生成配置会把它同时导出为 `app::uart::ps2`。该 UART 必须在 `board.ioc` 中启用 RX DMA 并完成对应 RX/TX 引脚配置；PS2 驱动初始化时会把绑定端口切换为 `9600 baud, 8 data bits, no parity, 1 stop bit (8N1)`。
+
+注意：`ahrs`、`referee`、`test`、`usb` 这些分组在生成脚本中按“整组缺省”补默认值。如果某个分组里只填写一部分字段，未填写的字段不会生成，使用时应保持同组字段完整。`remoter` 分组的字段支持逐项缺省。
 
 CAN 的 `id_type` 只表示标准帧 ID 或扩展帧 ID，不表示 CAN Classic 或 CAN FD。CAN Classic/FD 仍由 `board.ioc` 的 `FDCANx.FrameFormat` 推导；`can.<fdcan>.id_type` 只控制生成到 `config::can::filter_id_types` 的标准/扩展过滤类型。
 
