@@ -13,7 +13,7 @@ class Function
 public:
     explicit Function(const command_config& cfg);
 
-    const chassis_command& update(const remoter::state& remote, float odom_x,
+    const chassis_command& update(const remoter::state& remote, float odom_x, float odom_v,
                                   float total_yaw, float dt);
     void reset();
     void reset_position(float x);
@@ -21,7 +21,7 @@ public:
 
 private:
     static bool is_transition(remoter::sw_state prev, remoter::sw_state current);
-    void update_position(bool spin, float odom_x, float dt);
+    void update_position(bool spin, float odom_x, float odom_v, float dt);
     void update_yaw(float total_yaw, float dt);
 
     command_config cfg_{};

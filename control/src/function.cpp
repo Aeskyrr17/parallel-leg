@@ -13,7 +13,7 @@ Function::Function(const command_config& cfg)
     reset();
 }
 
-const chassis_command& Function::update(const remoter::state& remote, float odom_x,
+const chassis_command& Function::update(const remoter::state& remote, float odom_x, float odom_v,
                                         float total_yaw, float dt)
 {
     yaw_updater_.set_path(cfg_.yaw_slope_rate * dt);
@@ -87,7 +87,7 @@ const chassis_command& Function::update(const remoter::state& remote, float odom
     }
 
     const bool spin = cmd_.mode == command_mode::spin && !transition;
-    update_position(spin, odom_x, dt);
+    update_position(spin, odom_x, odom_v, dt);
     cmd_.yaw_rate = cmd_.w + cmd_.dyaw;
     update_yaw(total_yaw, dt);
 
@@ -126,14 +126,17 @@ bool Function::is_transition(remoter::sw_state prev, remoter::sw_state current)
            (prev == remoter::sw_state::up && current == remoter::sw_state::mid);
 }
 
-void Function::update_position(bool spin, float odom_x, float dt)
+void Function::update_position(bool spin, float odom_x, float odom_v, float dt)
 {
-    if (std::fabs(cmd_.v) < cfg_.stationary_vel || spin)
+    const bool stopped = std::fabs(cmd_.v) < cfg_.stationary_vel &&
+                         std::fabs(cmd_.v - odom_v) < cfg_.stationary_vel_error;
+    if (stopped || spin)
     {
         if (!maintaining_x_)
         {
             maintained_x_ = odom_x;
             maintaining_x_ = true;
+            cmd_.v = 0.0f;
         }
         cmd_.x = maintained_x_;
         return;

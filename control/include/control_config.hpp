@@ -25,6 +25,7 @@ struct command_config
     float normal_len = 0.17f;
 
     float stationary_vel = 0.002f;
+    float stationary_vel_error = 0.3f;
 };
 
 struct runtime_config
@@ -84,7 +85,7 @@ struct state_config
 
 struct leg_config
 {
-    ::control::pid len_pid{3000.0f, 0.0f, -500.0f, 200.0f, 0.0f,
+    ::control::pid len_pid{4000.0f, 0.0f, -120.0f, 200.0f, 0.0f,
                            ::control::pid_mode::delta};
     float max_hip_tau = 40.0f;
 
@@ -105,7 +106,7 @@ struct leg_config
 
 struct chassis_config
 {
-    ::control::pid roll_pid{0.1f, 0.0f, 0.0f, 0.1f, 0.0f,
+    ::control::pid roll_pid{0.5f, 0.0f, -0.002f, 0.5f, 0.0f,
                             ::control::pid_mode::delta};
     float max_wheel_tau = 15.0f;
 
@@ -120,6 +121,10 @@ struct chassis_config
     joint_offset_config joint_offset{};
     lqr_config lqr{};
     state_config state{};
+
+    //在relax状态下读到的roll和pitch角度偏差
+    float roll_offset = 0.002;
+    float pitch_offset = -0.015;
 };
 
 struct control_config

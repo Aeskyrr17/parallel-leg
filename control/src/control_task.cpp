@@ -136,7 +136,7 @@ void control_entry(ULONG /*arg*/)
         const motor_fdb_frame motor_fdb = read_motor_fdb();
 
         const chassis_command cmd =
-            function.update(remote, odom.state().x, attitude.total_yaw, dt);
+            function.update(remote, odom.state().x, odom.state().v, attitude.total_yaw, dt);
 
         odometry_input odom_input{};
         odom_input.quaternion[0] = attitude.quaternion[0];

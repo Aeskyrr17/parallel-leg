@@ -213,7 +213,8 @@ lqr_state ChassisController::build_normal_ref(const chassis_context& ctx) const
     ref.theta_l_r = 0.0f;
     ref.dtheta_l_r = 0.0f;
 
-    ref.theta_b = 0.0f;
+    ref.theta_b = cfg_.pitch_offset;
+    // ref.theta_b = 0.0f;
     ref.dtheta_b = 0.0f;
 
     return ref;

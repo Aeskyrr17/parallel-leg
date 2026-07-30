@@ -128,6 +128,8 @@ threads.
   - one-update control-switch transition behavior
   - right-switch jump request mapping
   - remote axes produce velocity/yaw-rate commands
+  - position hold requires both a near-zero velocity command and a small command-to-odometry
+    velocity error
   - moving x reference uses one-step feedback prediction `odom.x + cmd.v * dt`; zero velocity
     captures and holds the current odometry position
   - active yaw reference uses one-step continuous-angle prediction
