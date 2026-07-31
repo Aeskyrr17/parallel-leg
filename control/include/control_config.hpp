@@ -33,6 +33,7 @@ struct runtime_config
     float dt = 0.001f;
 
     std::uint32_t control_thread_priority = 5U;
+    std::uint32_t function_thread_priority = 6U;
     bool actuation_enabled = true;
 };
 

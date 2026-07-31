@@ -54,6 +54,13 @@ struct odometry_state
     float a_z = 0.0f; // m/s^2, world z specific force; stationary is about +g
 };
 
+struct chassis_feedback
+{
+    float x = 0.0f;
+    float v = 0.0f;
+    float total_yaw = 0.0f;
+};
+
 struct motor_fdb_frame
 {
     motors::feedback left_joint1{};
