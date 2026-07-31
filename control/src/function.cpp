@@ -86,6 +86,12 @@ const chassis_command& Function::update(const remoter::state& remote, float odom
         }
     }
 
+    if (cmd_.mode == command_mode::relax)
+    {
+        reset_position(odom_x);
+        reset_yaw(total_yaw);
+    }
+
     const bool spin = cmd_.mode == command_mode::spin && !transition;
     update_position(spin, odom_x, odom_v, dt);
     cmd_.yaw_rate = cmd_.w + cmd_.dyaw;

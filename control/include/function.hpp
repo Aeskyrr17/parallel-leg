@@ -24,7 +24,7 @@ private:
     void update_position(bool spin, float odom_x, float odom_v, float dt);
     void update_yaw(float total_yaw, float dt);
 
-    command_config cfg_{};
+    const command_config& cfg_;
     chassis_command cmd_{};
 
     slope yaw_updater_;
