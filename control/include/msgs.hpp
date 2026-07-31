@@ -17,10 +17,9 @@ enum class command_mode : std::uint8_t
 
 enum class jump_command : std::uint8_t
 {
-    none = 0,
-    extending,
-    inair,
-    landing,
+    None = 0,
+    Prepared,
+    Jump,
 };
 
 struct chassis_command
@@ -42,7 +41,7 @@ struct chassis_command
     float roll = 0.0f;
 
     command_mode mode = command_mode::relax;
-    jump_command jump = jump_command::none;
+    jump_command jump = jump_command::None;
     bool valid = false;
 };
 

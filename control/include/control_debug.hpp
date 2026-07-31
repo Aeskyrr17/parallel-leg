@@ -67,7 +67,7 @@ struct control_debug_t
     float motor_torque[6]{};
 
     chassis_state state = chassis_state::RELAX;
-    jump_stage jump = jump_stage::DONT;
+    jump_stage jump = jump_stage::DONT_JUMP;
     bool input_valid = false;
     bool output_valid = false;
     bool actuation_enabled = false;

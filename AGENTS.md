@@ -186,8 +186,8 @@ remain together in `wbr_control`; AHRS and remoter keep their module-owned threa
     LQR yaw state uses `ahrs::message::total_yaw`
   - Spin currently reuses Normal; the ordinary Offground state keeps safe-relax placeholder output
   - Jump migrates the `wbr_2026` V0.1 Prepared/trigger behavior into the existing state switch:
-    Prepared arms once, then `EXTENDING -> INAIR -> LANDING` advances from current leg length and
-    combined support feedback
+    Prepared sets `START_JUMP`, then the Jump command advances
+    `EXTEND_LEGS -> IN_AIR -> LANDING` from current leg length and combined support feedback
   - V0.1 jump actuation retains the `+400 N` extension and `-200 N` retraction overrides, 20 N
     support threshold, sparse off-ground LQR, zero wheel output, 0.27 m off-ground length target,
     and off-ground Odometry reset
@@ -214,7 +214,7 @@ RELAX
 
 NORMAL
     -> SPIN for a Spin command
-    -> JUMP after a Jump-Prepared command arms the controller and a Jump trigger follows
+    -> JUMP after Prepared sets `START_JUMP` and a Jump trigger follows
 
 JUMP
     -> NORMAL when the command is released/changed
@@ -387,8 +387,8 @@ cmake --build --preset Release --target pnx_embedded --parallel 4
 ```
 
 - Debug and Release both link successfully.
-- Debug uses 79,064 B DTCM and 198,596 B flash.
-- Release uses 79,008 B DTCM and 100,892 B flash.
+- Debug uses 79,064 B DTCM and 198,564 B flash.
+- Release uses 79,008 B DTCM and 100,884 B flash.
 - The generator writes the only coefficient header directly to
   `control/include/lqr_coeffs.hpp`: 484 samples, max absolute fit error `0.266341151`, RMS error
   `0.0353841236`, and worst exact-grid closed-loop max real eigenvalue `-0.698537529`.
@@ -428,8 +428,9 @@ cmake --build --preset Release --target pnx_embedded --parallel 4
   `total_yaw`.
 - Normal sends `ctx.cmd.len + leg_len_bias` to the two live length PID objects, so manual Function
   leg-length updates now affect control.
-- Jump requires a Prepared command before the trigger, advances through `EXTENDING`, `INAIR`, and
-  `LANDING` inside `ChassisController`, and exposes the current stage in the Debug Watch snapshot.
+- Jump requires a Prepared command before the trigger, advances through `START_JUMP`,
+  `EXTEND_LEGS`, `IN_AIR`, and `LANDING` inside `ChassisController`, and exposes the current stage
+  in the Debug Watch snapshot.
 - The jump off-ground branch selects sparse LQR gains, zeros wheel output, targets 0.27 m leg
   length, and requests the existing Odometry reset without adding another task or message topic.
 - Only Control accesses the two leg objects.

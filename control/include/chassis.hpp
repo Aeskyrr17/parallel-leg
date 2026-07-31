@@ -23,9 +23,10 @@ enum class chassis_state : std::uint8_t
 
 enum class jump_stage : std::uint8_t
 {
-    DONT = 0,
-    EXTENDING,
-    INAIR,
+    DONT_JUMP = 0,
+    START_JUMP,
+    EXTEND_LEGS,
+    IN_AIR,
     LANDING,
 };
 
@@ -87,8 +88,7 @@ private:
     ::control::pid roll_pd_;
 
     chassis_state state_ = chassis_state::RELAX;
-    jump_stage jump_stage_ = jump_stage::DONT;
-    bool jump_armed_ = false;
+    jump_stage jump_stage_ = jump_stage::DONT_JUMP;
 };
 
 } // namespace wbr

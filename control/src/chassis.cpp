@@ -22,7 +22,7 @@ chassis_output ChassisController::step(const chassis_context& ctx)
         const bool entering_relax = (state_ != chassis_state::RELAX);
 
         transition_to(chassis_state::RELAX);
-        transition_jump_to(jump_stage::DONT);
+        transition_jump_to(jump_stage::DONT_JUMP);
 
         if (entering_relax)
         {
@@ -62,8 +62,7 @@ chassis_output ChassisController::step(const chassis_context& ctx)
 void ChassisController::reset()
 {
     state_ = chassis_state::RELAX;
-    jump_stage_ = jump_stage::DONT;
-    jump_armed_ = false;
+    jump_stage_ = jump_stage::DONT_JUMP;
 
     roll_pd_.clear();
 }
@@ -85,7 +84,6 @@ void ChassisController::step_relax(const chassis_context& ctx, chassis_output& o
     out = {};
     out.relax = true;
     out.reset_odom = true;
-    jump_armed_ = false;
 
     // ctx.left.reset();
     // ctx.right.reset();
@@ -142,20 +140,20 @@ void ChassisController::step_normal(const chassis_context& ctx, chassis_output& 
 
     if (ctx.cmd.mode == command_mode::jump)
     {
-        if (ctx.cmd.jump == jump_command::none)
+        if (ctx.cmd.jump == jump_command::Prepared)
         {
-            jump_armed_ = true;
+            transition_jump_to(jump_stage::START_JUMP);
         }
-        else if (ctx.cmd.jump == jump_command::extending && jump_armed_)
+        else if (ctx.cmd.jump == jump_command::Jump &&
+                 jump_stage_ == jump_stage::START_JUMP)
         {
-            jump_armed_ = false;
-            transition_jump_to(jump_stage::EXTENDING);
+            transition_jump_to(jump_stage::EXTEND_LEGS);
             transition_to(chassis_state::JUMP);
         }
     }
     else
     {
-        jump_armed_ = false;
+        transition_jump_to(jump_stage::DONT_JUMP);
     }
 
     // if (left.N + right.N < cfg_.state.offground_support_force)
@@ -188,10 +186,10 @@ void ChassisController::step_spin(const chassis_context& ctx, chassis_output& ou
 
 void ChassisController::step_jump(const chassis_context& ctx, chassis_output& out)
 {
-    if (ctx.cmd.mode != command_mode::jump || ctx.cmd.jump != jump_command::extending ||
-        jump_stage_ == jump_stage::DONT)
+    if (ctx.cmd.mode != command_mode::jump || ctx.cmd.jump != jump_command::Jump ||
+        jump_stage_ == jump_stage::DONT_JUMP)
     {
-        transition_jump_to(jump_stage::DONT);
+        transition_jump_to(jump_stage::DONT_JUMP);
         transition_to(chassis_state::NORMAL);
         step_normal(ctx, out);
         return;
@@ -204,7 +202,7 @@ void ChassisController::step_jump(const chassis_context& ctx, chassis_output& ou
 
     const lqr_state obs = build_obs(ctx);
     const lqr_state ref = offground ? build_offground_ref(ctx) : build_normal_ref(ctx);
-    const bool use_offground_lqr = offground || jump_stage_ == jump_stage::INAIR;
+    const bool use_offground_lqr = offground || jump_stage_ == jump_stage::IN_AIR;
     const lqr_output lqr =
         lqr_.solve(left.len, right.len, use_offground_lqr, obs, ref);
 
@@ -213,11 +211,11 @@ void ChassisController::step_jump(const chassis_context& ctx, chassis_output& ou
     roll_pd_.update(ctx.ins.gyro_r);
 
     float command_len = cfg_.cmd.normal_len;
-    if (jump_stage_ == jump_stage::EXTENDING)
+    if (jump_stage_ == jump_stage::EXTEND_LEGS)
     {
         command_len = cfg_.jump.extend_len;
     }
-    else if (jump_stage_ == jump_stage::INAIR)
+    else if (jump_stage_ == jump_stage::IN_AIR)
     {
         command_len = cfg_.jump.retract_len;
     }
@@ -235,12 +233,12 @@ void ChassisController::step_jump(const chassis_context& ctx, chassis_output& ou
         out.left_target.F = ctx.left.len_control(len_ref + roll_pd_.result) - left.Fs;
         out.right_target.F = ctx.right.len_control(len_ref - roll_pd_.result) - right.Fs;
 
-        if (jump_stage_ == jump_stage::EXTENDING)
+        if (jump_stage_ == jump_stage::EXTEND_LEGS)
         {
             out.left_target.F = cfg_.jump.extend_force;
             out.right_target.F = cfg_.jump.extend_force;
         }
-        else if (jump_stage_ == jump_stage::INAIR)
+        else if (jump_stage_ == jump_stage::IN_AIR)
         {
             out.left_target.F = cfg_.jump.retract_force;
             out.right_target.F = cfg_.jump.retract_force;
@@ -254,17 +252,17 @@ void ChassisController::step_jump(const chassis_context& ctx, chassis_output& ou
     out.relax = false;
 
     const float average_len = 0.5f * (left.len + right.len);
-    if (jump_stage_ == jump_stage::EXTENDING && average_len > cfg_.jump.extend_done_len)
+    if (jump_stage_ == jump_stage::EXTEND_LEGS && average_len > cfg_.jump.extend_done_len)
     {
-        transition_jump_to(jump_stage::INAIR);
+        transition_jump_to(jump_stage::IN_AIR);
     }
-    else if (jump_stage_ == jump_stage::INAIR && average_len < cfg_.jump.retract_done_len)
+    else if (jump_stage_ == jump_stage::IN_AIR && average_len < cfg_.jump.retract_done_len)
     {
         transition_jump_to(jump_stage::LANDING);
     }
     else if (jump_stage_ == jump_stage::LANDING && support_force > cfg_.jump.support_force)
     {
-        transition_jump_to(jump_stage::DONT);
+        transition_jump_to(jump_stage::DONT_JUMP);
         transition_to(chassis_state::NORMAL);
     }
 }
