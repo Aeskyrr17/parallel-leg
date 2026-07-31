@@ -5,7 +5,7 @@
 #include "constrain.hpp"
 #include "control_config.hpp"
 #include "control_debug.hpp"
-#include "function.hpp"
+#include "function_task.hpp"
 #include "leg.hpp"
 #include "lkmotorhandler.hpp"
 #include "lkmotors.hpp"
@@ -37,7 +37,6 @@ motors::lk9025 right_wheel{robot::motors::rwheel};
 
 leg_controller left_leg{left_joint1, left_joint4, chassis_cfg.motor_dir.left_leg, leg_cfg};
 leg_controller right_leg{right_joint1, right_joint4, chassis_cfg.motor_dir.right_leg, leg_cfg};
-Function function{chassis_cfg.cmd};
 Odometry odom{k_default_odometry};
 ChassisController chassis{chassis_cfg};
 
@@ -45,7 +44,8 @@ TX_THREAD control_thread{};
 alignas(8) std::uint8_t control_stack[6144]{};
 
 msg::subscriber ahrs_sub{};
-msg::subscriber remote_sub{};
+msg::subscriber command_sub{};
+msg::topic* feedback_topic = nullptr;
 bool tasks_started = false;
 
 #define WBR_DEBUG
@@ -124,7 +124,9 @@ void control_entry(ULONG /*arg*/)
 {
     const float dt = chassis_cfg.runtime.dt;
     ahrs::message attitude{};
-    remoter::state remote{};
+    chassis_command cmd{};
+    cmd.mode = command_mode::relax;
+    cmd.valid = false;
     auto& handler = motors::lkmotorhandler::instance();
 
     for (;;)
@@ -132,11 +134,8 @@ void control_entry(ULONG /*arg*/)
         (void)handler.alive_check();
 
         (void)msg::read(ahrs_sub, attitude);
-        (void)msg::read(remote_sub, remote);
+        (void)msg::read(command_sub, cmd);
         const motor_fdb_frame motor_fdb = read_motor_fdb();
-
-        const chassis_command cmd =
-            function.update(remote, odom.state().x, odom.state().v, attitude.total_yaw, dt);
 
         odometry_input odom_input{};
         odom_input.quaternion[0] = attitude.quaternion[0];
@@ -190,8 +189,14 @@ void control_entry(ULONG /*arg*/)
         if (out.reset_odom)
         {
             odom.reset();
-            function.reset_position(0.0f);
         }
+
+        const chassis_feedback feedback{
+            odom.state().x,
+            odom.state().v,
+            attitude.total_yaw,
+        };
+        (void)msg::publish(feedback_topic, feedback);
 
         tx_thread_sleep(1);
     }
@@ -301,13 +306,18 @@ bool start_control_task() noexcept
     }
 
     ahrs_sub = msg::subscribe<ahrs::message>();
-    remote_sub = msg::subscribe<remoter::state>();
-    if (!ahrs_sub.valid() || !remote_sub.valid())
+    command_sub = msg::subscribe<chassis_command>();
+    feedback_topic = msg::create<chassis_feedback>();
+    if (!ahrs_sub.valid() || !command_sub.valid() || feedback_topic == nullptr)
     {
         return false;
     }
 
     if (!register_motors())
+    {
+        return false;
+    }
+    if (!start_function_task())
     {
         return false;
     }
