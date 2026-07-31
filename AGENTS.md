@@ -30,15 +30,19 @@ hardware-validated.
 - `control/app.cpp::app_start()` calls `wbr::start_control_task()`.
 - AHRS and remoter are initialized with their module-default, no-argument `init()` calls. Their
   libraries were not modified.
-- There is one high-frequency business-control thread, `wbr_control`, at priority 5.
-- There is no application-level input adapter thread or shared input mutex. `wbr_control` directly
-  reads the AHRS/remoter subscribers each cycle into local latest-value objects.
-- These direct `msg::read()` calls use the message-bus topic mutex semantics; the separate adapter
-  no longer isolates the control cycle from a blocked topic mutex.
-- The control path consumes module-owned `ahrs::message`, `remoter::state`, and
-  `motors::feedback` directly. Control does not maintain duplicate freshness, usable, or per-field
+- There are two application-level control threads: high-frequency `wbr_control` at priority 5 and
+  lower-priority `wbr_function` at priority 6. Both sleep one ThreadX tick per loop.
+- There is no shared input mutex or synchronization barrier. `wbr_function` reads the module-owned
+  remoter topic plus a lightweight `chassis_feedback` latest-value topic, runs the single
+  `Function` object, and publishes `chassis_command`. `wbr_control` reads AHRS and the latest
+  command.
+- These `msg::read()` and `msg::publish()` calls use the message-bus per-topic mutex semantics.
+  Command generation is intentionally allowed to lag feedback by about one control cycle.
+- The high-frequency control path consumes module-owned `ahrs::message` and `motors::feedback`
+  directly. The only Control-owned cross-thread messages are `chassis_feedback{x,v,total_yaw}` and
+  `chassis_command`; Control does not maintain duplicate freshness, usable, or per-field
   input-validation state.
-- The Control cycle directly calls `Function`, `Odometry`, both `leg_controller` objects,
+- The Control cycle directly calls `Odometry`, both `leg_controller` objects,
   `ChassisController`, limits, six motor-buffer writes, and one final LK batch commit.
   Each `leg_controller` privately owns its `link_solver`; intermediate control products do not use
   the message bus.
@@ -55,15 +59,21 @@ hardware-validated.
 - `control_task.cpp` also exposes the global `g_control_tuning` Watch entry. Its three pointers
   refer directly to the two live leg-length PID objects and the live chassis Roll PID; there is no
   parameter copy, `volatile` tuning object, or per-cycle tuning synchronization.
-- `k_default_control.chassis.runtime.actuation_enabled` is still `false`. Every cycle therefore
-  computes requests but sends relaxed/zero-current commands.
+- `function_task.cpp` exposes the non-const `g_command_config` Watch object. The live `Function`
+  holds a const reference to this object, so debugger edits affect subsequent command updates.
+- `k_default_control.chassis.runtime.actuation_enabled` is currently `true`; a valid non-Relax
+  control cycle can therefore write active motor commands.
 
 Current cycle:
 
 ```text
-six-motor feedback snapshot
-    -> direct AHRS/remoter subscriber reads
+Function task:
+remoter + latest chassis_feedback
     -> Function
+    -> publish latest chassis_command
+
+Control task:
+direct AHRS read + latest chassis_command + six-motor feedback snapshot
     -> Odometry
     -> left_leg/right_leg solve
     -> current-cycle validity
@@ -73,6 +83,8 @@ six-motor feedback snapshot
     -> safety insertion point and torque limits
     -> six command buffers
     -> one lkmotorhandler::send_control()
+    -> optional Odometry reset
+    -> publish chassis_feedback for the next Function update
 ```
 
 Control file map:
@@ -94,6 +106,8 @@ parallel_leg_lqr/
     offline parallel-leg model, gain fitting, verification, and CMake-connected header generator
 control/include/function.hpp + control/src/function.cpp
     Function remote-command logic
+control/include/function_task.hpp + control/src/function_task.cpp
+    Function thread, live command tuning, remote/feedback subscriptions, and command publication
 control/include/chassis.hpp + control/src/chassis.cpp
     chassis_state/jump_stage and the single visible state switch
 control/include/control_debug.hpp
@@ -117,13 +131,15 @@ The active old configuration is `CHASSIS_ONLY + SJTU_MODEL`; `STAIRUP` is disabl
 - There is no `pendulum.hpp` and no `Pendulum<hiptype, wheeltype>` class in the inspected old
   `User` tree. Pendulum control is implemented directly in `TaskPendulum.cpp`.
 
-The old Function/Pendulum/Solver thread boundaries and latest-value topic timing were not reproduced.
-The current application has one `wbr_control` thread; the AHRS and remoter keep their module-owned
-threads.
+The old application code was not copied, but its lower-priority Function/latest-value timing is now
+represented by `wbr_function`. Odometry, leg solving, chassis control, VMC, and actuator commit
+remain together in `wbr_control`; AHRS and remoter keep their module-owned threads.
 
 ## Completed control objects
 
 - `Function`
+  - the single live object is owned and called only by `wbr_function`
+  - reads the live non-const `g_command_config` through a const reference
   - nested left/right switch interpretation
   - one-update control-switch transition behavior
   - right-switch jump request mapping
@@ -134,6 +150,8 @@ threads.
     captures and holds the current odometry position
   - active yaw reference uses one-step continuous-angle prediction
     `total_yaw + cmd.yaw_rate * dt`; zero yaw rate captures and holds `total_yaw`
+  - every Relax update synchronizes the maintained position and yaw to the latest
+    `chassis_feedback`
 - `Odometry`
   - fixed-size `[x, v, a]` Kalman filter
   - quaternion body-to-world acceleration rotation
@@ -164,14 +182,14 @@ threads.
 - `ChassisController`
   - one enum/switch class; no state classes or factories
   - `step(chassis_context)` with explicit Relax/Normal/Spin/Offground/Jump methods
-  - Normal applies LQR wheel/leg torque, roll-compensated length PD, old `+0.03 m` length preload,
-    optional spring-force subtraction, and the verified 20 N off-ground transition
+  - Normal applies LQR wheel/leg torque, `cmd.len + 0.03 m`, roll-compensated length PD, and optional
+    spring-force subtraction; the off-ground transition remains disabled
   - Normal and Spin map the Function-owned continuous yaw/yaw-rate command directly; the observed
     LQR yaw state uses `ahrs::message::total_yaw`
-  - Spin/Offground/Jump currently keep safe-relax placeholder output
+  - Spin currently reuses Normal; Offground and Jump keep safe-relax placeholder output
 - `control_entry`
-  - same-cycle composition, direct input reads, fixed configured `dt`, actuator gate, and one
-    commit
+  - reads latest command, keeps same-cycle high-frequency composition, uses fixed configured `dt`,
+    applies the actuator gate, performs one commit, and publishes post-reset chassis feedback
 
 No dynamic memory, new controller interface hierarchy, factory, direct CAN call, or motor-manager
 call was added to the math/control objects. `leg_controller` reuses the existing `motors::api`; it
@@ -231,12 +249,13 @@ It owns:
 - LQR length range/resolution
 - leg and roll PID values
 - singularity thresholds
-- fixed `dt`, control-thread priority, and actuation gate
+- fixed `dt`, Control/Function thread priorities, and actuation gate
 
 The 40x6 runtime LQR table remains only in `control/include/lqr_coeffs.hpp` and is generated from
 `parallel_leg_lqr/`; no preview-header copy remains in the generator directory. Structural constants
 such as vector dimensions, matrix indices, zero, one, and pi remain in algorithm code.
 
+`Function` retains `const command_config&` to the live non-const `g_command_config` Watch object.
 `link_solver` and `leg_controller` retain only `const leg_config&`. `ChassisController` retains
 `const chassis_config&` so state logic can read chassis-owned targets such as `cmd.min_len`; it
 also copies the LQR configuration and constructs its roll PID.
@@ -245,9 +264,9 @@ solve path for the existing support-force calculation. `runtime_config::dt` is f
 and is passed through Function, Odometry, leg_controller, and link_solver without runtime range
 validation.
 
-ThreadX is configured for 1000 ticks/s. The control thread uses the configured `0.001 s` step and
-sleeps one tick after each cycle. Control does not use DWT for cycle timing and has no
-application-level release deadline or period-conversion state.
+ThreadX is configured for 1000 ticks/s. The Control and Function threads both use the configured
+`0.001 s` step and sleep one tick after each cycle. Control does not use DWT for cycle timing and
+has no application-level release deadline or period-conversion state.
 
 LK torque constants and gear behavior stay in the motor driver; AHRS installation offset stays in
 the AHRS default config; motor CAN IDs stay in generated `robot_config.hpp`. The four hardware-
@@ -340,12 +359,12 @@ Do not invent or silently choose these values.
     - Target leg pose to joint angles remains intentionally unimplemented.
 
 13. **Actuation gate**
-    - Keep `runtime.actuation_enabled=false` until geometry, units, zero positions, signs, and
-      captured-data comparisons are reviewed together.
+    - `runtime.actuation_enabled` is currently `true`. Restore the gate to `false` unless geometry,
+      units, zero positions, signs, and captured-data comparisons have been reviewed together.
 
 ## Verification
 
-Latest completed checks after connecting the parallel-leg LQR generator:
+Latest completed checks after moving Function into its own latest-value task:
 
 ```text
 cmake --build --preset Debug --target pnx_embedded --clean-first --parallel 4
@@ -353,11 +372,11 @@ cmake --build --preset Release --target pnx_embedded --parallel 4
 ```
 
 - Debug and Release both link successfully.
-- Debug uses 77,064 B DTCM and 197,616 B flash.
-- Release uses 77,008 B DTCM and 100,032 B flash.
+- Debug uses 79,072 B DTCM and 197,516 B flash.
+- Release uses 79,016 B DTCM and 100,092 B flash.
 - The generator writes the only coefficient header directly to
-  `control/include/lqr_coeffs.hpp`: 484 samples, max absolute fit error `0.26849856`, RMS error
-  `0.0337392739`, and worst exact-grid closed-loop max real eigenvalue `-0.691231099`.
+  `control/include/lqr_coeffs.hpp`: 484 samples, max absolute fit error `0.266341151`, RMS error
+  `0.0353841236`, and worst exact-grid closed-loop max real eigenvalue `-0.698537529`.
 - `chassis_state` declarations and switch cases are synchronized. The only declared states are
   Relax, Normal, Spin, Offground, and Jump.
 - `command_action`, `command_event`, `fsm_input`, `fsm_output`, `function_feedback`,
@@ -368,7 +387,8 @@ cmake --build --preset Release --target pnx_embedded --parallel 4
 - Duplicate `joint_state.valid`, `joint_torque.valid`, `motor_fdb_frame.valid`,
   `odometry_state.valid`, `reachable`, and `near_singularity` states were removed.
 - No dynamic allocation was added under `control/`.
-- No staged internal-control topic chain remains.
+- The only cross-thread Control topics are `chassis_command` and the lightweight
+  `chassis_feedback`; no Odometry/leg/LQR/VMC topic chain was introduced.
 - The former C-linkage task telemetry remains removed. Debug builds expose only
   `wbr::control_debug_data`, populated directly by the existing control thread.
 - Control-layer motor sign configuration uses `leg_dir`, `motor_dir_config`, and
@@ -383,8 +403,16 @@ cmake --build --preset Release --target pnx_embedded --parallel 4
 - At `phi1=1.3`, `phi4=0.3`, and `delta=1e-4 rad`, central differences for the spring model's
   `dphi2/dphi1` and `dphi2/dphi4` matched the `sin(phi2 - phi3)` analytic expressions within
   `1.1e-9`.
-- There is no `wbr_input` thread, input stack, shared input snapshot, or input mutex. `wbr_control`
-  directly reads the module-owned AHRS/remoter topics.
+- `wbr_function` is the only caller of `Function` and the only direct consumer of the module-owned
+  remoter topic. `wbr_control` reads AHRS and `chassis_command` directly; no shared input mutex or
+  synchronization barrier was added.
+- Before the first published command, `wbr_control` keeps its local command explicitly invalid and
+  Relax. Function publishes every loop and retains its last command/config state between updates.
+- Relax keeps the existing per-cycle Odometry reset. Control publishes feedback after that reset,
+  and Function synchronizes both maintained references to the resulting `x` and current
+  `total_yaw`.
+- Normal sends `ctx.cmd.len + leg_len_bias` to the two live length PID objects, so manual Function
+  leg-length updates now affect control.
 - Only Control accesses the two leg objects.
 - A normal cycle contains one LK `send_control()`.
 - `git diff --check` passes. No `clang-format` executable is available in the current environment,
