@@ -11,12 +11,10 @@
 namespace wbr
 {
 
-command_config g_command_config{k_default_control.chassis.cmd};
-
 namespace
 {
 
-Function function{g_command_config};
+Function function{k_default_control.chassis.cmd};
 
 TX_THREAD function_thread{};
 alignas(8) std::uint8_t function_stack[2048]{};

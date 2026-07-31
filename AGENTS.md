@@ -59,8 +59,6 @@ hardware-validated.
 - `control_task.cpp` also exposes the global `g_control_tuning` Watch entry. Its three pointers
   refer directly to the two live leg-length PID objects and the live chassis Roll PID; there is no
   parameter copy, `volatile` tuning object, or per-cycle tuning synchronization.
-- `function_task.cpp` exposes the non-const `g_command_config` Watch object. The live `Function`
-  holds a const reference to this object, so debugger edits affect subsequent command updates.
 - `k_default_control.chassis.runtime.actuation_enabled` is currently `true`; a valid non-Relax
   control cycle can therefore write active motor commands.
 
@@ -107,7 +105,7 @@ parallel_leg_lqr/
 control/include/function.hpp + control/src/function.cpp
     Function remote-command logic
 control/include/function_task.hpp + control/src/function_task.cpp
-    Function thread, live command tuning, remote/feedback subscriptions, and command publication
+    Function thread, remote/feedback subscriptions, and command publication
 control/include/chassis.hpp + control/src/chassis.cpp
     chassis_state/jump_stage and the single visible state switch
 control/include/control_debug.hpp
@@ -139,7 +137,7 @@ remain together in `wbr_control`; AHRS and remoter keep their module-owned threa
 
 - `Function`
   - the single live object is owned and called only by `wbr_function`
-  - reads the live non-const `g_command_config` through a const reference
+  - reads `k_default_control.chassis.cmd` through a const reference
   - nested left/right switch interpretation
   - one-update control-switch transition behavior
   - right-switch jump request mapping
@@ -255,7 +253,7 @@ The 40x6 runtime LQR table remains only in `control/include/lqr_coeffs.hpp` and 
 `parallel_leg_lqr/`; no preview-header copy remains in the generator directory. Structural constants
 such as vector dimensions, matrix indices, zero, one, and pi remain in algorithm code.
 
-`Function` retains `const command_config&` to the live non-const `g_command_config` Watch object.
+`Function` retains `const command_config&` to `k_default_control.chassis.cmd`.
 `link_solver` and `leg_controller` retain only `const leg_config&`. `ChassisController` retains
 `const chassis_config&` so state logic can read chassis-owned targets such as `cmd.min_len`; it
 also copies the LQR configuration and constructs its roll PID.
@@ -372,8 +370,8 @@ cmake --build --preset Release --target pnx_embedded --parallel 4
 ```
 
 - Debug and Release both link successfully.
-- Debug uses 79,072 B DTCM and 197,516 B flash.
-- Release uses 79,016 B DTCM and 100,092 B flash.
+- Debug uses 79,032 B DTCM and 197,492 B flash.
+- Release uses 78,968 B DTCM and 100,068 B flash.
 - The generator writes the only coefficient header directly to
   `control/include/lqr_coeffs.hpp`: 484 samples, max absolute fit error `0.266341151`, RMS error
   `0.0353841236`, and worst exact-grid closed-loop max real eigenvalue `-0.698537529`.
