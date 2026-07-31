@@ -184,7 +184,13 @@ remain together in `wbr_control`; AHRS and remoter keep their module-owned threa
     spring-force subtraction; the off-ground transition remains disabled
   - Normal and Spin map the Function-owned continuous yaw/yaw-rate command directly; the observed
     LQR yaw state uses `ahrs::message::total_yaw`
-  - Spin currently reuses Normal; Offground and Jump keep safe-relax placeholder output
+  - Spin currently reuses Normal; the ordinary Offground state keeps safe-relax placeholder output
+  - Jump migrates the `wbr_2026` V0.1 Prepared/trigger behavior into the existing state switch:
+    Prepared arms once, then `EXTENDING -> INAIR -> LANDING` advances from current leg length and
+    combined support feedback
+  - V0.1 jump actuation retains the `+400 N` extension and `-200 N` retraction overrides, 20 N
+    support threshold, sparse off-ground LQR, zero wheel output, 0.27 m off-ground length target,
+    and off-ground Odometry reset
 - `control_entry`
   - reads latest command, keeps same-cycle high-frequency composition, uses fixed configured `dt`,
     applies the actuator gate, performs one commit, and publishes post-reset chassis feedback
@@ -208,7 +214,11 @@ RELAX
 
 NORMAL
     -> SPIN for a Spin command
-    -> OFFGROUND when combined support force is below 20 N
+    -> JUMP after a Jump-Prepared command arms the controller and a Jump trigger follows
+
+JUMP
+    -> NORMAL when the command is released/changed
+    -> NORMAL after LANDING observes combined support force above 20 N
 ```
 
 `RECOVER`, `FLATTEN`, `NEUTRAL`, and `GOSTAIR` are not declared states. They were removed because
@@ -218,11 +228,11 @@ the active `wbr_2026` branch does not provide validated behavior for them.
 
 | State | Current implementation |
 | --- | --- |
-| Relax | Resets both legs, requests odometry/position-hold reset, keeps safe relaxed output, and routes valid Normal/Jump/Spin commands |
+| Relax | Requests odometry/position-hold reset, keeps safe relaxed output, and routes valid Normal/Jump/Spin commands |
 | Normal | Active 10-state LQR, roll-compensated length PD, spring-force subtraction, and wheel/leg outputs |
-| Spin | Safe-relax placeholder; observed/reference scaffolding only |
+| Spin | Reuses Normal control with the Function-owned spin yaw command |
 | Offground | Safe-relax placeholder; observed/reference scaffolding only |
-| Jump | Safe-relax placeholder |
+| Jump | Active V0.1 extension, in-air/retraction, off-ground, and landing sequence |
 
 ## Central parameter source
 
@@ -244,6 +254,7 @@ It owns:
 - hip/wheel torque limits
 - leg directions, wheel directions, and four LK8016 raw encoder zero points
 - command scales/slopes/reference limits
+- V0.1 jump lengths, transition thresholds, force overrides, and support threshold
 - LQR length range/resolution
 - leg and roll PID values
 - singularity thresholds
@@ -285,10 +296,10 @@ the unchanged LK driver `offset` fields before motor registration.
   command produces RELAX through the current-cycle `control_ok` value.
 - The actuator writer directly clamps both wheel requests to `chassis_config::max_wheel_tau`;
   the native motor layer owns torque-to-current conversion.
-- Unimplemented motion states return safe-relax output.
+- The unimplemented ordinary Offground state returns safe-relax output.
 - `ChassisController` never accesses CAN, a motor manager, or commit.
 - Power limiting has one explicit insertion point after VMC and before motor buffers.
-- The actuation gate remains false.
+- The actuation gate is currently true.
 
 ## Unresolved blockers
 
@@ -360,9 +371,15 @@ Do not invent or silently choose these values.
     - `runtime.actuation_enabled` is currently `true`. Restore the gate to `false` unless geometry,
       units, zero positions, signs, and captured-data comparisons have been reviewed together.
 
+14. **V0.1 jump applicability**
+    - The migrated sequence intentionally retains the old `+400 N` extension, `-200 N` retraction,
+      `0.32/0.14 m` length transitions, `20 N` support threshold, and `0.27 m` off-ground target.
+    - These values now run through the current parallel-leg model, LK driver, support-force estimate,
+      and torque limits. Validate them with restrained low-energy tests before an unrestricted jump.
+
 ## Verification
 
-Latest completed checks after moving Function into its own latest-value task:
+Latest completed checks after migrating the `wbr_2026` V0.1 jump sequence:
 
 ```text
 cmake --build --preset Debug --target pnx_embedded --clean-first --parallel 4
@@ -370,8 +387,8 @@ cmake --build --preset Release --target pnx_embedded --parallel 4
 ```
 
 - Debug and Release both link successfully.
-- Debug uses 79,032 B DTCM and 197,492 B flash.
-- Release uses 78,968 B DTCM and 100,068 B flash.
+- Debug uses 79,064 B DTCM and 198,596 B flash.
+- Release uses 79,008 B DTCM and 100,892 B flash.
 - The generator writes the only coefficient header directly to
   `control/include/lqr_coeffs.hpp`: 484 samples, max absolute fit error `0.266341151`, RMS error
   `0.0353841236`, and worst exact-grid closed-loop max real eigenvalue `-0.698537529`.
@@ -411,6 +428,10 @@ cmake --build --preset Release --target pnx_embedded --parallel 4
   `total_yaw`.
 - Normal sends `ctx.cmd.len + leg_len_bias` to the two live length PID objects, so manual Function
   leg-length updates now affect control.
+- Jump requires a Prepared command before the trigger, advances through `EXTENDING`, `INAIR`, and
+  `LANDING` inside `ChassisController`, and exposes the current stage in the Debug Watch snapshot.
+- The jump off-ground branch selects sparse LQR gains, zeros wheel output, targets 0.27 m leg
+  length, and requests the existing Odometry reset without adding another task or message topic.
 - Only Control accesses the two leg objects.
 - A normal cycle contains one LK `send_control()`.
 - `git diff --check` passes. No `clang-format` executable is available in the current environment,
