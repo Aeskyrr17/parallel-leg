@@ -120,10 +120,7 @@ void ChassisController::step_normal(const chassis_context& ctx, chassis_output& 
     roll_pd_.update(ctx.ins.gyro_r);
 
     out = {};
-    // const float len_ref =
-    //     math::clamp(ctx.cmd.len, cfg_.cmd.min_len, cfg_.cmd.max_len) +
-    //     cfg_.state.leg_len_bias;
-    const float len_ref = cfg_.cmd.normal_len + cfg_.state.leg_len_bias;
+    const float len_ref = ctx.cmd.len + cfg_.state.leg_len_bias;
     out.left_target.F = ctx.left.len_control(len_ref + roll_pd_.result) - left.Fs;
     out.right_target.F = ctx.right.len_control(len_ref - roll_pd_.result) - right.Fs;
     // out.left_target.F = ctx.left.len_control(len_ref);
