@@ -84,6 +84,21 @@ struct state_config
     float leg_len_bias = 0.03f;
 };
 
+struct jump_config
+{
+    // wbr_2026 V0.1 jump values: m, N.
+    float extend_len = 0.370f;
+    float retract_len = 0.140f;
+    float offground_len = 0.270f;
+
+    float extend_done_len = 0.320f;
+    float retract_done_len = 0.140f;
+    float support_force = 20.0f;
+
+    float extend_force = 400.0f;
+    float retract_force = -200.0f;
+};
+
 struct leg_config
 {
     ::control::pid len_pid{4000.0f, 0.0f, -120.0f, 200.0f, 0.0f,
@@ -122,6 +137,7 @@ struct chassis_config
     joint_offset_config joint_offset{};
     lqr_config lqr{};
     state_config state{};
+    jump_config jump{};
 
     //在relax状态下读到的roll和pitch角度偏差
     float roll_offset = 0.002;

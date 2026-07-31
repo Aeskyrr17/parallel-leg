@@ -60,6 +60,7 @@ public:
 
     chassis_output step(const chassis_context& ctx);
     chassis_state state() const { return state_; }
+    jump_stage jump_state() const { return jump_stage_; }
 
     ::control::pid& roll_pid_for_tuning() noexcept { return roll_pd_; }
 
@@ -87,6 +88,7 @@ private:
 
     chassis_state state_ = chassis_state::RELAX;
     jump_stage jump_stage_ = jump_stage::DONT;
+    bool jump_armed_ = false;
 };
 
 } // namespace wbr

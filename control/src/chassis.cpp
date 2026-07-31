@@ -63,6 +63,7 @@ void ChassisController::reset()
 {
     state_ = chassis_state::RELAX;
     jump_stage_ = jump_stage::DONT;
+    jump_armed_ = false;
 
     roll_pd_.clear();
 }
@@ -84,6 +85,7 @@ void ChassisController::step_relax(const chassis_context& ctx, chassis_output& o
     out = {};
     out.relax = true;
     out.reset_odom = true;
+    jump_armed_ = false;
 
     // ctx.left.reset();
     // ctx.right.reset();
@@ -138,6 +140,24 @@ void ChassisController::step_normal(const chassis_context& ctx, chassis_output& 
         transition_to(chassis_state::SPIN);
     }
 
+    if (ctx.cmd.mode == command_mode::jump)
+    {
+        if (ctx.cmd.jump == jump_command::none)
+        {
+            jump_armed_ = true;
+        }
+        else if (ctx.cmd.jump == jump_command::extending && jump_armed_)
+        {
+            jump_armed_ = false;
+            transition_jump_to(jump_stage::EXTENDING);
+            transition_to(chassis_state::JUMP);
+        }
+    }
+    else
+    {
+        jump_armed_ = false;
+    }
+
     // if (left.N + right.N < cfg_.state.offground_support_force)
     // {
     //     transition_to(chassis_state::OFFGROUND);
@@ -168,10 +188,85 @@ void ChassisController::step_spin(const chassis_context& ctx, chassis_output& ou
 
 void ChassisController::step_jump(const chassis_context& ctx, chassis_output& out)
 {
-    (void)ctx;
+    if (ctx.cmd.mode != command_mode::jump || ctx.cmd.jump != jump_command::extending ||
+        jump_stage_ == jump_stage::DONT)
+    {
+        transition_jump_to(jump_stage::DONT);
+        transition_to(chassis_state::NORMAL);
+        step_normal(ctx, out);
+        return;
+    }
+
+    const link_state& left = ctx.left.link();
+    const link_state& right = ctx.right.link();
+    const float support_force = left.N + right.N;
+    const bool offground = support_force < cfg_.jump.support_force;
+
+    const lqr_state obs = build_obs(ctx);
+    const lqr_state ref = offground ? build_offground_ref(ctx) : build_normal_ref(ctx);
+    const bool use_offground_lqr = offground || jump_stage_ == jump_stage::INAIR;
+    const lqr_output lqr =
+        lqr_.solve(left.len, right.len, use_offground_lqr, obs, ref);
+
+    roll_pd_.ref = ctx.cmd.roll;
+    roll_pd_.fdb = ctx.ins.roll;
+    roll_pd_.update(ctx.ins.gyro_r);
+
+    float command_len = cfg_.cmd.normal_len;
+    if (jump_stage_ == jump_stage::EXTENDING)
+    {
+        command_len = cfg_.jump.extend_len;
+    }
+    else if (jump_stage_ == jump_stage::INAIR)
+    {
+        command_len = cfg_.jump.retract_len;
+    }
 
     out = {};
-    out.relax = true;
+    if (offground)
+    {
+        out.left_target.F = ctx.left.len_control(cfg_.jump.offground_len) - left.Fs;
+        out.right_target.F = ctx.right.len_control(cfg_.jump.offground_len) - right.Fs;
+        out.reset_odom = true;
+    }
+    else
+    {
+        const float len_ref = command_len + cfg_.state.leg_len_bias;
+        out.left_target.F = ctx.left.len_control(len_ref + roll_pd_.result) - left.Fs;
+        out.right_target.F = ctx.right.len_control(len_ref - roll_pd_.result) - right.Fs;
+
+        if (jump_stage_ == jump_stage::EXTENDING)
+        {
+            out.left_target.F = cfg_.jump.extend_force;
+            out.right_target.F = cfg_.jump.extend_force;
+        }
+        else if (jump_stage_ == jump_stage::INAIR)
+        {
+            out.left_target.F = cfg_.jump.retract_force;
+            out.right_target.F = cfg_.jump.retract_force;
+        }
+    }
+
+    out.left_target.Tp = lqr.tau_l_l;
+    out.right_target.Tp = lqr.tau_l_r;
+    out.tau_w_l = lqr.tau_w_l;
+    out.tau_w_r = lqr.tau_w_r;
+    out.relax = false;
+
+    const float average_len = 0.5f * (left.len + right.len);
+    if (jump_stage_ == jump_stage::EXTENDING && average_len > cfg_.jump.extend_done_len)
+    {
+        transition_jump_to(jump_stage::INAIR);
+    }
+    else if (jump_stage_ == jump_stage::INAIR && average_len < cfg_.jump.retract_done_len)
+    {
+        transition_jump_to(jump_stage::LANDING);
+    }
+    else if (jump_stage_ == jump_stage::LANDING && support_force > cfg_.jump.support_force)
+    {
+        transition_jump_to(jump_stage::DONT);
+        transition_to(chassis_state::NORMAL);
+    }
 }
 
 lqr_state ChassisController::build_obs(const chassis_context& ctx) const
@@ -227,6 +322,14 @@ lqr_state ChassisController::build_offground_ref(const chassis_context& ctx) con
     ref.dx = obs.dx;
     ref.phi = obs.phi;
     ref.dphi = obs.dphi;
+
+    ref.theta_l_l = obs.theta_b;
+    ref.dtheta_l_l = 0.0f;
+    ref.theta_l_r = obs.theta_b;
+    ref.dtheta_l_r = 0.0f;
+
+    ref.theta_b = obs.theta_b;
+    ref.dtheta_b = obs.dtheta_b;
 
     return ref;
 }

@@ -281,6 +281,7 @@ void update_control_debug(float dt, const ahrs::message& attitude,
     debug.motor_torque[5] = right_wheel.cmd.torque;
 
     debug.state = chassis.state();
+    debug.jump = chassis.jump_state();
     debug.input_valid = input_ok;
     debug.output_valid = output_ok;
     debug.actuation_enabled = chassis_cfg.runtime.actuation_enabled;
