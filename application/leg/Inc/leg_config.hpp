@@ -6,6 +6,15 @@
 namespace app::leg_config
 {
 
+namespace feature
+{
+// Temporarily disabled during chassis bring-up. Keep the implementation in
+// place so each feature can be restored independently after basic control is
+// verified.
+inline constexpr bool jump = false;
+inline constexpr bool off_ground_detection = false;
+} // namespace feature
+
 // Mechanical geometry, in metres.
 inline constexpr float vmc_link_1_length_m = 0.150f;
 inline constexpr float vmc_link_2_length_m = 0.270f;

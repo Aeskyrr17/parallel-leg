@@ -1,6 +1,7 @@
 #include "leg_tasks.hpp"
 
 #include "constrain.hpp"
+#include "leg_debug.hpp"
 #include "msg.hpp"
 #include "tx_api.h"
 
@@ -265,9 +266,17 @@ leg_messages::command command_interpreter::update(
             apply_manual_mode(remote, command);
             break;
         case ::remoter::sw_state::mid:
+            if constexpr (!leg_config::feature::jump)
+            {
+                return stop_command(odometry, tick);
+            }
             apply_jump_ready_mode(remote, command);
             break;
         case ::remoter::sw_state::up:
+            if constexpr (!leg_config::feature::jump)
+            {
+                return stop_command(odometry, tick);
+            }
             apply_jump_mode(solver, command);
             hold_position = true;
             break;
@@ -308,6 +317,10 @@ namespace control_task
         const auto tick = static_cast<std::uint32_t>(tx_time_get());
         const leg_messages::command command = interpreter.update(remote, solver, odometry, tick);
         (void)msg::publish(command_topic, command);
+
+        leg_debug_remoter = remote;
+        leg_debug_command = command;
+        ++leg_debug_control_heartbeat;
 
         tx_thread_sleep(leg_config::control_task_thread::period_ticks);
     }

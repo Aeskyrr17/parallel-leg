@@ -1,6 +1,7 @@
 #include "leg_tasks.hpp"
 
 #include "ahrs.hpp"
+#include "leg_debug.hpp"
 #include "lqr.hpp"
 #include "msg.hpp"
 #include "pid.hpp"
@@ -72,8 +73,10 @@ namespace pendulum_task
         else
         {
             const bool off_ground =
+                leg_config::feature::off_ground_detection &&
                 solver.support_force_n < leg_config::off_ground_force_threshold_n;
             const bool airborne =
+                leg_config::feature::jump &&
                 command.jump_status == leg_messages::jump_state::airborne;
 
             const lqr::state observed{
@@ -131,7 +134,8 @@ namespace pendulum_task
                 target.left_leg_force_n = left_leg_length_pid.result;
                 target.right_leg_force_n = right_leg_length_pid.result;
 
-                if (command.jump_status == leg_messages::jump_state::extending)
+                if (leg_config::feature::jump &&
+                    command.jump_status == leg_messages::jump_state::extending)
                 {
                     target.left_leg_force_n = jump_extending_force_n;
                     target.right_leg_force_n = jump_extending_force_n;
@@ -184,6 +188,9 @@ namespace pendulum_task
         }
 
         (void)msg::publish(control_target_topic, target);
+        leg_debug_imu = attitude;
+        leg_debug_control_target = target;
+        ++leg_debug_pendulum_heartbeat;
         tx_thread_sleep(leg_config::control_thread::period_ticks);
     }
 }

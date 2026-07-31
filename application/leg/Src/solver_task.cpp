@@ -3,6 +3,7 @@
 #include "ahrs.hpp"
 #include "constants.hpp"
 #include "constrain.hpp"
+#include "leg_debug.hpp"
 #include "leg_system.hpp"
 #include "lkmotorhandler.hpp"
 #include "msg.hpp"
@@ -261,7 +262,8 @@ namespace solver_task
                     previous_right_length_velocity =
                         feedback.right_leg_length_velocity_mps;
 
-                    if (feedback.support_force_n <
+                    if (leg_config::feature::off_ground_detection &&
+                        feedback.support_force_n <
                         leg_config::off_ground_force_threshold_n)
                     {
                         odometry_filter.reset();
@@ -341,6 +343,10 @@ namespace solver_task
         {
             relax_all(robot);
         }
+
+        leg_debug_solver_feedback = feedback;
+        leg_debug_odometry = odometry_data;
+        ++leg_debug_solver_heartbeat;
 
         motor_handler.send_control();
         tx_thread_sleep(leg_config::solver_thread::period_ticks);
