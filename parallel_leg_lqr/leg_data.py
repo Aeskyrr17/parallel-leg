@@ -100,8 +100,8 @@ L_STEP = 0.01
 
 Q_DIAG = np.array(
     [
-        100.0,  # x
-        8.0,   # dx
+        300.0,  # x
+        12.0,   # dx
         400.0,   # yaw
         80.0,   # dyaw
         1200.0,   # theta_l_l

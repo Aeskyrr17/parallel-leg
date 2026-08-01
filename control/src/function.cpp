@@ -51,7 +51,7 @@ const chassis_command& Function::update(const remoter::state& remote, float odom
                 cmd_.v = vel_updater_.update(remote.left_y * cfg_.vel_scale);
                 cmd_.roll = 0.0f;
                 cmd_.len =
-                    math::clamp(cmd_.len + remote.left_x * cfg_.manual_len_rate * dt,
+                    math::clamp(cmd_.len + remote.right_y * cfg_.manual_len_rate * dt,
                                 cfg_.min_len, cfg_.max_len);
                 cmd_.w = 0.0f;
                 break;
@@ -135,7 +135,8 @@ bool Function::is_transition(remoter::sw_state prev, remoter::sw_state current)
 void Function::update_position(bool spin, float odom_x, float odom_v, float dt)
 {
     const bool stopped = std::fabs(cmd_.v) < cfg_.stationary_vel &&
-                         std::fabs(cmd_.v - odom_v) < cfg_.stationary_vel_error;
+                        //  std::fabs(cmd_.v - odom_v) < cfg_.stationary_vel_error;
+                        std::fabs(odom_v) < cfg_.stationary_vel_error; //! ? 
     if (stopped || spin)
     {
         if (!maintaining_x_)

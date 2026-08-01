@@ -19,13 +19,13 @@ struct command_config
     float yaw_slope_rate = 10.0f;
 
     // m/s, m.
-    float manual_len_rate = 0.8f;
+    float manual_len_rate = 0.2f;
     float min_len = 0.14f;
     float max_len = 0.34f;
-    float normal_len = 0.17f;
+    float normal_len = 0.20f;
 
-    float stationary_vel = 0.002f;
-    float stationary_vel_error = 0.3f;
+    float stationary_vel = 0.008f;
+    float stationary_vel_error = 0.5f;
 };
 
 struct runtime_config
@@ -88,8 +88,8 @@ struct jump_config
 {
     // wbr_2026 V0.1 jump values: m, N.
     float extend_len = 0.370f;
-    float retract_len = 0.140f;
-    float offground_len = 0.270f;
+    float retract_len = 0.170f;
+    float offground_len = 0.300f;
 
     float extend_done_len = 0.320f;
     float retract_done_len = 0.140f;
@@ -103,6 +103,7 @@ struct leg_config
 {
     ::control::pid len_pid{4000.0f, 0.0f, -120.0f, 200.0f, 0.0f,
                            ::control::pid_mode::delta};
+
     float max_hip_tau = 40.0f;
 
     // wbr_2026 five-bar geometry [m].
@@ -122,8 +123,8 @@ struct leg_config
 
 struct chassis_config
 {
-    ::control::pid roll_pid{0.5f, 0.0f, -0.002f, 0.5f, 0.0f,
-                            ::control::pid_mode::delta};
+    ::control::pid roll_pid{0.3f, 0.0f, 1.0f, 0.5f, 0.0f,
+                            ::control::pid_mode::position};
     float max_wheel_tau = 15.0f;
 
     command_config cmd{};

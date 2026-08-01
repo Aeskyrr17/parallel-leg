@@ -210,7 +210,7 @@ void ChassisController::step_jump(const chassis_context& ctx, chassis_output& ou
     roll_pd_.fdb = ctx.ins.roll;
     roll_pd_.update(ctx.ins.gyro_r);
 
-    float command_len = cfg_.cmd.normal_len;
+    float command_len = cfg_.cmd.normal_len - 0.03f;
     if (jump_stage_ == jump_stage::EXTEND_LEGS)
     {
         command_len = cfg_.jump.extend_len;
@@ -240,8 +240,10 @@ void ChassisController::step_jump(const chassis_context& ctx, chassis_output& ou
         }
         else if (jump_stage_ == jump_stage::IN_AIR)
         {
-            out.left_target.F = cfg_.jump.retract_force;
-            out.right_target.F = cfg_.jump.retract_force;
+            // out.left_target.F = cfg_.jump.retract_force;
+            // out.right_target.F = cfg_.jump.retract_force;
+            out.left_target.F = ctx.left.len_control(len_ref + roll_pd_.result) - left.Fs;
+            out.right_target.F = ctx.right.len_control(len_ref - roll_pd_.result) - right.Fs;
         }
     }
 
