@@ -30,14 +30,6 @@ namespace pendulum_task
     auto solver_sub = msg::subscribe<leg_messages::solver_feedback>();
     auto odometry_sub = msg::subscribe<leg_messages::odometry>();
 
-    // Repository PID: kp, ki, kd, max output, max integral output, mode.
-    control::pid left_leg_length_pid(
-        4000.0f, 0.0f, -120.0f, 200.0f, 0.0f,
-        control::pid_mode::delta);
-    control::pid right_leg_length_pid(
-        4000.0f, 0.0f, -120.0f, 200.0f, 0.0f,
-        control::pid_mode::delta);
-    control::pid roll_pid(0.5f, 0.0f, -0.5f, 3.0f, 0.0f);
     lqr lqr_controller;
 
     ::ahrs::message attitude{};

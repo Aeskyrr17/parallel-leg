@@ -58,6 +58,22 @@ struct control_target
     bool valid = false;
 };
 
+struct motor_torque
+{
+    struct value
+    {
+        float target = 0.0f;
+        float fdb = 0.0f;
+    };
+
+    value left_joint_1{};
+    value left_joint_4{};
+    value right_joint_1{};
+    value right_joint_4{};
+    value left_wheel{};
+    value right_wheel{};
+};
+
 struct odometry
 {
     float position_m = 0.0f;
@@ -70,6 +86,7 @@ struct odometry
 static_assert(std::is_trivially_copyable_v<command>);
 static_assert(std::is_trivially_copyable_v<solver_feedback>);
 static_assert(std::is_trivially_copyable_v<control_target>);
+static_assert(std::is_trivially_copyable_v<motor_torque>);
 static_assert(std::is_trivially_copyable_v<odometry>);
 
 } // namespace app::leg_messages

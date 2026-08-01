@@ -283,6 +283,13 @@ namespace solver_task
         (void)msg::publish(solver_feedback_topic, feedback);
         (void)msg::publish(odometry_topic, odometry_data);
 
+        float left_joint_1_torque_nm = 0.0f;
+        float left_joint_4_torque_nm = 0.0f;
+        float right_joint_1_torque_nm = 0.0f;
+        float right_joint_4_torque_nm = 0.0f;
+        float left_wheel_torque_nm = 0.0f;
+        float right_wheel_torque_nm = 0.0f;
+
         if (feedback.valid && control_target_usable(control_target))
         {
             const joint_torque left_torque =
@@ -296,54 +303,63 @@ namespace solver_task
                     control_target.right_leg_torque_nm,
                 });
 
-            left_joint_1.set_torque(
-                directed(
-                    limit_motor_torque(
-                        left_torque.joint_1_nm,
-                        leg_config::max_joint_torque_nm,
-                        left_joint_1),
-                    leg_config::left_joint_1_direction));
-            left_joint_4.set_torque(
-                directed(
-                    limit_motor_torque(
-                        left_torque.joint_4_nm,
-                        leg_config::max_joint_torque_nm,
-                        left_joint_4),
-                    leg_config::left_joint_4_direction));
-            right_joint_1.set_torque(
-                directed(
-                    limit_motor_torque(
-                        right_torque.joint_1_nm,
-                        leg_config::max_joint_torque_nm,
-                        right_joint_1),
-                    leg_config::right_joint_1_direction));
-            right_joint_4.set_torque(
-                directed(
-                    limit_motor_torque(
-                        right_torque.joint_4_nm,
-                        leg_config::max_joint_torque_nm,
-                        right_joint_4),
-                    leg_config::right_joint_4_direction));
-            left_wheel.set_torque(
-                directed(
-                    limit_motor_torque(
-                        control_target.left_wheel_torque_nm,
-                        leg_config::max_wheel_torque_nm,
-                        left_wheel),
-                    leg_config::left_wheel_direction));
-            right_wheel.set_torque(
-                directed(
-                    limit_motor_torque(
-                        control_target.right_wheel_torque_nm,
-                        leg_config::max_wheel_torque_nm,
-                        right_wheel),
-                    leg_config::right_wheel_direction));
+            left_joint_1_torque_nm = directed(
+                limit_motor_torque(
+                    left_torque.joint_1_nm,
+                    leg_config::max_joint_torque_nm,
+                    left_joint_1),
+                leg_config::left_joint_1_direction);
+            left_joint_4_torque_nm = directed(
+                limit_motor_torque(
+                    left_torque.joint_4_nm,
+                    leg_config::max_joint_torque_nm,
+                    left_joint_4),
+                leg_config::left_joint_4_direction);
+            right_joint_1_torque_nm = directed(
+                limit_motor_torque(
+                    right_torque.joint_1_nm,
+                    leg_config::max_joint_torque_nm,
+                    right_joint_1),
+                leg_config::right_joint_1_direction);
+            right_joint_4_torque_nm = directed(
+                limit_motor_torque(
+                    right_torque.joint_4_nm,
+                    leg_config::max_joint_torque_nm,
+                    right_joint_4),
+                leg_config::right_joint_4_direction);
+            left_wheel_torque_nm = directed(
+                limit_motor_torque(
+                    control_target.left_wheel_torque_nm,
+                    leg_config::max_wheel_torque_nm,
+                    left_wheel),
+                leg_config::left_wheel_direction);
+            right_wheel_torque_nm = directed(
+                limit_motor_torque(
+                    control_target.right_wheel_torque_nm,
+                    leg_config::max_wheel_torque_nm,
+                    right_wheel),
+                leg_config::right_wheel_direction);
+
+            left_joint_1.set_torque(left_joint_1_torque_nm);
+            left_joint_4.set_torque(left_joint_4_torque_nm);
+            right_joint_1.set_torque(right_joint_1_torque_nm);
+            right_joint_4.set_torque(right_joint_4_torque_nm);
+            left_wheel.set_torque(left_wheel_torque_nm);
+            right_wheel.set_torque(right_wheel_torque_nm);
         }
         else
         {
             relax_all(robot);
         }
 
+        leg_debug_motor_torque = {
+            {left_joint_1_torque_nm, left_joint_1.get_feedback().torque},
+            {left_joint_4_torque_nm, left_joint_4.get_feedback().torque},
+            {right_joint_1_torque_nm, right_joint_1.get_feedback().torque},
+            {right_joint_4_torque_nm, right_joint_4.get_feedback().torque},
+            {left_wheel_torque_nm, left_wheel.get_feedback().torque},
+            {right_wheel_torque_nm, right_wheel.get_feedback().torque},
+        };
         leg_debug_solver_feedback = feedback;
         leg_debug_odometry = odometry_data;
         ++leg_debug_solver_heartbeat;
