@@ -47,6 +47,7 @@ private:
     float manual_leg_length_m_ = leg_config::normal_leg_length_m;
     float position_target_m_ = 0.0f;
     leg_messages::jump_state jump_state_ = leg_messages::jump_state::idle;
+    bool stopping_position_ = false;
     bool holding_position_ = false;
 };
 

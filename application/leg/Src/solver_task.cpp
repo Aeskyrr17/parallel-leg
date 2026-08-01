@@ -194,16 +194,18 @@ namespace solver_task
 
                 if (odometry_data.valid)
                 {
+                    const float corrected_pitch =
+                        attitude.pitch - leg_config::pitch_zero_offset_rad;
                     feedback.left_leg_length_m =
                         left_vmc.leg_length_m();
                     feedback.right_leg_length_m =
                         right_vmc.leg_length_m();
                     feedback.left_leg_angle_rad =
                         left_vmc.leg_angle_rad() -
-                        0.5f * math::pi + attitude.pitch;
+                        0.5f * math::pi + corrected_pitch;
                     feedback.right_leg_angle_rad =
                         right_vmc.leg_angle_rad() -
-                        0.5f * math::pi + attitude.pitch;
+                        0.5f * math::pi + corrected_pitch;
                     feedback.left_leg_length_velocity_mps =
                         left_velocity.length_mps;
                     feedback.right_leg_length_velocity_mps =

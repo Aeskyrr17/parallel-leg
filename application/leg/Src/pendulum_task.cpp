@@ -31,6 +31,13 @@ namespace pendulum_task
     auto odometry_sub = msg::subscribe<leg_messages::odometry>();
 
     lqr lqr_controller;
+    control::pid right_leg_pid(
+        app::leg_config::pid::leg_length::kp,
+        app::leg_config::pid::leg_length::ki,
+        app::leg_config::pid::leg_length::kd,
+        app::leg_config::pid::leg_length::max_out,
+        app::leg_config::pid::leg_length::max_iout,
+        control::pid_mode::delta);
 
     ::ahrs::message attitude{};
     leg_messages::command command{};
@@ -52,13 +59,19 @@ namespace pendulum_task
         leg_messages::control_target target{};
         target.tick = tick;
 
+        // leg_pid is the single FreeMASTER tuning entry. Keep the right-leg
+        // controller's independent state while sharing the same live gains.
+        right_leg_pid.tune(leg_pid.kp, leg_pid.ki, leg_pid.kd);
+        right_leg_pid.max_out = leg_pid.max_out;
+        right_leg_pid.max_iout = leg_pid.max_iout;
+
         const bool disabled = command.valid && !command.enabled;
         const bool inputs_ready = ahrs_received && command.valid && solver.valid && odometry.valid;
 
         if (disabled || !inputs_ready)
         {
-            left_leg_length_pid.clear();
-            right_leg_length_pid.clear();
+            leg_pid.clear();
+            right_leg_pid.clear();
             roll_pid.clear();
             target.valid = disabled;
         }
@@ -70,6 +83,8 @@ namespace pendulum_task
             const bool airborne =
                 leg_config::feature::jump &&
                 command.jump_status == leg_messages::jump_state::airborne;
+            const float corrected_pitch =
+                attitude.pitch - leg_config::pitch_zero_offset_rad;
 
             const lqr::state observed{
                 odometry.position_m,
@@ -80,7 +95,7 @@ namespace pendulum_task
                 solver.left_leg_angular_velocity_rad_s,
                 solver.right_leg_angle_rad,
                 solver.right_leg_angular_velocity_rad_s,
-                attitude.pitch,
+                corrected_pitch,
                 attitude.gyro_p,
             };
             lqr::state reference{};
@@ -91,16 +106,16 @@ namespace pendulum_task
 
             if (off_ground)
             {
-                left_leg_length_pid.ref = off_ground_leg_length_m;
-                left_leg_length_pid.fdb = solver.left_leg_length_m;
-                left_leg_length_pid.update(solver.left_leg_length_velocity_mps);
+                leg_pid.ref = off_ground_leg_length_m;
+                leg_pid.fdb = solver.left_leg_length_m;
+                leg_pid.update(solver.left_leg_length_velocity_mps);
 
-                right_leg_length_pid.ref = off_ground_leg_length_m;
-                right_leg_length_pid.fdb = solver.right_leg_length_m;
-                right_leg_length_pid.update(solver.right_leg_length_velocity_mps);
+                right_leg_pid.ref = off_ground_leg_length_m;
+                right_leg_pid.fdb = solver.right_leg_length_m;
+                right_leg_pid.update(solver.right_leg_length_velocity_mps);
 
-                target.left_leg_force_n = left_leg_length_pid.result;
-                target.right_leg_force_n = right_leg_length_pid.result;
+                target.left_leg_force_n = leg_pid.result;
+                target.right_leg_force_n = right_leg_pid.result;
 
                 reference[0] = observed[0];
                 reference[1] = observed[1];
@@ -115,16 +130,16 @@ namespace pendulum_task
             {
                 const float base_length = command.leg_length_m + grounded_leg_length_bias_m;
 
-                left_leg_length_pid.ref = base_length + roll_pid.result;
-                left_leg_length_pid.fdb = solver.left_leg_length_m;
-                left_leg_length_pid.update(solver.left_leg_length_velocity_mps);
+                leg_pid.ref = base_length + roll_pid.result;
+                leg_pid.fdb = solver.left_leg_length_m;
+                leg_pid.update(solver.left_leg_length_velocity_mps);
 
-                right_leg_length_pid.ref = base_length - roll_pid.result;
-                right_leg_length_pid.fdb = solver.right_leg_length_m;
-                right_leg_length_pid.update(solver.right_leg_length_velocity_mps);
+                right_leg_pid.ref = base_length - roll_pid.result;
+                right_leg_pid.fdb = solver.right_leg_length_m;
+                right_leg_pid.update(solver.right_leg_length_velocity_mps);
 
-                target.left_leg_force_n = left_leg_length_pid.result;
-                target.right_leg_force_n = right_leg_length_pid.result;
+                target.left_leg_force_n = leg_pid.result;
+                target.right_leg_force_n = right_leg_pid.result;
 
                 if (leg_config::feature::jump &&
                     command.jump_status == leg_messages::jump_state::extending)
@@ -173,8 +188,8 @@ namespace pendulum_task
             {
                 target = {};
                 target.tick = tick;
-                left_leg_length_pid.clear();
-                right_leg_length_pid.clear();
+                leg_pid.clear();
+                right_leg_pid.clear();
                 roll_pid.clear();
             }
         }

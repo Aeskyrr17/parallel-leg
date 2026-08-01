@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ahrs.hpp"
+#include "leg_config.hpp"
 #include "leg_messages.hpp"
 #include "pid.hpp"
 #include "types.hpp"
@@ -25,14 +26,20 @@ LEG_DEBUG_INLINE app::leg_messages::control_target leg_debug_control_target{};
 LEG_DEBUG_INLINE app::leg_messages::odometry leg_debug_odometry{};
 
 // These are the real controllers used by pendulum_task. FreeMASTER writes
-// their members directly, e.g. left_leg_length_pid.kp.
-LEG_DEBUG_INLINE control::pid left_leg_length_pid(
-    4000.0f, 0.0f, -120.0f, 200.0f, 0.0f,
+// their members directly. leg_pid is the common tuning source for both legs.
+LEG_DEBUG_INLINE control::pid leg_pid(
+    app::leg_config::pid::leg_length::kp,
+    app::leg_config::pid::leg_length::ki,
+    app::leg_config::pid::leg_length::kd,
+    app::leg_config::pid::leg_length::max_out,
+    app::leg_config::pid::leg_length::max_iout,
     control::pid_mode::delta);
-LEG_DEBUG_INLINE control::pid right_leg_length_pid(
-    4000.0f, 0.0f, -120.0f, 200.0f, 0.0f,
-    control::pid_mode::delta);
-LEG_DEBUG_INLINE control::pid roll_pid(0.5f, 0.0f, -0.5f, 3.0f, 0.0f);
+LEG_DEBUG_INLINE control::pid roll_pid(
+    app::leg_config::pid::roll::kp,
+    app::leg_config::pid::roll::ki,
+    app::leg_config::pid::roll::kd,
+    app::leg_config::pid::roll::max_out,
+    app::leg_config::pid::roll::max_iout);
 
 // Final torque targets and motor feedback, grouped for external monitoring.
 LEG_DEBUG_INLINE app::leg_messages::motor_torque leg_debug_motor_torque{};

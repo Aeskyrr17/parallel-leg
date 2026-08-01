@@ -31,12 +31,13 @@ inline constexpr std::uint16_t right_wheel_offset = 0U;
 
 inline constexpr float wheel_radius_m = 0.077f;
 inline constexpr float wheel_mass_kg = 1.41f;
+inline constexpr float pitch_zero_offset_rad = -0.02f;
 
 // Leg-length targets and adjustment steps, in metres.
 inline constexpr float min_control_leg_length_m = 0.15f;
 inline constexpr float max_control_leg_length_m = 0.35f;
 inline constexpr float leg_length_resolution_m = 0.01f;
-inline constexpr float normal_leg_length_m = 0.17f;
+inline constexpr float normal_leg_length_m = 0.20f;
 inline constexpr float jump_start_leg_length_m = 0.370f;
 inline constexpr float jump_air_leg_length_m = 0.140f;
 inline constexpr float normal_leg_step_m = 0.001f;
@@ -44,14 +45,15 @@ inline constexpr float jump_leg_step_m = 0.007f;
 
 namespace command
 {
-inline constexpr float max_speed_mps = 2.5f;
-inline constexpr float max_yaw_rate_rad_s = 1.5f;
+inline constexpr float max_speed_mps = 2.25f;
+inline constexpr float max_yaw_rate_rad_s = 1.75f;
 inline constexpr float spin_yaw_rate_rad_s = 3.0f;
-inline constexpr float speed_step_mps = 0.005f;
+inline constexpr float speed_step_mps = 0.004f;
 inline constexpr float yaw_rate_step_rad_s = 0.01f;
-inline constexpr float manual_leg_step_m = 0.0008f;
-inline constexpr float speed_deadband_mps = 0.002f;
+inline constexpr float manual_leg_step_m = 0.0005f;
+inline constexpr float speed_deadband_mps = 0.005f;
 inline constexpr float yaw_rate_deadband_rad_s = 0.0001f;
+inline constexpr float position_lock_velocity_error_mps = 0.03f;
 inline constexpr float jump_extended_threshold_m = 0.32f;
 inline constexpr float jump_retracted_threshold_m = 0.14f;
 } // namespace command
@@ -59,6 +61,29 @@ inline constexpr float jump_retracted_threshold_m = 0.14f;
 // Output torque limits, in N*m.
 inline constexpr float max_joint_torque_nm = 40.0f;
 inline constexpr float max_wheel_torque_nm = 15.0f;
+
+// PID defaults. FreeMASTER can tune the live controller values; change the
+// power-on defaults only here.
+namespace pid
+{
+namespace leg_length
+{
+inline constexpr float kp = 2000.0f;
+inline constexpr float ki = 0.0f;
+inline constexpr float kd = -200.0f;
+inline constexpr float max_out = 200.0f;
+inline constexpr float max_iout = 0.0f;
+} // namespace leg_length
+
+namespace roll
+{
+inline constexpr float kp = 0.5f;
+inline constexpr float ki = 0.0f;
+inline constexpr float kd = 0.5f;
+inline constexpr float max_out = 3.0f;
+inline constexpr float max_iout = 0.0f;
+} // namespace roll
+} // namespace pid
 
 // Signs used to map motor feedback/output into the robot coordinate system.
 inline constexpr std::int8_t left_joint_4_direction = -1;

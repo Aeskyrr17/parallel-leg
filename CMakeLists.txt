@@ -56,6 +56,7 @@ if(PNX_AUTO_GENERATE_LQR)
 
     add_custom_command(
         OUTPUT "${PNX_LQR_STAMP}"
+        BYPRODUCTS "${PNX_LQR_HEADER}"
         COMMAND "${CMAKE_COMMAND}" -E make_directory
                 "${CMAKE_CURRENT_BINARY_DIR}/generated"
         COMMAND "${PNX_MATLAB_EXECUTABLE}" -batch "${PNX_LQR_BATCH_COMMAND}"

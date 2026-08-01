@@ -41,6 +41,7 @@ void command_interpreter::reset() noexcept
     manual_leg_length_m_ = leg_config::normal_leg_length_m;
     position_target_m_ = 0.0f;
     jump_state_ = leg_messages::jump_state::idle;
+    stopping_position_ = false;
     holding_position_ = false;
 }
 
@@ -61,6 +62,8 @@ leg_messages::command command_interpreter::stop_command(
     command.tick = tick;
     command.enabled = false;
     command.valid = true;
+    stopping_position_ = false;
+    holding_position_ = false;
     update_position(command, odometry, true);
     return command;
 }
@@ -88,25 +91,43 @@ void command_interpreter::update_position(leg_messages::command& command,
                                           const leg_messages::odometry& odometry,
                                           bool force_hold) noexcept
 {
-    const bool hold = force_hold ||
-                      std::fabs(command.speed_mps) <
-                          leg_config::command::speed_deadband_mps;
+    const bool command_stopped =
+        std::fabs(command.speed_mps) < leg_config::command::speed_deadband_mps;
+    const bool velocity_matched =
+        std::fabs(command.speed_mps - odometry.velocity_mps) < leg_config::command::position_lock_velocity_error_mps;
 
     if (odometry.valid)
     {
-        if (hold)
+        if (force_hold)
         {
             if (!holding_position_)
             {
                 position_target_m_ = odometry.position_m;
-                holding_position_ = true;
             }
+            stopping_position_ = false;
+            holding_position_ = true;
         }
-        else
+        else if (!command_stopped)
         {
             position_target_m_ = odometry.position_m +
                                  command.speed_mps * leg_config::control_task_thread::period_s;
+            stopping_position_ = false;
             holding_position_ = false;
+        }
+        else if (!holding_position_)
+        {
+            if (!stopping_position_)
+            {
+                position_target_m_ = odometry.position_m;
+                stopping_position_ = true;
+            }
+
+            if (velocity_matched)
+            {
+                position_target_m_ = odometry.position_m;
+                stopping_position_ = false;
+                holding_position_ = true;
+            }
         }
     }
 
