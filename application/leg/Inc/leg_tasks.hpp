@@ -49,6 +49,7 @@ private:
     leg_messages::jump_state jump_state_ = leg_messages::jump_state::idle;
     bool stopping_position_ = false;
     bool holding_position_ = false;
+    bool off_ground_hold_ = false;
 };
 
 namespace control_task

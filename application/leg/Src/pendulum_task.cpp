@@ -1,6 +1,7 @@
 #include "leg_tasks.hpp"
 
 #include "ahrs.hpp"
+#include "constrain.hpp"
 #include "leg_debug.hpp"
 #include "lqr.hpp"
 #include "msg.hpp"
@@ -14,8 +15,6 @@ namespace
 
 constexpr float grounded_leg_length_bias_m = 0.03f;
 constexpr float off_ground_leg_length_m = 0.27f;
-constexpr float jump_extending_force_n = 400.0f;
-constexpr float jump_airborne_force_n = -200.0f;
 
 } // namespace
 
@@ -80,9 +79,16 @@ namespace pendulum_task
             const bool off_ground =
                 leg_config::feature::off_ground_detection &&
                 solver.support_force_n < leg_config::off_ground_force_threshold_n;
+            const bool extending =
+                leg_config::feature::jump &&
+                command.jump_status == leg_messages::jump_state::extending;
             const bool airborne =
                 leg_config::feature::jump &&
                 command.jump_status == leg_messages::jump_state::airborne;
+            const bool landing =
+                leg_config::feature::jump &&
+                command.jump_status == leg_messages::jump_state::landing;
+            const bool air_control = off_ground || airborne || landing;
             const float corrected_pitch =
                 attitude.pitch - leg_config::pitch_zero_offset_rad;
 
@@ -104,7 +110,7 @@ namespace pendulum_task
             roll_pid.fdb = attitude.roll;
             roll_pid.update();
 
-            if (off_ground)
+            if ((off_ground || landing) && !extending && !airborne)
             {
                 leg_pid.ref = off_ground_leg_length_m;
                 leg_pid.fdb = solver.left_leg_length_m;
@@ -128,29 +134,25 @@ namespace pendulum_task
             }
             else
             {
-                const float base_length = command.leg_length_m + grounded_leg_length_bias_m;
+                const float base_length = command.leg_length_m +
+                                          (airborne ? 0.0f : grounded_leg_length_bias_m);
+                const float roll_offset = airborne ? 0.0f : roll_pid.result;
 
-                leg_pid.ref = base_length + roll_pid.result;
+                leg_pid.ref = base_length + roll_offset;
                 leg_pid.fdb = solver.left_leg_length_m;
                 leg_pid.update(solver.left_leg_length_velocity_mps);
 
-                right_leg_pid.ref = base_length - roll_pid.result;
+                right_leg_pid.ref = base_length - roll_offset;
                 right_leg_pid.fdb = solver.right_leg_length_m;
                 right_leg_pid.update(solver.right_leg_length_velocity_mps);
 
                 target.left_leg_force_n = leg_pid.result;
                 target.right_leg_force_n = right_leg_pid.result;
 
-                if (leg_config::feature::jump &&
-                    command.jump_status == leg_messages::jump_state::extending)
+                if (extending)
                 {
-                    target.left_leg_force_n = jump_extending_force_n;
-                    target.right_leg_force_n = jump_extending_force_n;
-                }
-                else if (airborne)
-                {
-                    target.left_leg_force_n = jump_airborne_force_n;
-                    target.right_leg_force_n = jump_airborne_force_n;
+                    target.left_leg_force_n = leg_config::jump::extending_force_n;
+                    target.right_leg_force_n = leg_config::jump::extending_force_n;
                 }
 
                 reference[0] = command.position_m;
@@ -161,6 +163,8 @@ namespace pendulum_task
                          ? 0.0f
                          : command.yaw_rate_rad_s * leg_config::control_thread::period_s);
                 reference[3] = command.yaw_rate_rad_s;
+                reference[4] = leg_config::normal_leg_angle_reference_rad;
+                reference[6] = leg_config::normal_leg_angle_reference_rad;
             }
 
             const lqr::output lqr_output =
@@ -169,18 +173,31 @@ namespace pendulum_task
                     reference,
                     solver.left_leg_length_m,
                     solver.right_leg_length_m,
-                    (off_ground || airborne)
+                    air_control
                         ? lqr::gain_mode::off_ground
                         : lqr::gain_mode::normal);
+
+            float wheel_scale = 1.0f;
+            if (extending)
+            {
+                const float average_leg_length =
+                    0.5f * (solver.left_leg_length_m + solver.right_leg_length_m);
+                wheel_scale = math::clamp(
+                    (leg_config::jump::wheel_off_length_m - average_leg_length) /
+                        (leg_config::jump::wheel_off_length_m -
+                         leg_config::jump::wheel_fade_start_length_m),
+                    0.0f,
+                    1.0f);
+            }
 
             if (lqr_output.valid)
             {
                 target.left_leg_torque_nm = lqr_output.left_leg_torque_nm;
                 target.right_leg_torque_nm = lqr_output.right_leg_torque_nm;
-                if (!off_ground)
+                if (!air_control)
                 {
-                    target.left_wheel_torque_nm = lqr_output.left_wheel_torque_nm;
-                    target.right_wheel_torque_nm = lqr_output.right_wheel_torque_nm;
+                    target.left_wheel_torque_nm = lqr_output.left_wheel_torque_nm * wheel_scale;
+                    target.right_wheel_torque_nm = lqr_output.right_wheel_torque_nm * wheel_scale;
                 }
                 target.valid = true;
             }

@@ -43,6 +43,7 @@ void command_interpreter::reset() noexcept
     jump_state_ = leg_messages::jump_state::idle;
     stopping_position_ = false;
     holding_position_ = false;
+    off_ground_hold_ = false;
 }
 
 leg_messages::command command_interpreter::stop_command(
@@ -64,6 +65,7 @@ leg_messages::command command_interpreter::stop_command(
     command.valid = true;
     stopping_position_ = false;
     holding_position_ = false;
+    off_ground_hold_ = false;
     update_position(command, odometry, true);
     return command;
 }
@@ -140,7 +142,7 @@ void command_interpreter::begin_jump_stage(leg_messages::jump_state stage) noexc
     if (stage == leg_messages::jump_state::extending ||
         stage == leg_messages::jump_state::airborne)
     {
-        leg_length_ramp_.set_path(leg_config::jump_leg_step_m);
+        leg_length_ramp_.set_path(leg_config::jump::leg_step_m);
     }
     else
     {
@@ -188,48 +190,43 @@ void command_interpreter::apply_jump_ready_mode(
     leg_messages::command& command) noexcept
 {
     apply_drive_input(remote, command);
-    manual_leg_length_m_ = leg_config::normal_leg_length_m;
+    manual_leg_length_m_ = leg_config::jump::ready_leg_length_m;
     begin_jump_stage(leg_messages::jump_state::starting);
-    command.leg_length_m = leg_length_ramp_.update(leg_config::normal_leg_length_m);
+    command.leg_length_m = leg_length_ramp_.update(leg_config::jump::ready_leg_length_m);
 }
 
 void command_interpreter::apply_jump_mode(
     const leg_messages::solver_feedback& solver,
     leg_messages::command& command) noexcept
 {
-    speed_ramp_.reset(0.0f);
-    yaw_rate_ramp_.reset(0.0f);
-
     if (solver.valid)
     {
         const float average_leg_length =
             0.5f * (solver.left_leg_length_m + solver.right_leg_length_m);
 
         if (jump_state_ == leg_messages::jump_state::extending &&
-            average_leg_length > leg_config::command::jump_extended_threshold_m)
+            average_leg_length > leg_config::jump::extended_threshold_m)
         {
             begin_jump_stage(leg_messages::jump_state::airborne);
         }
         else if (jump_state_ == leg_messages::jump_state::airborne &&
-                 average_leg_length <
-                     leg_config::command::jump_retracted_threshold_m)
+                 average_leg_length < leg_config::jump::retracted_threshold_m)
         {
             begin_jump_stage(leg_messages::jump_state::landing);
         }
         else if (jump_state_ == leg_messages::jump_state::landing &&
-                 solver.support_force_n >
-                     leg_config::off_ground_force_threshold_n)
+                 solver.support_force_n > leg_config::off_ground_force_threshold_n)
         {
             begin_jump_stage(leg_messages::jump_state::idle);
             leg_length_ramp_.reset(leg_config::normal_leg_length_m);
+            holding_position_ = false;
         }
     }
 
     switch (jump_state_)
     {
     case leg_messages::jump_state::starting:
-        command.leg_length_m =
-            leg_length_ramp_.update(leg_config::normal_leg_length_m);
+        command.leg_length_m = leg_length_ramp_.update(leg_config::jump::ready_leg_length_m);
         if (leg_length_ramp_.reached())
         {
             begin_jump_stage(leg_messages::jump_state::extending);
@@ -237,11 +234,11 @@ void command_interpreter::apply_jump_mode(
         break;
     case leg_messages::jump_state::extending:
         command.leg_length_m =
-            leg_length_ramp_.update(leg_config::jump_start_leg_length_m);
+            leg_length_ramp_.update(leg_config::jump::start_leg_length_m);
         break;
     case leg_messages::jump_state::airborne:
         command.leg_length_m =
-            leg_length_ramp_.update(leg_config::jump_air_leg_length_m);
+            leg_length_ramp_.update(leg_config::jump::air_leg_length_m);
         break;
     case leg_messages::jump_state::landing:
         command.leg_length_m =
@@ -250,6 +247,18 @@ void command_interpreter::apply_jump_mode(
     default:
         command.leg_length_m = leg_config::normal_leg_length_m;
         break;
+    }
+
+    if (jump_state_ == leg_messages::jump_state::starting ||
+        jump_state_ == leg_messages::jump_state::extending)
+    {
+        command.speed_mps = speed_ramp_.value();
+        command.yaw_rate_rad_s = yaw_rate_ramp_.value();
+    }
+    else
+    {
+        speed_ramp_.reset(0.0f);
+        yaw_rate_ramp_.reset(0.0f);
     }
 }
 
@@ -299,7 +308,8 @@ leg_messages::command command_interpreter::update(
                 return stop_command(odometry, tick);
             }
             apply_jump_mode(solver, command);
-            hold_position = true;
+            hold_position = jump_state_ != leg_messages::jump_state::starting &&
+                            jump_state_ != leg_messages::jump_state::extending;
             break;
         default:
             return stop_command(odometry, tick);
@@ -307,6 +317,31 @@ leg_messages::command command_interpreter::update(
         break;
     default:
         return stop_command(odometry, tick);
+    }
+
+    const bool off_ground =
+        leg_config::feature::off_ground_detection && solver.valid &&
+        solver.support_force_n < leg_config::off_ground_force_threshold_n;
+    if (off_ground)
+    {
+        off_ground_hold_ = true;
+        position_target_m_ = 0.0f;
+        holding_position_ = true;
+    }
+    if (off_ground_hold_)
+    {
+        speed_ramp_.reset(0.0f);
+        yaw_rate_ramp_.reset(0.0f);
+        command.speed_mps = 0.0f;
+        command.yaw_rate_rad_s = 0.0f;
+        hold_position = true;
+
+        if (!off_ground &&
+            std::fabs(remote.left_y) < leg_config::command::hold_release_stick_deadband &&
+            std::fabs(remote.left_x) < leg_config::command::hold_release_stick_deadband)
+        {
+            off_ground_hold_ = false;
+        }
     }
 
     command.jump_status = jump_state_;

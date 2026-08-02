@@ -11,8 +11,8 @@ namespace feature
 // Temporarily disabled during chassis bring-up. Keep the implementation in
 // place so each feature can be restored independently after basic control is
 // verified.
-inline constexpr bool jump = false;
-inline constexpr bool off_ground_detection = false;
+inline constexpr bool jump = true;
+inline constexpr bool off_ground_detection = true;
 } // namespace feature
 
 // Mechanical geometry, in metres.
@@ -32,30 +32,40 @@ inline constexpr std::uint16_t right_wheel_offset = 0U;
 inline constexpr float wheel_radius_m = 0.077f;
 inline constexpr float wheel_mass_kg = 1.41f;
 inline constexpr float pitch_zero_offset_rad = -0.02f;
+inline constexpr float normal_leg_angle_reference_rad = -0.016f;
 
 // Leg-length targets and adjustment steps, in metres.
 inline constexpr float min_control_leg_length_m = 0.15f;
 inline constexpr float max_control_leg_length_m = 0.35f;
 inline constexpr float leg_length_resolution_m = 0.01f;
 inline constexpr float normal_leg_length_m = 0.20f;
-inline constexpr float jump_start_leg_length_m = 0.370f;
-inline constexpr float jump_air_leg_length_m = 0.140f;
 inline constexpr float normal_leg_step_m = 0.001f;
-inline constexpr float jump_leg_step_m = 0.007f;
+
+namespace jump
+{
+inline constexpr float ready_leg_length_m = 0.180f;
+inline constexpr float start_leg_length_m = 0.360f;
+inline constexpr float air_leg_length_m = 0.150f;
+inline constexpr float leg_step_m = 0.008f;
+inline constexpr float extended_threshold_m = 0.370f;
+inline constexpr float retracted_threshold_m = 0.150f;
+inline constexpr float wheel_fade_start_length_m = 0.25f;
+inline constexpr float wheel_off_length_m = 0.30f;
+inline constexpr float extending_force_n = 400.0f;
+} // namespace jump
 
 namespace command
 {
-inline constexpr float max_speed_mps = 2.25f;
+inline constexpr float max_speed_mps = 2.5f;
 inline constexpr float max_yaw_rate_rad_s = 1.75f;
-inline constexpr float spin_yaw_rate_rad_s = 3.0f;
+inline constexpr float spin_yaw_rate_rad_s = 5.0f;
 inline constexpr float speed_step_mps = 0.004f;
 inline constexpr float yaw_rate_step_rad_s = 0.01f;
 inline constexpr float manual_leg_step_m = 0.0005f;
 inline constexpr float speed_deadband_mps = 0.005f;
 inline constexpr float yaw_rate_deadband_rad_s = 0.0001f;
 inline constexpr float position_lock_velocity_error_mps = 0.03f;
-inline constexpr float jump_extended_threshold_m = 0.32f;
-inline constexpr float jump_retracted_threshold_m = 0.14f;
+inline constexpr float hold_release_stick_deadband = 0.05f;
 } // namespace command
 
 // Output torque limits, in N*m.
@@ -94,7 +104,7 @@ inline constexpr std::int8_t left_wheel_direction = 1;
 inline constexpr std::int8_t right_wheel_direction = -1;
 
 // The robot is considered off the ground below this total support force.
-inline constexpr float off_ground_force_threshold_n = 20.0f;
+inline constexpr float off_ground_force_threshold_n = 52.5f;
 
 namespace solver_thread
 {
