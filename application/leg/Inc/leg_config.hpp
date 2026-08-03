@@ -58,7 +58,7 @@ namespace command
 {
 inline constexpr float max_speed_mps = 2.5f;
 inline constexpr float max_yaw_rate_rad_s = 1.75f;
-inline constexpr float spin_yaw_rate_rad_s = 5.0f;
+inline constexpr float spin_yaw_rate_rad_s = 6.0f;
 inline constexpr float speed_step_mps = 0.004f;
 inline constexpr float yaw_rate_step_rad_s = 0.01f;
 inline constexpr float manual_leg_step_m = 0.0005f;
