@@ -22,6 +22,11 @@
       "id_type": "standard"
     }
   },
+  "can_diag": {
+    "enabled": true,
+    "sample_period_ms": 1000,
+    "window_size": 60
+  },
   "ahrs": {
     "imu_offset_x": 0.0,
     "imu_thread_priority": 3,

@@ -58,6 +58,12 @@ _pnx_json_bool_to_cmake("${motor_dji}" MOTOR_DJI)
 _pnx_json_bool_to_cmake("${motor_dm}" MOTOR_DM)
 _pnx_json_bool_to_cmake("${motor_lk}" MOTOR_LK)
 
+string(JSON can_diag_enabled ERROR_VARIABLE json_err GET "${params_json}" can_diag enabled)
+if(json_err)
+    set(can_diag_enabled "true")
+endif()
+_pnx_json_bool_to_cmake("${can_diag_enabled}" CAN_DIAG_ENABLED)
+
 # --- params.json: bindings ---
 string(JSON remoter_uart ERROR_VARIABLE json_err GET "${params_json}" bindings remoter_uart)
 if(json_err)
@@ -476,6 +482,18 @@ if(params_usb_body STREQUAL "")
         "  inline constexpr std::uint32_t period_ticks = 2${generated_semicolon_token}\n")
 endif()
 
+set(params_can_diag_body "")
+_pnx_param_uint("can_diag" "sample_period_ms" _line)
+if(_line STREQUAL "")
+    set(_line "  inline constexpr std::uint32_t sample_period_ms = 1000${generated_semicolon_token}\n")
+endif()
+string(APPEND params_can_diag_body "${_line}")
+_pnx_param_uint("can_diag" "window_size" _line)
+if(_line STREQUAL "")
+    set(_line "  inline constexpr std::uint32_t window_size = 60${generated_semicolon_token}\n")
+endif()
+string(APPEND params_can_diag_body "${_line}")
+
 if(MOTOR_DJI)
     set(MOTOR_DJI_C 1)
 else()
@@ -490,6 +508,11 @@ if(MOTOR_LK)
     set(MOTOR_LK_C 1)
 else()
     set(MOTOR_LK_C 0)
+endif()
+if(CAN_DIAG_ENABLED)
+    set(CAN_DIAG_ENABLED_C 1)
+else()
+    set(CAN_DIAG_ENABLED_C 0)
 endif()
 
 file(MAKE_DIRECTORY "${OUT_DIR}")
@@ -520,7 +543,8 @@ file(WRITE "${CONFIG_HPP}"
 "#define HAS_MOTORS ${HAS_MOTORS}\n"
 "#define MOTOR_DJI ${MOTOR_DJI_C}\n"
 "#define MOTOR_DM ${MOTOR_DM_C}\n"
-"#define MOTOR_LK ${MOTOR_LK_C}\n\n"
+"#define MOTOR_LK ${MOTOR_LK_C}\n"
+"#define CAN_DIAG_ENABLED ${CAN_DIAG_ENABLED_C}\n\n"
 "namespace config::feature {\n\n"
 "inline constexpr bool hw_has_usb = ${HW_HAS_USB};\n"
 "inline constexpr bool enable_usbx = ${ENABLE_USBX_C};\n"
@@ -539,7 +563,8 @@ file(WRITE "${CONFIG_HPP}"
 "inline constexpr bool has_motors = ${HAS_MOTORS};\n"
 "inline constexpr bool motor_dji = ${MOTOR_DJI_C};\n"
 "inline constexpr bool motor_dm = ${MOTOR_DM_C};\n"
-"inline constexpr bool motor_lk = ${MOTOR_LK_C};\n\n"
+"inline constexpr bool motor_lk = ${MOTOR_LK_C};\n"
+"inline constexpr bool can_diag = ${CAN_DIAG_ENABLED_C};\n\n"
 "} // namespace config::feature\n\n"
 "namespace bsp {\n"
 "namespace can {\n\n"
@@ -625,7 +650,10 @@ file(WRITE "${CONFIG_HPP}"
 "} // namespace params::test\n\n"
 "namespace params::usb {\n"
 "${params_usb_body}"
-"} // namespace params::usb\n"
+"} // namespace params::usb\n\n"
+"namespace params::can_diag {\n"
+"${params_can_diag_body}"
+"} // namespace params::can_diag\n"
 )
 file(READ "${CONFIG_HPP}" config_hpp_raw)
 string(REPLACE "${generated_semicolon_token}" ";" config_hpp_fixed "${config_hpp_raw}")
