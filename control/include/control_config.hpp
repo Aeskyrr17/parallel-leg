@@ -54,6 +54,13 @@ struct motor_dir_config
     float right_wheel_dir = -1.0f;
 };
 
+struct actuator_config
+{
+    motor_dir_config motor_dir{};
+    float max_hip_tau = 40.0f;
+    float max_wheel_tau = 15.0f;
+};
+
 struct joint_offset_config
 {
     // LK8016 raw encoder zero points.
@@ -101,11 +108,6 @@ struct jump_config
 
 struct leg_config
 {
-    ::control::pid len_pid{4000.0f, 0.0f, -120.0f, 200.0f, 0.0f,
-                           ::control::pid_mode::delta};
-
-    float max_hip_tau = 40.0f;
-
     // wbr_2026 five-bar geometry [m].
     float l1 = 0.150f;
     float l2 = 0.270f;
@@ -121,11 +123,18 @@ struct leg_config
     solver_numerics_config numerics{};
 };
 
+struct leg_control_config
+{
+    ::control::pid len_pid{4000.0f, 0.0f, -120.0f, 200.0f, 0.0f,
+                           ::control::pid_mode::delta};
+};
+
 struct chassis_config
 {
+    leg_control_config leg_control{};
     ::control::pid roll_pid{0.3f, 0.0f, 1.0f, 0.5f, 0.0f,
-                            ::control::pid_mode::position};
-    float max_wheel_tau = 15.0f;
+                             ::control::pid_mode::position};
+    actuator_config actuator{};
 
     command_config cmd{};
     runtime_config runtime{};
@@ -134,7 +143,6 @@ struct chassis_config
     float wheel_side_mass = 1.41f;
     float gravity = 9.78f;
 
-    motor_dir_config motor_dir{};
     joint_offset_config joint_offset{};
     lqr_config lqr{};
     state_config state{};
@@ -145,12 +153,7 @@ struct chassis_config
     float pitch_offset = -0.015;
 };
 
-struct control_config
-{
-    leg_config leg{};
-    chassis_config chassis{};
-};
-
-inline const control_config k_default_control{};
+inline const leg_config k_default_leg{};
+inline const chassis_config k_default_chassis{};
 
 } // namespace wbr

@@ -8,6 +8,8 @@ namespace wbr
 ChassisController::ChassisController(const chassis_config& cfg)
     : cfg_(cfg),
       lqr_(cfg.lqr),
+      left_control_(cfg.leg_control),
+      right_control_(cfg.leg_control),
       roll_pd_(cfg.roll_pid)
 {
     reset();
@@ -64,7 +66,23 @@ void ChassisController::reset()
     state_ = chassis_state::RELAX;
     jump_stage_ = jump_stage::DONT_JUMP;
 
+    left_control_.len_pid.clear();
+    right_control_.len_pid.clear();
     roll_pd_.clear();
+}
+
+float ChassisController::len_control(leg_control_state& control, const link_state& leg,
+                                     float reference)
+{
+    if (!leg.valid)
+    {
+        return 0.0f;
+    }
+
+    control.len_pid.ref = reference;
+    control.len_pid.fdb = leg.len;
+    control.len_pid.update(leg.dlen);
+    return control.len_pid.result;
 }
 
 void ChassisController::transition_to(chassis_state next)
@@ -84,9 +102,6 @@ void ChassisController::step_relax(const chassis_context& ctx, chassis_output& o
     out = {};
     out.relax = true;
     out.reset_odom = true;
-
-    // ctx.left.reset();
-    // ctx.right.reset();
 
     if (!ctx.control_ok)
     {
@@ -109,8 +124,8 @@ void ChassisController::step_relax(const chassis_context& ctx, chassis_output& o
 
 void ChassisController::step_normal(const chassis_context& ctx, chassis_output& out)
 {
-    const link_state& left = ctx.left.link();
-    const link_state& right = ctx.right.link();
+    const link_state& left = ctx.left;
+    const link_state& right = ctx.right;
     const lqr_state obs = build_obs(ctx);
     const lqr_state ref = build_normal_ref(ctx);
     const lqr_output lqr = lqr_.solve(left.len, right.len, false, obs, ref);
@@ -121,10 +136,8 @@ void ChassisController::step_normal(const chassis_context& ctx, chassis_output& 
 
     out = {};
     const float len_ref = ctx.cmd.len + cfg_.state.leg_len_bias;
-    out.left_target.F = ctx.left.len_control(len_ref + roll_pd_.result) - left.Fs;
-    out.right_target.F = ctx.right.len_control(len_ref - roll_pd_.result) - right.Fs;
-    // out.left_target.F = ctx.left.len_control(len_ref);
-    // out.right_target.F = ctx.right.len_control(len_ref);
+    out.left_target.F = len_control(left_control_, left, len_ref + roll_pd_.result) - left.Fs;
+    out.right_target.F = len_control(right_control_, right, len_ref - roll_pd_.result) - right.Fs;
     out.left_target.Tp = lqr.tau_l_l;
     out.right_target.Tp = lqr.tau_l_r;
     out.tau_w_l = lqr.tau_w_l;
@@ -195,8 +208,8 @@ void ChassisController::step_jump(const chassis_context& ctx, chassis_output& ou
         return;
     }
 
-    const link_state& left = ctx.left.link();
-    const link_state& right = ctx.right.link();
+    const link_state& left = ctx.left;
+    const link_state& right = ctx.right;
     const float support_force = left.N + right.N;
     const bool offground = support_force < cfg_.jump.support_force;
 
@@ -223,15 +236,17 @@ void ChassisController::step_jump(const chassis_context& ctx, chassis_output& ou
     out = {};
     if (offground)
     {
-        out.left_target.F = ctx.left.len_control(cfg_.jump.offground_len) - left.Fs;
-        out.right_target.F = ctx.right.len_control(cfg_.jump.offground_len) - right.Fs;
+        out.left_target.F = len_control(left_control_, left, cfg_.jump.offground_len) - left.Fs;
+        out.right_target.F = len_control(right_control_, right, cfg_.jump.offground_len) - right.Fs;
         out.reset_odom = true;
     }
     else
     {
         const float len_ref = command_len + cfg_.state.leg_len_bias;
-        out.left_target.F = ctx.left.len_control(len_ref + roll_pd_.result) - left.Fs;
-        out.right_target.F = ctx.right.len_control(len_ref - roll_pd_.result) - right.Fs;
+        out.left_target.F =
+            len_control(left_control_, left, len_ref + roll_pd_.result) - left.Fs;
+        out.right_target.F =
+            len_control(right_control_, right, len_ref - roll_pd_.result) - right.Fs;
 
         if (jump_stage_ == jump_stage::EXTEND_LEGS)
         {
@@ -242,8 +257,10 @@ void ChassisController::step_jump(const chassis_context& ctx, chassis_output& ou
         {
             // out.left_target.F = cfg_.jump.retract_force;
             // out.right_target.F = cfg_.jump.retract_force;
-            out.left_target.F = ctx.left.len_control(len_ref + roll_pd_.result) - left.Fs;
-            out.right_target.F = ctx.right.len_control(len_ref - roll_pd_.result) - right.Fs;
+            out.left_target.F =
+                len_control(left_control_, left, len_ref + roll_pd_.result) - left.Fs;
+            out.right_target.F =
+                len_control(right_control_, right, len_ref - roll_pd_.result) - right.Fs;
         }
     }
 
@@ -279,11 +296,11 @@ lqr_state ChassisController::build_obs(const chassis_context& ctx) const
     state.phi = ctx.ins.total_yaw;
     state.dphi = ctx.ins.gyro_y;
 
-    state.theta_l_l = ctx.left.link().alpha;
-    state.dtheta_l_l = ctx.left.link().dalpha;
+    state.theta_l_l = ctx.left.alpha;
+    state.dtheta_l_l = ctx.left.dalpha;
 
-    state.theta_l_r = ctx.right.link().alpha;
-    state.dtheta_l_r = ctx.right.link().dalpha;
+    state.theta_l_r = ctx.right.alpha;
+    state.dtheta_l_r = ctx.right.dalpha;
 
     state.theta_b = ctx.ins.pitch;
     state.dtheta_b = ctx.ins.gyro_p;

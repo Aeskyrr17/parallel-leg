@@ -14,7 +14,7 @@ namespace wbr
 namespace
 {
 
-Function function{k_default_control.chassis.cmd};
+Function function{k_default_chassis.cmd};
 
 TX_THREAD function_thread{};
 alignas(8) std::uint8_t function_stack[2048]{};
@@ -26,7 +26,7 @@ bool task_started = false;
 
 void function_entry(ULONG /*arg*/)
 {
-    const float dt = k_default_control.chassis.runtime.dt;
+    const float dt = k_default_chassis.runtime.dt;
     remoter::state remote{};
     chassis_feedback feedback{};
 
@@ -60,7 +60,7 @@ bool start_function_task() noexcept
         return false;
     }
 
-    const auto priority = k_default_control.chassis.runtime.function_thread_priority;
+    const auto priority = k_default_chassis.runtime.function_thread_priority;
     const UINT status = tx_thread_create(
         &function_thread, const_cast<CHAR*>("wbr_function"), function_entry, 0U,
         function_stack, sizeof(function_stack), priority, priority, TX_NO_TIME_SLICE,

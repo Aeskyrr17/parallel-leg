@@ -2,7 +2,7 @@
 
 #include "ahrs.hpp"
 #include "control_config.hpp"
-#include "leg.hpp"
+#include "leg_types.hpp"
 #include "lqr.hpp"
 #include "msgs.hpp"
 #include "pid.hpp"
@@ -36,8 +36,8 @@ struct chassis_context
     const chassis_command& cmd;
     const odometry_state& odom;
 
-    leg_controller& left;
-    leg_controller& right;
+    const link_state& left;
+    const link_state& right;
 
     bool control_ok = false;
 };
@@ -63,10 +63,21 @@ public:
     chassis_state state() const { return state_; }
     jump_stage jump_state() const { return jump_stage_; }
 
+    ::control::pid& left_len_pid_for_tuning() noexcept { return left_control_.len_pid; }
+    ::control::pid& right_len_pid_for_tuning() noexcept { return right_control_.len_pid; }
     ::control::pid& roll_pid_for_tuning() noexcept { return roll_pd_; }
 
 private:
+    struct leg_control_state
+    {
+        explicit leg_control_state(const leg_control_config& cfg) : len_pid(cfg.len_pid) {}
+
+        ::control::pid len_pid;
+    };
+
     void reset();
+    static float len_control(leg_control_state& control, const link_state& leg,
+                             float reference);
 
     void transition_to(chassis_state next);
     void transition_jump_to(jump_stage next);
@@ -85,6 +96,8 @@ private:
 private:
     const chassis_config& cfg_;
     LQR lqr_;
+    leg_control_state left_control_;
+    leg_control_state right_control_;
     ::control::pid roll_pd_;
 
     chassis_state state_ = chassis_state::RELAX;

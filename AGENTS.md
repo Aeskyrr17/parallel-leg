@@ -42,10 +42,11 @@ hardware-validated.
   directly. The only Control-owned cross-thread messages are `chassis_feedback{x,v,total_yaw}` and
   `chassis_command`; Control does not maintain duplicate freshness, usable, or per-field
   input-validation state.
-- The Control cycle directly calls `Odometry`, both `leg_controller` objects,
-  `ChassisController`, limits, six motor-buffer writes, and one final LK batch commit.
-  Each `leg_controller` privately owns its `link_solver`; intermediate control products do not use
-  the message bus.
+- The Control cycle directly calls `Odometry`, both pure `leg_solver` objects,
+  `ChassisController`, the thin `chassis_actuator`, and one final LK batch commit. The actuator
+  adapter owns only feedback/command direction conversion, VMC resolution, torque limits, and six
+  motor-buffer writes. Each `leg_solver` privately owns its `link_solver`; intermediate control
+  products do not use the message bus.
 - All six module-owned `motors::feedback` values are copied through the unchanged native
   `get_feedback()` interface into one `motor_fdb_frame` before the cycle uses them. Control
   adds no capture wrapper, interrupt-disabled section, per-motor usable flag, or duplicate
@@ -59,7 +60,7 @@ hardware-validated.
 - `control_task.cpp` also exposes the global `g_control_tuning` Watch entry. Its three pointers
   refer directly to the two live leg-length PID objects and the live chassis Roll PID; there is no
   parameter copy, `volatile` tuning object, or per-cycle tuning synchronization.
-- `k_default_control.chassis.runtime.actuation_enabled` is currently `true`; a valid non-Relax
+- `k_default_chassis.runtime.actuation_enabled` is currently `true`; a valid non-Relax
   control cycle can therefore write active motor commands.
 
 Current cycle:
@@ -77,9 +78,9 @@ direct AHRS read + latest chassis_command + six-motor feedback snapshot
     -> current-cycle validity
     -> ChassisController state switch
     -> left/right virtual_force targets + wheel torque
-    -> leg_controller/link_solver VMC
-    -> safety insertion point and torque limits
-    -> six command buffers
+    -> chassis_actuator: leg_solver/link_solver VMC, installation directions, and torque limits
+    -> explicit control_task safety gate
+    -> chassis_actuator: six command buffers
     -> one lkmotorhandler::send_control()
     -> optional Odometry reset
     -> publish chassis_feedback for the next Function update
@@ -89,9 +90,9 @@ Control file map:
 
 ```text
 control/include/leg.hpp + control/src/leg.cpp
-    leg_controller motor binding, directions, length PID, VMC output, and command-buffer writes
+    pure leg_solver wrapper around link_solver solve, forward/reverse VMC, state, and reset
 control/include/control_config.hpp
-    leg_config, chassis_config, control_config, and the single k_default_control object
+    leg_config, chassis_config, and their direct k_default_leg/k_default_chassis objects
 control/include/vmc.hpp
     header-only link_solver five-bar kinematics, Jacobian, support-force estimate, and VMC math
 control/include/odometry.hpp
@@ -107,11 +108,14 @@ control/include/function.hpp + control/src/function.cpp
 control/include/function_task.hpp + control/src/function_task.cpp
     Function thread, remote/feedback subscriptions, and command publication
 control/include/chassis.hpp + control/src/chassis.cpp
-    chassis_state/jump_stage and the single visible state switch
+    chassis_state/jump_stage, the single visible state switch, LQR, Roll PID, and two independent
+    leg-length PID states
+control/include/chassis_actuator.hpp + control/src/chassis_actuator.cpp
+    thin feedback/command coordinate adapter, VMC composition, torque limits, and motor-buffer writes
 control/include/control_debug.hpp
     DEBUG-only cycle snapshot type; its sole global POD definition is in control_task.cpp
 control/src/control_task.cpp
-    direct input reads, cycle ordering, safety gate, motor buffers, and single send
+    direct input reads, cycle ordering, explicit safety gate, and single send
 ```
 
 ## Source behavior used from `wbr_2026`
@@ -137,7 +141,7 @@ remain together in `wbr_control`; AHRS and remoter keep their module-owned threa
 
 - `Function`
   - the single live object is owned and called only by `wbr_function`
-  - reads `k_default_control.chassis.cmd` through a const reference
+  - reads `k_default_chassis.cmd` through a const reference
   - nested left/right switch interpretation
   - one-update control-switch transition behavior
   - right-switch jump request mapping
@@ -162,15 +166,13 @@ remain together in `wbr_control`; AHRS and remoter keep their module-owned threa
   - discriminant, Jacobian/leg-length singularity, and spring-denominator guards
   - VMC forward/reverse operations return `bool`; `joint_torque` carries no duplicate validity flag
   - the only single-leg mathematical solver; it owns no motor or controller state and is private
-    to `leg_controller`
-- `leg_controller`
-  - non-template binding to two existing `motors::api&` objects
-  - direct `motors::feedback` snapshot input
-  - no duplicate feedback-valid boolean or motor feedback validation
-  - zero/direction conversion
-  - one active old-real-robot length PID
-  - VMC torque resolution and motor-buffer write
-  - no unused equivalent-leg-angle controller
+    to `leg_solver`
+- `leg_solver`
+  - non-template, motor-independent wrapper retaining the current `link_solver`
+  - accepts unified mechanical `joint_state`, exposes read-only `link_state`, and forwards the
+    existing forward/reverse VMC operations
+  - owns no PID, slope, motor reference, installation direction, torque limit, command, or state
+    machine behavior
 - `LQR`
   - single generated 40x6 parallel-leg coefficient output in `control/include/lqr_coeffs.hpp`
   - `parallel_leg_lqr/lqr_codegen.cmake` regenerates that header before the firmware target
@@ -180,6 +182,8 @@ remain together in `wbr_control`; AHRS and remoter keep their module-owned threa
 - `ChassisController`
   - one enum/switch class; no state classes or factories
   - `step(chassis_context)` with explicit Relax/Normal/Spin/Offground/Jump methods
+  - owns independent left/right leg-length PID objects plus the existing Roll PID; its context
+    receives only read-only `link_state` references
   - Normal applies LQR wheel/leg torque, `cmd.len + 0.03 m`, roll-compensated length PD, and optional
     spring-force subtraction; the off-ground transition remains disabled
   - Normal and Spin map the Function-owned continuous yaw/yaw-rate command directly; the observed
@@ -188,16 +192,16 @@ remain together in `wbr_control`; AHRS and remoter keep their module-owned threa
   - Jump migrates the `wbr_2026` V0.1 Prepared/trigger behavior into the existing state switch:
     Prepared sets `START_JUMP`, then the Jump command advances
     `EXTEND_LEGS -> IN_AIR -> LANDING` from current leg length and combined support feedback
-  - V0.1 jump actuation retains the `+400 N` extension and `-200 N` retraction overrides, 20 N
-    support threshold, sparse off-ground LQR, zero wheel output, 0.27 m off-ground length target,
-    and off-ground Odometry reset
+  - jump actuation retains the current `+400 N` extension, in-air length-PID control, 20 N support
+    threshold, sparse off-ground LQR, zero wheel output, 0.30 m off-ground length target, and
+    off-ground Odometry reset
 - `control_entry`
   - reads latest command, keeps same-cycle high-frequency composition, uses fixed configured `dt`,
     applies the actuator gate, performs one commit, and publishes post-reset chassis feedback
 
 No dynamic memory, new controller interface hierarchy, factory, direct CAN call, or motor-manager
-call was added to the math/control objects. `leg_controller` reuses the existing `motors::api`; it
-does not introduce another runtime-polymorphic hierarchy.
+call was added to the math/control objects. `leg_solver` is a concrete value object and introduces
+no runtime-polymorphic hierarchy.
 
 `control/include/leg_math.hpp` now contains only the Control-specific `slope`. Control reuses
 `pnx_libs/math` for `math::pi`, `math::clamp`, `math::clamp_loop`, and `math::limit_abs`.
@@ -240,17 +244,16 @@ All current control-layer tuning enters through:
 
 ```text
 control/include/control_config.hpp
-    -> inline const control_config k_default_control
-        -> leg_config leg
-        -> chassis_config chassis
+    -> inline const leg_config k_default_leg
+    -> inline const chassis_config k_default_chassis
 ```
 
 It owns:
 
-- leg_config: legacy five-bar geometry, explicit spring enable/model, solver numerics, length PID,
-  and hip limit
-- chassis_config: wheel radius/mass, gravity, roll PID, wheel limit, directions, LQR fit range,
-  command mapping, Normal-state preload/off-ground threshold, and runtime
+- leg_config: legacy five-bar geometry, explicit spring enable/model, and solver numerics
+- chassis_config: wheel radius/mass, gravity, one `leg_control_config` copied into two independent
+  leg-length PID states, roll PID, actuator config, LQR fit range, command mapping, Normal-state
+  preload/off-ground threshold, and runtime
 - hip/wheel torque limits
 - leg directions, wheel directions, and four LK8016 raw encoder zero points
 - command scales/slopes/reference limits
@@ -264,13 +267,15 @@ The 40x6 runtime LQR table remains only in `control/include/lqr_coeffs.hpp` and 
 `parallel_leg_lqr/`; no preview-header copy remains in the generator directory. Structural constants
 such as vector dimensions, matrix indices, zero, one, and pi remain in algorithm code.
 
-`Function` retains `const command_config&` to `k_default_control.chassis.cmd`.
-`link_solver` and `leg_controller` retain only `const leg_config&`. `ChassisController` retains
-`const chassis_config&` so state logic can read chassis-owned targets such as `cmd.min_len`; it
-also copies the LQR configuration and constructs its roll PID.
+`Function` retains `const command_config&` to `k_default_chassis.cmd`.
+`link_solver` retains only `const leg_config&`; `leg_solver` retains only its `link_solver`.
+`ChassisController` retains `const chassis_config&` so state logic can read chassis-owned targets;
+it also copies the LQR configuration and constructs independent left/right length PIDs and its Roll
+PID. `chassis_actuator` retains `const actuator_config&`, const references to both leg solvers, and
+references to all six motors; it owns no controller, state transition, safety policy, or send call.
 Wheel-side mass and gravity remain chassis-owned and are passed as scalar cycle inputs to the leg
 solve path for the existing support-force calculation. `runtime_config::dt` is fixed at `0.001 s`
-and is passed through Function, Odometry, leg_controller, and link_solver without runtime range
+and is passed through Function, Odometry, leg_solver, and link_solver without runtime range
 validation.
 
 ThreadX is configured for 1000 ticks/s. The Control and Function threads both use the configured
@@ -287,6 +292,8 @@ the unchanged LK driver `offset` fields before motor registration.
 - Negative closure discriminant is rejected before `sqrt()`.
 - Jacobian, leg-length, spring, and innovation-matrix denominators are checked only where the
   corresponding division or square root requires them.
+- `link_solver::solve()` rejects non-finite joint/IMU/mass/gravity inputs and non-positive or
+  non-finite `dt`; forward/reverse VMC reject non-finite inputs and outputs.
 - The restored legacy geometry uses `l1=0.150 m`, `l2=0.270 m`, and a `0.150 m` motor-pivot
   distance. Software spring compensation is explicitly disabled by default.
 - The spring model's `phi2` implicit derivatives use `sin(phi2 - phi3)`; the ordinary VMC
@@ -294,8 +301,11 @@ the unchanged LK driver `offset` fields before motor registration.
 - Link acceleration differences use `(current - previous) / dt`; initial history is guarded.
 - Remoter offline behavior is handled by `Function`; Odometry failure, invalid links, or an invalid
   command produces RELAX through the current-cycle `control_ok` value.
-- The actuator writer directly clamps both wheel requests to `chassis_config::max_wheel_tau`;
-  the native motor layer owns torque-to-current conversion.
+- `chassis_actuator::resolve()` directly clamps hip/wheel requests using `actuator_config`, rejects
+  non-finite resolved outputs, and leaves its output command zero on failure; the native motor layer
+  owns torque-to-current conversion.
+- The actuation/validity/Relax safety gate remains visible in `control_task`; a closed gate writes
+  zero torque commands to all six buffers before the single batch commit.
 - The unimplemented ordinary Offground state returns safe-relax output.
 - `ChassisController` never accesses CAN, a motor manager, or commit.
 - Power limiting has one explicit insertion point after VMC and before motor buffers.
@@ -372,33 +382,44 @@ Do not invent or silently choose these values.
       units, zero positions, signs, and captured-data comparisons have been reviewed together.
 
 14. **V0.1 jump applicability**
-    - The migrated sequence intentionally retains the old `+400 N` extension, `-200 N` retraction,
-      `0.32/0.14 m` length transitions, `20 N` support threshold, and `0.27 m` off-ground target.
+    - The current sequence uses `+400 N` extension, in-air length-PID control, `0.32/0.14 m`
+      length transitions, a `20 N` support threshold, and a `0.30 m` off-ground target.
     - These values now run through the current parallel-leg model, LK driver, support-force estimate,
       and torque limits. Validate them with restrained low-energy tests before an unrestricted jump.
 
+15. **CAN diagnostic generated configuration**
+    - Full Debug and Release firmware builds currently fail in `pnx_bsp/can` because generated
+      `config.hpp` does not declare `config::feature::can_diag` or `params::can_diag`, while
+      `bsp_can.cpp`, `bsp_can_diag.hpp`, and `bsp_can_diag.cpp` require them.
+    - This mismatch predates and is independent of the Control responsibility refactor. Control's
+      modified Debug and Release object targets compile without warnings or errors.
+
 ## Verification
 
-Latest completed checks after migrating the `wbr_2026` V0.1 jump sequence:
+Latest checks after adding `leg_control_config` and the thin `chassis_actuator` adapter:
 
 ```text
-cmake --build --preset Debug --target pnx_embedded --clean-first --parallel 4
+cmake --build --preset Debug --target pnx_embedded --parallel 4
 cmake --build --preset Release --target pnx_embedded --parallel 4
+cmake --build --preset Debug --target CMakeFiles/pnx_embedded.dir/control/src/chassis_actuator.cpp.obj CMakeFiles/pnx_embedded.dir/control/src/control_task.cpp.obj CMakeFiles/pnx_embedded.dir/control/src/chassis.cpp.obj CMakeFiles/pnx_embedded.dir/control/src/leg.cpp.obj --parallel 4
+cmake --build --preset Release --target CMakeFiles/pnx_embedded.dir/control/src/chassis_actuator.cpp.obj CMakeFiles/pnx_embedded.dir/control/src/control_task.cpp.obj CMakeFiles/pnx_embedded.dir/control/src/chassis.cpp.obj CMakeFiles/pnx_embedded.dir/control/src/leg.cpp.obj --parallel 4
 ```
 
-- Debug and Release both link successfully.
-- Debug uses 79,064 B DTCM and 198,564 B flash.
-- Release uses 79,008 B DTCM and 100,884 B flash.
+- The modified Control object targets compile successfully in Debug and Release.
+- Full Debug and Release links are blocked by the unrelated CAN diagnostic generated-config
+  mismatch described above, so no new post-refactor firmware memory totals are available.
+- The last successful pre-refactor full links used 79,064 B DTCM / 198,564 B flash in Debug and
+  79,008 B DTCM / 100,884 B flash in Release.
 - The generator writes the only coefficient header directly to
-  `control/include/lqr_coeffs.hpp`: 484 samples, max absolute fit error `0.266341151`, RMS error
-  `0.0353841236`, and worst exact-grid closed-loop max real eigenvalue `-0.698537529`.
+  `control/include/lqr_coeffs.hpp`: 484 samples, max absolute fit error `0.302590529`, RMS error
+  `0.0412903229`, and worst exact-grid closed-loop max real eigenvalue `-0.926197183`.
 - `chassis_state` declarations and switch cases are synchronized. The only declared states are
   Relax, Normal, Spin, Offground, and Jump.
 - `command_action`, `command_event`, `fsm_input`, `fsm_output`, `function_feedback`,
   `health_state`, and `power_state` have no remaining control-layer matches.
 - VMC forward/reverse transformations use direct `bool + output` operations. Velocity mapping is
-  internal to `link_solver::solve()`; `leg_controller` exposes only the torque-resolution operation
-  needed by upper-layer control.
+  internal to `link_solver::solve()`; `leg_solver` exposes only solve/state, forward/reverse VMC,
+  and reset.
 - Duplicate `joint_state.valid`, `joint_torque.valid`, `motor_fdb_frame.valid`,
   `odometry_state.valid`, `reachable`, and `near_singularity` states were removed.
 - No dynamic allocation was added under `control/`.
@@ -406,8 +427,8 @@ cmake --build --preset Release --target pnx_embedded --parallel 4
   `chassis_feedback`; no Odometry/leg/LQR/VMC topic chain was introduced.
 - The former C-linkage task telemetry remains removed. Debug builds expose only
   `wbr::control_debug_data`, populated directly by the existing control thread.
-- Control-layer motor sign configuration uses `leg_dir`, `motor_dir_config`, and
-  `chassis_config::motor_dir`; no legacy calibration naming remains under `control/`.
+- Control-layer motor sign configuration uses `leg_dir` and `motor_dir_config` inside
+  `chassis_config::actuator`; only `chassis_actuator` consumes it.
 - Single-leg targets use only `virtual_force`; motor input uses only module-owned
   `motors::feedback`. The duplicate `Pendulum` files/class and old `VMCsolver` class are removed;
   header-only `vmc.hpp` now contains the single `link_solver` mathematical layer.
@@ -431,9 +452,11 @@ cmake --build --preset Release --target pnx_embedded --parallel 4
 - Jump requires a Prepared command before the trigger, advances through `START_JUMP`,
   `EXTEND_LEGS`, `IN_AIR`, and `LANDING` inside `ChassisController`, and exposes the current stage
   in the Debug Watch snapshot.
-- The jump off-ground branch selects sparse LQR gains, zeros wheel output, targets 0.27 m leg
+- The jump off-ground branch selects sparse LQR gains, zeros wheel output, targets 0.30 m leg
   length, and requests the existing Odometry reset without adding another task or message topic.
-- Only Control accesses the two leg objects.
+- `ChassisController` owns separate left/right leg-length PID instances and the Roll PID;
+  `g_control_tuning` points directly to those three live objects.
+- Only Control accesses the two leg solver objects; chassis receives only their read-only states.
 - A normal cycle contains one LK `send_control()`.
 - `git diff --check` passes. No `clang-format` executable is available in the current environment,
   so formatting was kept consistent manually and no whole-tree formatter was run.

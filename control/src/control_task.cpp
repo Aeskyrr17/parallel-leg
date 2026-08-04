@@ -2,7 +2,7 @@
 
 #include "ahrs.hpp"
 #include "chassis.hpp"
-#include "constrain.hpp"
+#include "chassis_actuator.hpp"
 #include "control_config.hpp"
 #include "control_debug.hpp"
 #include "function_task.hpp"
@@ -25,8 +25,8 @@ control_debug_t control_debug_data{};
 namespace
 {
 
-const leg_config& leg_cfg = k_default_control.leg;
-const chassis_config& chassis_cfg = k_default_control.chassis;
+const leg_config& leg_cfg = k_default_leg;
+const chassis_config& chassis_cfg = k_default_chassis;
 
 motors::lk8016 left_joint4{robot::motors::ljoint4};
 motors::lk8016 left_joint1{robot::motors::ljoint1};
@@ -35,10 +35,13 @@ motors::lk8016 right_joint1{robot::motors::rjoint1};
 motors::lk9025 left_wheel{robot::motors::lwheel};
 motors::lk9025 right_wheel{robot::motors::rwheel};
 
-leg_controller left_leg{left_joint1, left_joint4, chassis_cfg.motor_dir.left_leg, leg_cfg};
-leg_controller right_leg{right_joint1, right_joint4, chassis_cfg.motor_dir.right_leg, leg_cfg};
+leg_solver left_leg{leg_cfg};
+leg_solver right_leg{leg_cfg};
 Odometry odom{k_default_odometry};
 ChassisController chassis{chassis_cfg};
+chassis_actuator actuator{chassis_cfg.actuator, left_leg, right_leg,
+                        {left_joint1, left_joint4, right_joint1, right_joint4,
+                                left_wheel, right_wheel}};
 
 TX_THREAD control_thread{};
 alignas(8) std::uint8_t control_stack[6144]{};
@@ -76,28 +79,6 @@ void relax_motors()
     right_joint4.relax();
     left_wheel.relax();
     right_wheel.relax();
-}
-
-bool write_actuators(const chassis_output& out)
-{
-    float lj1_tau = 0.0f;
-    float lj4_tau = 0.0f;
-    float rj1_tau = 0.0f;
-    float rj4_tau = 0.0f;
-    if (!left_leg.resolve_torque(out.left_target, lj1_tau, lj4_tau) ||
-        !right_leg.resolve_torque(out.right_target, rj1_tau, rj4_tau))
-    {
-        return false;
-    }
-
-    left_leg.write_torque(lj1_tau, lj4_tau);
-    right_leg.write_torque(rj1_tau, rj4_tau);
-
-    left_wheel.set_torque(chassis_cfg.motor_dir.left_wheel_dir *
-                          math::limit_abs(out.tau_w_l, chassis_cfg.max_wheel_tau));
-    right_wheel.set_torque(chassis_cfg.motor_dir.right_wheel_dir *
-                           math::limit_abs(out.tau_w_r, chassis_cfg.max_wheel_tau));
-    return true;
 }
 
 bool register_motors()
@@ -145,43 +126,42 @@ void control_entry(ULONG /*arg*/)
         odom_input.acceleration[0] = attitude.accel[0];
         odom_input.acceleration[1] = attitude.accel[1];
         odom_input.acceleration[2] = attitude.accel[2];
-        odom_input.wheel_velocity = 0.5f * (chassis_cfg.motor_dir.left_wheel_dir * motor_fdb.left_wheel.velocity +
-                                            chassis_cfg.motor_dir.right_wheel_dir * motor_fdb.right_wheel.velocity) * chassis_cfg.wheel_radius;
+        odom_input.wheel_velocity = actuator.wheel_velocity(
+            motor_fdb.left_wheel, motor_fdb.right_wheel, chassis_cfg.wheel_radius);
         odom_input.yaw = attitude.yaw;
         odom_input.dt = dt;
         const bool odom_ok = odom.update(odom_input);
 
-        left_leg.solve(motor_fdb.left_joint1, motor_fdb.left_joint4, attitude.pitch,
-                       attitude.gyro_p, odom.state().a_z, dt,
+        const joint_state left_joint = actuator.left_joint_state(motor_fdb.left_joint1, motor_fdb.left_joint4);
+        const joint_state right_joint = actuator.right_joint_state(motor_fdb.right_joint1, motor_fdb.right_joint4);
+        left_leg.solve(left_joint, attitude.pitch, attitude.gyro_p, odom.state().a_z, dt,
                        chassis_cfg.wheel_side_mass, chassis_cfg.gravity);
-        right_leg.solve(motor_fdb.right_joint1, motor_fdb.right_joint4, attitude.pitch,
-                         attitude.gyro_p, odom.state().a_z, dt,
-                         chassis_cfg.wheel_side_mass, chassis_cfg.gravity);
+        right_leg.solve(right_joint, attitude.pitch, attitude.gyro_p, odom.state().a_z, dt,
+                        chassis_cfg.wheel_side_mass, chassis_cfg.gravity);
 
-        const bool control_ok = cmd.valid && odom_ok && left_leg.link().valid && right_leg.link().valid;
+        const bool control_ok = cmd.valid && odom_ok && left_leg.state().valid && right_leg.state().valid;
 
         const chassis_context ctx{
             attitude,
             cmd,
             odom.state(),
-            left_leg,
-            right_leg,
+            left_leg.state(),
+            right_leg.state(),
             control_ok,
         };
         const chassis_output out = chassis.step(ctx);
 
-        bool written = false;
-        if (chassis_cfg.runtime.actuation_enabled && control_ok && !out.relax)
+        actuator_command command{};
+        const bool actuator_ok = actuator.resolve(out, command);
+        const bool enable_output = chassis_cfg.runtime.actuation_enabled && control_ok && !out.relax && actuator_ok;
+        if (!enable_output)
         {
-            written = write_actuators(out);
+            command = {};
         }
-        if (!written)
-        {
-            relax_motors();
-        }
+        actuator.write(command);
 
 #ifdef WBR_DEBUG
-        update_control_debug(dt, attitude, motor_fdb, cmd, out, control_ok, written);
+        update_control_debug(dt, attitude, motor_fdb, cmd, out, control_ok, enable_output);
 #endif
 
         handler.send_control();
@@ -232,7 +212,7 @@ void update_control_debug(float dt, const ahrs::message& attitude,
     debug.wheel_torque_left_ref = out.tau_w_l;
     debug.wheel_torque_right_ref = out.tau_w_r;
 
-    const link_state& left_link = left_leg.link();
+    const link_state& left_link = left_leg.state();
     debug.left_leg.motor1_position = motor_fdb.left_joint1.position;
     debug.left_leg.motor4_position = motor_fdb.left_joint4.position;
     debug.left_leg.motor1_velocity = motor_fdb.left_joint1.velocity;
@@ -254,7 +234,7 @@ void update_control_debug(float dt, const ahrs::message& attitude,
     debug.wheel_left_fdb = motor_fdb.left_wheel;
     debug.wheel_right_fdb = motor_fdb.right_wheel;
 
-    const link_state& right_link = right_leg.link();
+    const link_state& right_link = right_leg.state();
     debug.right_leg.motor1_position = motor_fdb.right_joint1.position;
     debug.right_leg.motor4_position = motor_fdb.right_joint4.position;
     debug.right_leg.motor1_velocity = motor_fdb.right_joint1.velocity;
@@ -341,7 +321,7 @@ struct control_tuning_handles
 };
 
 control_tuning_handles g_control_tuning{
-    &wbr::left_leg.len_pid_for_tuning(),
-    &wbr::right_leg.len_pid_for_tuning(),
+    &wbr::chassis.left_len_pid_for_tuning(),
+    &wbr::chassis.right_len_pid_for_tuning(),
     &wbr::chassis.roll_pid_for_tuning(),
 };

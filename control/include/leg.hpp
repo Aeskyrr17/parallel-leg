@@ -2,42 +2,28 @@
 
 #include "control_config.hpp"
 #include "leg_types.hpp"
-#include "motor.hpp"
 #include "vmc.hpp"
 
 namespace wbr
 {
 
-class leg_controller
+class leg_solver
 {
 public:
-    leg_controller(motors::api& joint1, motors::api& joint4, const leg_dir& dir,
-                   const leg_config& cfg);
+    explicit leg_solver(const leg_config& cfg);
 
-    void solve(const motors::feedback& joint1_fdb, const motors::feedback& joint4_fdb,
-               float pitch, float dpitch, float az, float dt, float wheel_side_mass, float gravity);
+    bool solve(const joint_state& joint, float pitch, float dpitch, float az, float dt,
+               float wheel_side_mass, float gravity);
 
-    const link_state& link() const { return solver_.state(); }
+    const link_state& state() const { return solver_.state(); }
 
-    float len_control(float len_ref);
+    bool resolve_torque(const virtual_force& force, joint_torque& torque) const;
+    bool estimate_link_force(const joint_torque& torque, virtual_force& force) const;
 
-    bool resolve_torque(const virtual_force& force, float& joint1_tau, float& joint4_tau) const;
-    void write_torque(float joint1_tau, float joint4_tau);
-
-    void reset_control();
     void reset();
-    void relax();
-
-    ::control::pid& len_pid_for_tuning() noexcept { return len_pd_; }
 
 private:
-    motors::api& joint1_;
-    motors::api& joint4_;
-    const leg_dir dir_;
-    const leg_config& cfg_;
-
     link_solver solver_;
-    ::control::pid len_pd_;
 };
 
 } // namespace wbr

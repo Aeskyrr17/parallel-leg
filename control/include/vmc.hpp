@@ -58,6 +58,16 @@ inline bool link_solver::solve(const joint_state& joint, float pitch, float dpit
     state_.valid = false;
     jacobian_valid_ = false;
 
+    if (!std::isfinite(dt) || dt <= 0.0f || !std::isfinite(pitch) ||
+        !std::isfinite(dpitch) || !std::isfinite(az) || !std::isfinite(wheel_side_mass) ||
+        !std::isfinite(gravity) || !std::isfinite(joint.q[0]) || !std::isfinite(joint.q[1]) ||
+        !std::isfinite(joint.dq[0]) || !std::isfinite(joint.dq[1]) ||
+        !std::isfinite(joint.tau[0]) || !std::isfinite(joint.tau[1]))
+    {
+        invalidate();
+        return false;
+    }
+
     if (!resolve(joint.q[0], joint.q[1]))
     {
         invalidate();
@@ -80,6 +90,16 @@ inline bool link_solver::solve(const joint_state& joint, float pitch, float dpit
 
     calc_support_force(az, dt, wheel_side_mass, gravity);
 
+    if (!std::isfinite(state_.len) || !std::isfinite(state_.dlen) ||
+        !std::isfinite(state_.phi) || !std::isfinite(state_.dphi) ||
+        !std::isfinite(state_.alpha) || !std::isfinite(state_.dalpha) ||
+        !std::isfinite(state_.fdb.F) || !std::isfinite(state_.fdb.Tp) ||
+        !std::isfinite(state_.Fs) || !std::isfinite(state_.N))
+    {
+        invalidate();
+        return false;
+    }
+
     state_.valid = true;
     return true;
 }
@@ -87,26 +107,37 @@ inline bool link_solver::solve(const joint_state& joint, float pitch, float dpit
 inline bool link_solver::vmc_cal(const virtual_force& force, joint_torque& tau) const
 {
     tau = {};
-    if (!state_.valid || !jacobian_valid_)
+    if (!state_.valid || !jacobian_valid_ || !std::isfinite(force.F) ||
+        !std::isfinite(force.Tp))
     {
         return false;
     }
 
     tau.t1 = jt_mat_[0] * force.F + jt_mat_[1] * force.Tp;
     tau.t4 = jt_mat_[2] * force.F + jt_mat_[3] * force.Tp;
+    if (!std::isfinite(tau.t1) || !std::isfinite(tau.t4))
+    {
+        tau = {};
+        return false;
+    }
     return true;
 }
 
 inline bool link_solver::vmc_rev_cal(const joint_torque& tau, virtual_force& force) const
 {
     force = {};
-    if (!jacobian_valid_)
+    if (!jacobian_valid_ || !std::isfinite(tau.t1) || !std::isfinite(tau.t4))
     {
         return false;
     }
 
     force.F = jt_inv_mat_[0] * tau.t1 + jt_inv_mat_[1] * tau.t4;
     force.Tp = jt_inv_mat_[2] * tau.t1 + jt_inv_mat_[3] * tau.t4;
+    if (!std::isfinite(force.F) || !std::isfinite(force.Tp))
+    {
+        force = {};
+        return false;
+    }
     return true;
 }
 
