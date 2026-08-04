@@ -136,7 +136,7 @@
 			<member name="unit" type="string">count</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_debug_control_heartbeat</member>
-			<member name="last_addr" type="uint32">0x20005FE4</member>
+			<member name="last_addr" type="uint32">0x20005FF4</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -185,7 +185,7 @@
 			<member name="unit" type="string">count</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_debug_pendulum_heartbeat</member>
-			<member name="last_addr" type="uint32">0x20005FE8</member>
+			<member name="last_addr" type="uint32">0x20005FF8</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -234,7 +234,7 @@
 			<member name="unit" type="string">count</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_debug_solver_heartbeat</member>
-			<member name="last_addr" type="uint32">0x20005FEC</member>
+			<member name="last_addr" type="uint32">0x20005FFC</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -1410,7 +1410,7 @@
 			<member name="unit" type="string">m/s</member>
 			<member name="period" type="sint32">0</member>
 			<member name="address" type="string">leg_debug_command.speed_mps</member>
-			<member name="last_addr" type="uint32">0x20005E9C</member>
+			<member name="last_addr" type="uint32">0x20005EA4</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -1459,7 +1459,7 @@
 			<member name="unit" type="string">rad/s</member>
 			<member name="period" type="sint32">0</member>
 			<member name="address" type="string">leg_debug_command.yaw_rate_rad_s</member>
-			<member name="last_addr" type="uint32">0x20005EA0</member>
+			<member name="last_addr" type="uint32">0x20005EA8</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -1508,7 +1508,7 @@
 			<member name="unit" type="string">m</member>
 			<member name="period" type="sint32">0</member>
 			<member name="address" type="string">leg_debug_command.position_m</member>
-			<member name="last_addr" type="uint32">0x20005EA4</member>
+			<member name="last_addr" type="uint32">0x20005EB0</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -1557,7 +1557,7 @@
 			<member name="unit" type="string">m</member>
 			<member name="period" type="sint32">0</member>
 			<member name="address" type="string">leg_debug_command.leg_length_m</member>
-			<member name="last_addr" type="uint32">0x20005EA8</member>
+			<member name="last_addr" type="uint32">0x20005EB4</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -1606,7 +1606,7 @@
 			<member name="unit" type="string">rad</member>
 			<member name="period" type="sint32">0</member>
 			<member name="address" type="string">leg_debug_command.roll_rad</member>
-			<member name="last_addr" type="uint32">0x20005EAC</member>
+			<member name="last_addr" type="uint32">0x20005EB8</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -1655,7 +1655,7 @@
 			<member name="unit" type="string">enum</member>
 			<member name="period" type="sint32">0</member>
 			<member name="address" type="string">leg_debug_command.jump_status</member>
-			<member name="last_addr" type="uint32">0x20005EB0</member>
+			<member name="last_addr" type="uint32">0x20005EBC</member>
 			<member name="byte_size" type="sint32">1</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -1704,7 +1704,7 @@
 			<member name="unit" type="string">bool</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_debug_command.enabled</member>
-			<member name="last_addr" type="uint32">0x20005EB1</member>
+			<member name="last_addr" type="uint32">0x20005EBD</member>
 			<member name="byte_size" type="sint32">1</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -1753,7 +1753,7 @@
 			<member name="unit" type="string">bool</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_debug_command.spin_mode</member>
-			<member name="last_addr" type="uint32">0x20005EB2</member>
+			<member name="last_addr" type="uint32">0x20005EBE</member>
 			<member name="byte_size" type="sint32">1</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -1802,7 +1802,7 @@
 			<member name="unit" type="string">tick</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_debug_command.tick</member>
-			<member name="last_addr" type="uint32">0x20005EB4</member>
+			<member name="last_addr" type="uint32">0x20005EC0</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -1851,7 +1851,7 @@
 			<member name="unit" type="string">bool</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_debug_command.valid</member>
-			<member name="last_addr" type="uint32">0x20005EB8</member>
+			<member name="last_addr" type="uint32">0x20005EC4</member>
 			<member name="byte_size" type="sint32">1</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -1900,7 +1900,7 @@
 			<member name="unit" type="string">m</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_debug_solver_feedback.left_leg_length_m</member>
-			<member name="last_addr" type="uint32">0x20005EBC</member>
+			<member name="last_addr" type="uint32">0x20005EC8</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -1949,7 +1949,7 @@
 			<member name="unit" type="string">m</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_debug_solver_feedback.right_leg_length_m</member>
-			<member name="last_addr" type="uint32">0x20005EC0</member>
+			<member name="last_addr" type="uint32">0x20005ECC</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -1998,7 +1998,7 @@
 			<member name="unit" type="string">rad</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_debug_solver_feedback.left_leg_angle_rad</member>
-			<member name="last_addr" type="uint32">0x20005EC4</member>
+			<member name="last_addr" type="uint32">0x20005ED0</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -2047,7 +2047,7 @@
 			<member name="unit" type="string">rad</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_debug_solver_feedback.right_leg_angle_rad</member>
-			<member name="last_addr" type="uint32">0x20005EC8</member>
+			<member name="last_addr" type="uint32">0x20005ED4</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -2096,7 +2096,7 @@
 			<member name="unit" type="string">m/s</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_debug_solver_feedback.left_leg_length_velocity_mps</member>
-			<member name="last_addr" type="uint32">0x20005ECC</member>
+			<member name="last_addr" type="uint32">0x20005ED8</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -2145,7 +2145,7 @@
 			<member name="unit" type="string">m/s</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_debug_solver_feedback.right_leg_length_velocity_mps</member>
-			<member name="last_addr" type="uint32">0x20005ED0</member>
+			<member name="last_addr" type="uint32">0x20005EDC</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -2194,7 +2194,7 @@
 			<member name="unit" type="string">rad/s</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_debug_solver_feedback.left_leg_angular_velocity_rad_s</member>
-			<member name="last_addr" type="uint32">0x20005ED4</member>
+			<member name="last_addr" type="uint32">0x20005EE0</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -2243,7 +2243,7 @@
 			<member name="unit" type="string">rad/s</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_debug_solver_feedback.right_leg_angular_velocity_rad_s</member>
-			<member name="last_addr" type="uint32">0x20005ED8</member>
+			<member name="last_addr" type="uint32">0x20005EE4</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -2292,7 +2292,7 @@
 			<member name="unit" type="string">N</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_debug_solver_feedback.support_force_n</member>
-			<member name="last_addr" type="uint32">0x20005EDC</member>
+			<member name="last_addr" type="uint32">0x20005EE8</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -2341,7 +2341,7 @@
 			<member name="unit" type="string">tick</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_debug_solver_feedback.tick</member>
-			<member name="last_addr" type="uint32">0x20005EE0</member>
+			<member name="last_addr" type="uint32">0x20005EF0</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -2390,7 +2390,7 @@
 			<member name="unit" type="string">bool</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_debug_solver_feedback.valid</member>
-			<member name="last_addr" type="uint32">0x20005EE4</member>
+			<member name="last_addr" type="uint32">0x20005EF4</member>
 			<member name="byte_size" type="sint32">1</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -2439,7 +2439,7 @@
 			<member name="unit" type="string">N</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_debug_control_target.left_leg_force_n</member>
-			<member name="last_addr" type="uint32">0x20005EE8</member>
+			<member name="last_addr" type="uint32">0x20005EF8</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -2488,7 +2488,7 @@
 			<member name="unit" type="string">N</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_debug_control_target.right_leg_force_n</member>
-			<member name="last_addr" type="uint32">0x20005EEC</member>
+			<member name="last_addr" type="uint32">0x20005EFC</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -2537,7 +2537,7 @@
 			<member name="unit" type="string">N*m</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_debug_control_target.left_leg_torque_nm</member>
-			<member name="last_addr" type="uint32">0x20005EF0</member>
+			<member name="last_addr" type="uint32">0x20005F00</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -2586,7 +2586,7 @@
 			<member name="unit" type="string">N*m</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_debug_control_target.right_leg_torque_nm</member>
-			<member name="last_addr" type="uint32">0x20005EF4</member>
+			<member name="last_addr" type="uint32">0x20005F04</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -2635,7 +2635,7 @@
 			<member name="unit" type="string">N*m</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_debug_control_target.left_wheel_torque_nm</member>
-			<member name="last_addr" type="uint32">0x20005EF8</member>
+			<member name="last_addr" type="uint32">0x20005F08</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -2684,7 +2684,7 @@
 			<member name="unit" type="string">N*m</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_debug_control_target.right_wheel_torque_nm</member>
-			<member name="last_addr" type="uint32">0x20005EFC</member>
+			<member name="last_addr" type="uint32">0x20005F0C</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -2733,7 +2733,7 @@
 			<member name="unit" type="string">tick</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_debug_control_target.tick</member>
-			<member name="last_addr" type="uint32">0x20005F00</member>
+			<member name="last_addr" type="uint32">0x20005F10</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -2782,7 +2782,7 @@
 			<member name="unit" type="string">bool</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_debug_control_target.valid</member>
-			<member name="last_addr" type="uint32">0x20005F04</member>
+			<member name="last_addr" type="uint32">0x20005F14</member>
 			<member name="byte_size" type="sint32">1</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -2831,7 +2831,7 @@
 			<member name="unit" type="string">m</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_debug_odometry.position_m</member>
-			<member name="last_addr" type="uint32">0x20005F08</member>
+			<member name="last_addr" type="uint32">0x20005F18</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -2880,7 +2880,7 @@
 			<member name="unit" type="string">m/s</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_debug_odometry.velocity_mps</member>
-			<member name="last_addr" type="uint32">0x20005F0C</member>
+			<member name="last_addr" type="uint32">0x20005F1C</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -2929,7 +2929,7 @@
 			<member name="unit" type="string">m/s2</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_debug_odometry.vertical_acceleration_mps2</member>
-			<member name="last_addr" type="uint32">0x20005F10</member>
+			<member name="last_addr" type="uint32">0x20005F20</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -2978,7 +2978,7 @@
 			<member name="unit" type="string">tick</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_debug_odometry.tick</member>
-			<member name="last_addr" type="uint32">0x20005F14</member>
+			<member name="last_addr" type="uint32">0x20005F24</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -3027,7 +3027,7 @@
 			<member name="unit" type="string">bool</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_debug_odometry.valid</member>
-			<member name="last_addr" type="uint32">0x20005F18</member>
+			<member name="last_addr" type="uint32">0x20005F28</member>
 			<member name="byte_size" type="sint32">1</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -3076,7 +3076,7 @@
 			<member name="unit" type="string">N*m</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_debug_motor_torque.left_joint_1.target</member>
-			<member name="last_addr" type="uint32">0x20005FB4</member>
+			<member name="last_addr" type="uint32">0x20005FC4</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -3125,7 +3125,7 @@
 			<member name="unit" type="string">N*m</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_debug_motor_torque.left_joint_1.fdb</member>
-			<member name="last_addr" type="uint32">0x20005FB8</member>
+			<member name="last_addr" type="uint32">0x20005FC8</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -3174,7 +3174,7 @@
 			<member name="unit" type="string">N*m</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_debug_motor_torque.left_joint_4.target</member>
-			<member name="last_addr" type="uint32">0x20005FBC</member>
+			<member name="last_addr" type="uint32">0x20005FCC</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -3223,7 +3223,7 @@
 			<member name="unit" type="string">N*m</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_debug_motor_torque.left_joint_4.fdb</member>
-			<member name="last_addr" type="uint32">0x20005FC0</member>
+			<member name="last_addr" type="uint32">0x20005FD0</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -3272,7 +3272,7 @@
 			<member name="unit" type="string">N*m</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_debug_motor_torque.right_joint_1.target</member>
-			<member name="last_addr" type="uint32">0x20005FC4</member>
+			<member name="last_addr" type="uint32">0x20005FD4</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -3321,7 +3321,7 @@
 			<member name="unit" type="string">N*m</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_debug_motor_torque.right_joint_1.fdb</member>
-			<member name="last_addr" type="uint32">0x20005FC8</member>
+			<member name="last_addr" type="uint32">0x20005FD8</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -3370,7 +3370,7 @@
 			<member name="unit" type="string">N*m</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_debug_motor_torque.right_joint_4.target</member>
-			<member name="last_addr" type="uint32">0x20005FCC</member>
+			<member name="last_addr" type="uint32">0x20005FDC</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -3419,7 +3419,7 @@
 			<member name="unit" type="string">N*m</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_debug_motor_torque.right_joint_4.fdb</member>
-			<member name="last_addr" type="uint32">0x20005FD0</member>
+			<member name="last_addr" type="uint32">0x20005FE0</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -3468,7 +3468,7 @@
 			<member name="unit" type="string">N*m</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_debug_motor_torque.left_wheel.target</member>
-			<member name="last_addr" type="uint32">0x20005FD4</member>
+			<member name="last_addr" type="uint32">0x20005FE4</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -3517,7 +3517,7 @@
 			<member name="unit" type="string">N*m</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_debug_motor_torque.left_wheel.fdb</member>
-			<member name="last_addr" type="uint32">0x20005FD8</member>
+			<member name="last_addr" type="uint32">0x20005FE8</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -3566,7 +3566,7 @@
 			<member name="unit" type="string">N*m</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_debug_motor_torque.right_wheel.target</member>
-			<member name="last_addr" type="uint32">0x20005FDC</member>
+			<member name="last_addr" type="uint32">0x20005FEC</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -3615,7 +3615,7 @@
 			<member name="unit" type="string">N*m</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_debug_motor_torque.right_wheel.fdb</member>
-			<member name="last_addr" type="uint32">0x20005FE0</member>
+			<member name="last_addr" type="uint32">0x20005FF0</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -3664,7 +3664,7 @@
 			<member name="unit" type="string">gain</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_pid.kp</member>
-			<member name="last_addr" type="uint32">0x20005F20</member>
+			<member name="last_addr" type="uint32">0x20005F30</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -3713,7 +3713,7 @@
 			<member name="unit" type="string">gain</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_pid.ki</member>
-			<member name="last_addr" type="uint32">0x20005F24</member>
+			<member name="last_addr" type="uint32">0x20005F34</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -3762,7 +3762,7 @@
 			<member name="unit" type="string">gain</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_pid.kd</member>
-			<member name="last_addr" type="uint32">0x20005F28</member>
+			<member name="last_addr" type="uint32">0x20005F38</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -3811,7 +3811,7 @@
 			<member name="unit" type="string">N</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_pid.max_out</member>
-			<member name="last_addr" type="uint32">0x20005F38</member>
+			<member name="last_addr" type="uint32">0x20005F48</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -3860,7 +3860,7 @@
 			<member name="unit" type="string">N</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_pid.max_iout</member>
-			<member name="last_addr" type="uint32">0x20005F3C</member>
+			<member name="last_addr" type="uint32">0x20005F4C</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -3909,7 +3909,7 @@
 			<member name="unit" type="string">m</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_pid.ref</member>
-			<member name="last_addr" type="uint32">0x20005F2C</member>
+			<member name="last_addr" type="uint32">0x20005F3C</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -3958,7 +3958,7 @@
 			<member name="unit" type="string">m</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_pid.fdb</member>
-			<member name="last_addr" type="uint32">0x20005F30</member>
+			<member name="last_addr" type="uint32">0x20005F40</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -4007,7 +4007,7 @@
 			<member name="unit" type="string">N</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">leg_pid.result</member>
-			<member name="last_addr" type="uint32">0x20005F34</member>
+			<member name="last_addr" type="uint32">0x20005F44</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -4056,7 +4056,7 @@
 			<member name="unit" type="string">gain</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">roll_pid.kp</member>
-			<member name="last_addr" type="uint32">0x20005F6C</member>
+			<member name="last_addr" type="uint32">0x20005F7C</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -4105,7 +4105,7 @@
 			<member name="unit" type="string">gain</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">roll_pid.ki</member>
-			<member name="last_addr" type="uint32">0x20005F70</member>
+			<member name="last_addr" type="uint32">0x20005F80</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -4154,7 +4154,7 @@
 			<member name="unit" type="string">gain</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">roll_pid.kd</member>
-			<member name="last_addr" type="uint32">0x20005F74</member>
+			<member name="last_addr" type="uint32">0x20005F84</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -4203,7 +4203,7 @@
 			<member name="unit" type="string">m</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">roll_pid.max_out</member>
-			<member name="last_addr" type="uint32">0x20005F84</member>
+			<member name="last_addr" type="uint32">0x20005F94</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -4252,7 +4252,7 @@
 			<member name="unit" type="string">m</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">roll_pid.max_iout</member>
-			<member name="last_addr" type="uint32">0x20005F88</member>
+			<member name="last_addr" type="uint32">0x20005F98</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -4301,7 +4301,7 @@
 			<member name="unit" type="string">rad</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">roll_pid.ref</member>
-			<member name="last_addr" type="uint32">0x20005F78</member>
+			<member name="last_addr" type="uint32">0x20005F88</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -4350,7 +4350,7 @@
 			<member name="unit" type="string">rad</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">roll_pid.fdb</member>
-			<member name="last_addr" type="uint32">0x20005F7C</member>
+			<member name="last_addr" type="uint32">0x20005F8C</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -4399,7 +4399,7 @@
 			<member name="unit" type="string">m</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">roll_pid.result</member>
-			<member name="last_addr" type="uint32">0x20005F80</member>
+			<member name="last_addr" type="uint32">0x20005F90</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -5129,7 +5129,7 @@
 		</object>
 		<object name="ObjId0160" type="CPrjItemRS_VarInfo">
 			<member name="variable" type="CObject_ptr">ObjId0026</member>
-			<member name="visible" type="sint32">1</member>
+			<member name="visible" type="sint32">0</member>
 			<member name="y_block" type="sint32">0</member>
 			<member name="color" type="uint32">0x478C00</member>
 		</object>
@@ -5141,7 +5141,7 @@
 		</object>
 		<object name="ObjId0162" type="CPrjItemRS_VarInfo">
 			<member name="variable" type="CObject_ptr">ObjId0028</member>
-			<member name="visible" type="sint32">0</member>
+			<member name="visible" type="sint32">1</member>
 			<member name="y_block" type="sint32">0</member>
 			<member name="color" type="uint32">0x227DF3</member>
 		</object>
@@ -5291,25 +5291,25 @@
 		</object>
 		<object name="ObjId0205" type="CPrjItemRS_VarInfo">
 			<member name="variable" type="CObject_ptr">ObjId0140</member>
-			<member name="visible" type="sint32">1</member>
+			<member name="visible" type="sint32">0</member>
 			<member name="y_block" type="sint32">0</member>
 			<member name="color" type="uint32">0x0</member>
 		</object>
 		<object name="ObjId0206" type="CPrjItemRS_VarInfo">
 			<member name="variable" type="CObject_ptr">ObjId0141</member>
-			<member name="visible" type="sint32">1</member>
+			<member name="visible" type="sint32">0</member>
 			<member name="y_block" type="sint32">0</member>
 			<member name="color" type="uint32">0x5F59F1</member>
 		</object>
 		<object name="ObjId0207" type="CPrjItemRS_VarInfo">
 			<member name="variable" type="CObject_ptr">ObjId0142</member>
-			<member name="visible" type="sint32">0</member>
+			<member name="visible" type="sint32">1</member>
 			<member name="y_block" type="sint32">0</member>
 			<member name="color" type="uint32">0x6AC379</member>
 		</object>
 		<object name="ObjId0208" type="CPrjItemRS_VarInfo">
 			<member name="variable" type="CObject_ptr">ObjId0143</member>
-			<member name="visible" type="sint32">0</member>
+			<member name="visible" type="sint32">1</member>
 			<member name="y_block" type="sint32">0</member>
 			<member name="color" type="uint32">0x2E2DED</member>
 		</object>

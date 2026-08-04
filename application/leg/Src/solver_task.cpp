@@ -255,8 +255,8 @@ namespace solver_task
                             feedback.right_leg_angle_rad,
                             right_length_velocity_change,
                             odometry_data.vertical_acceleration_mps2);
-                    feedback.support_force_n =
-                        left_support_force + right_support_force;
+                    feedback.support_force_n = left_support_force + right_support_force;
+                    feedback.yaw_rad = attitude.total_yaw;
                     feedback.valid = true;
 
                     previous_left_length_velocity =

@@ -19,6 +19,7 @@ struct command
 {
     float speed_mps = 0.0f;
     float yaw_rate_rad_s = 0.0f;
+    float yaw_rad = 0.0f;
     float position_m = 0.0f;
     float leg_length_m = 0.0f;
     float roll_rad = 0.0f;
@@ -42,6 +43,7 @@ struct solver_feedback
     float left_leg_angular_velocity_rad_s = 0.0f;
     float right_leg_angular_velocity_rad_s = 0.0f;
     float support_force_n = 0.0f;
+    float yaw_rad = 0.0f;
     std::uint32_t tick = 0U;
     bool valid = false;
 };

@@ -40,9 +40,11 @@ void command_interpreter::reset() noexcept
     leg_length_ramp_.set_path(leg_config::normal_leg_step_m);
     manual_leg_length_m_ = leg_config::normal_leg_length_m;
     position_target_m_ = 0.0f;
+    yaw_target_rad_ = 0.0f;
     jump_state_ = leg_messages::jump_state::idle;
     stopping_position_ = false;
     holding_position_ = false;
+    holding_yaw_ = false;
     off_ground_hold_ = false;
 }
 
@@ -65,6 +67,7 @@ leg_messages::command command_interpreter::stop_command(
     command.valid = true;
     stopping_position_ = false;
     holding_position_ = false;
+    holding_yaw_ = false;
     off_ground_hold_ = false;
     update_position(command, odometry, true);
     return command;
@@ -330,6 +333,7 @@ leg_messages::command command_interpreter::update(
     }
     if (off_ground_hold_)
     {
+        holding_yaw_ = false;
         speed_ramp_.reset(0.0f);
         yaw_rate_ramp_.reset(0.0f);
         command.speed_mps = 0.0f;
@@ -345,6 +349,13 @@ leg_messages::command command_interpreter::update(
     }
 
     command.jump_status = jump_state_;
+    if (solver.valid && (!holding_yaw_ || command.spin_mode || command.yaw_rate_rad_s != 0.0f))
+    {
+        yaw_target_rad_ = solver.yaw_rad +
+            (command.spin_mode ? 0.0f : command.yaw_rate_rad_s * leg_config::control_task_thread::period_s);
+    }
+    holding_yaw_ = solver.valid && !command.spin_mode && command.yaw_rate_rad_s == 0.0f;
+    command.yaw_rad = yaw_target_rad_;
     update_position(command, odometry, hold_position);
     return command;
 }

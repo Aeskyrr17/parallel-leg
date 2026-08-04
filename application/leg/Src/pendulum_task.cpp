@@ -157,11 +157,7 @@ namespace pendulum_task
 
                 reference[0] = command.position_m;
                 reference[1] = command.speed_mps;
-                reference[2] =
-                    attitude.total_yaw +
-                    (command.spin_mode
-                         ? 0.0f
-                         : command.yaw_rate_rad_s * leg_config::control_thread::period_s);
+                reference[2] = command.yaw_rad;
                 reference[3] = command.yaw_rate_rad_s;
                 reference[4] = leg_config::normal_leg_angle_reference_rad;
                 reference[6] = leg_config::normal_leg_angle_reference_rad;

@@ -5,9 +5,9 @@ function [Q, R] = lqr_config()
 % State:
 % [position, velocity, yaw, yaw_rate, left_angle, left_angle_rate, ...
 %  right_angle, right_angle_rate, pitch, pitch_rate]
-Q = diag([308, 50, 555, 90, 1000, 4, 1000, 4, 6888, 12]);
+Q = diag([358, 35, 555, 55, 1000, 4, 1000, 4, 6888, 12]);
 
 % Input:
 % [left_wheel_torque, right_wheel_torque, left_leg_torque, right_leg_torque]
-R = diag([3.75, 3.75, 1.25, 1.25]);
+R = diag([3.85, 3.85, 1.25, 1.25]);
 end
