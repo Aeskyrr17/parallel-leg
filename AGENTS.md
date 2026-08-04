@@ -89,8 +89,8 @@ direct AHRS read + latest chassis_command + six-motor feedback snapshot
 Control file map:
 
 ```text
-control/include/leg.hpp + control/src/leg.cpp
-    pure leg_solver wrapper around link_solver solve, forward/reverse VMC, state, and reset
+control/include/leg.hpp
+    header-only pure leg_solver wrapper around link_solver solve, forward/reverse VMC, state, and reset
 control/include/control_config.hpp
     leg_config, chassis_config, and their direct k_default_leg/k_default_chassis objects
 control/include/vmc.hpp
@@ -110,8 +110,9 @@ control/include/function_task.hpp + control/src/function_task.cpp
 control/include/chassis.hpp + control/src/chassis.cpp
     chassis_state/jump_stage, the single visible state switch, LQR, Roll PID, and two independent
     leg-length PID states
-control/include/chassis_actuator.hpp + control/src/chassis_actuator.cpp
-    thin feedback/command coordinate adapter, VMC composition, torque limits, and motor-buffer writes
+control/include/chassis_actuator.hpp
+    header-only thin feedback/command coordinate adapter, VMC composition, torque limits, and
+    motor-buffer writes
 control/include/control_debug.hpp
     DEBUG-only cycle snapshot type; its sole global POD definition is in control_task.cpp
 control/src/control_task.cpp
@@ -268,7 +269,8 @@ The 40x6 runtime LQR table remains only in `control/include/lqr_coeffs.hpp` and 
 such as vector dimensions, matrix indices, zero, one, and pi remain in algorithm code.
 
 `Function` retains `const command_config&` to `k_default_chassis.cmd`.
-`link_solver` retains only `const leg_config&`; `leg_solver` retains only its `link_solver`.
+`link_solver` retains only `const leg_config&`; the header-only `leg_solver` retains only its
+`link_solver`.
 `ChassisController` retains `const chassis_config&` so state logic can read chassis-owned targets;
 it also copies the LQR configuration and constructs independent left/right length PIDs and its Roll
 PID. `chassis_actuator` retains `const actuator_config&`, const references to both leg solvers, and
@@ -401,8 +403,8 @@ Latest checks after adding `leg_control_config` and the thin `chassis_actuator` 
 ```text
 cmake --build --preset Debug --target pnx_embedded --parallel 4
 cmake --build --preset Release --target pnx_embedded --parallel 4
-cmake --build --preset Debug --target CMakeFiles/pnx_embedded.dir/control/src/chassis_actuator.cpp.obj CMakeFiles/pnx_embedded.dir/control/src/control_task.cpp.obj CMakeFiles/pnx_embedded.dir/control/src/chassis.cpp.obj CMakeFiles/pnx_embedded.dir/control/src/leg.cpp.obj --parallel 4
-cmake --build --preset Release --target CMakeFiles/pnx_embedded.dir/control/src/chassis_actuator.cpp.obj CMakeFiles/pnx_embedded.dir/control/src/control_task.cpp.obj CMakeFiles/pnx_embedded.dir/control/src/chassis.cpp.obj CMakeFiles/pnx_embedded.dir/control/src/leg.cpp.obj --parallel 4
+cmake --build --preset Debug --target CMakeFiles/pnx_embedded.dir/control/src/control_task.cpp.obj CMakeFiles/pnx_embedded.dir/control/src/chassis.cpp.obj --parallel 4
+cmake --build --preset Release --target CMakeFiles/pnx_embedded.dir/control/src/control_task.cpp.obj CMakeFiles/pnx_embedded.dir/control/src/chassis.cpp.obj --parallel 4
 ```
 
 - The modified Control object targets compile successfully in Debug and Release.
