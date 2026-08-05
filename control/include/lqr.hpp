@@ -36,15 +36,29 @@ struct lqr_output
     float tau_l_r = 0.0f; // N*m
 };
 
+struct lqr_diagnostics
+{
+    // x, dx, yaw, dyaw, left leg angle/angular velocity,
+    // right leg angle/angular velocity, pitch, dpitch.
+    float error[10]{};
+    lqr_output state_contribution[10]{};
+    lqr_output total{};
+};
+
 class LQR
 {
 public:
     explicit LQR(const lqr_config& cfg) : cfg_(cfg) {}
 
     lqr_output solve(float left_leg_len, float right_leg_len, bool offground,
-                     const lqr_state& obs, const lqr_state& ref) const
+                     const lqr_state& obs, const lqr_state& ref,
+                     lqr_diagnostics* diagnostics = nullptr) const
     {
         lqr_output output{};
+        if (diagnostics != nullptr)
+        {
+            *diagnostics = {};
+        }
         const float left =
             std::round(math::clamp(left_leg_len, cfg_.min_leg_len, cfg_.max_leg_len) /
                        cfg_.leg_len_resolution) *
@@ -83,18 +97,51 @@ public:
             obs.dtheta_b - ref.dtheta_b,
         };
 
+        if (diagnostics != nullptr)
+        {
+            for (int state = 0; state < 10; ++state)
+            {
+                diagnostics->error[state] = error[state];
+            }
+        }
+
         float tau[4] = {};
         for (int actuator = 0; actuator < 4; ++actuator)
         {
             for (int state = 0; state < 10; ++state)
             {
-                tau[actuator] += gain[actuator * 10 + state] * error[state];
+                const float contribution = gain[actuator * 10 + state] * error[state];
+                tau[actuator] += contribution;
+                if (diagnostics != nullptr)
+                {
+                    lqr_output& state_output = diagnostics->state_contribution[state];
+                    if (actuator == 0)
+                    {
+                        state_output.tau_w_l = contribution;
+                    }
+                    else if (actuator == 1)
+                    {
+                        state_output.tau_w_r = contribution;
+                    }
+                    else if (actuator == 2)
+                    {
+                        state_output.tau_l_l = contribution;
+                    }
+                    else
+                    {
+                        state_output.tau_l_r = contribution;
+                    }
+                }
             }
         }
         output.tau_w_l = tau[0];
         output.tau_w_r = tau[1];
         output.tau_l_l = tau[2];
         output.tau_l_r = tau[3];
+        if (diagnostics != nullptr)
+        {
+            diagnostics->total = output;
+        }
         return output;
     }
 

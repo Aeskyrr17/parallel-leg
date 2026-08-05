@@ -77,6 +77,7 @@ public:
     chassis_output step(const chassis_context& ctx);
     chassis_state state() const { return state_; }
     jump_stage jump_state() const { return jump_stage_; }
+    const lqr_diagnostics& lqr_debug() const { return lqr_debug_; }
 
 private:
     void reset();
@@ -101,6 +102,7 @@ private:
 private:
     const chassis_config& cfg_;
     LQR lqr_;
+    lqr_diagnostics lqr_debug_{};
     ::control::pid left_len_pid_;
     ::control::pid right_len_pid_;
     ::control::pid left_jump_retract_pid_;

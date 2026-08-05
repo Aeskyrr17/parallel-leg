@@ -30,6 +30,7 @@ ChassisController::ChassisController(const chassis_config& cfg)
 chassis_output ChassisController::step(const chassis_context& ctx)
 {
     sync_tuning();
+    lqr_debug_ = {};
 
     chassis_output out{};
 
@@ -175,7 +176,7 @@ void ChassisController::step_normal(const chassis_context& ctx, chassis_output& 
     const link_state& right = ctx.right;
     const lqr_state obs = build_obs(ctx);
     const lqr_state ref = build_normal_ref(ctx);
-    const lqr_output lqr = lqr_.solve(left.len, right.len, false, obs, ref);
+    const lqr_output lqr = lqr_.solve(left.len, right.len, false, obs, ref, &lqr_debug_);
 
     const float roll_pd_result = roll_control(ctx);
 
@@ -267,7 +268,8 @@ void ChassisController::step_jump(const chassis_context& ctx, chassis_output& ou
 
     const lqr_state obs = build_obs(ctx);
     const lqr_state ref = use_offground_lqr ? build_offground_ref(ctx) : build_normal_ref(ctx);
-    const lqr_output lqr =lqr_.solve(left.len,right.len,use_offground_lqr, obs, ref);
+    const lqr_output lqr =
+        lqr_.solve(left.len, right.len, use_offground_lqr, obs, ref, &lqr_debug_);
 
     const float roll_pd_result = roll_control(ctx);
 
@@ -410,9 +412,9 @@ lqr_state ChassisController::build_normal_ref(const chassis_context& ctx) const
     ref.phi = ctx.cmd.yaw;
     ref.dphi = ctx.cmd.yaw_rate;
 
-    ref.theta_l_l = 0.0f;
+    ref.theta_l_l = -0.03f;
     ref.dtheta_l_l = 0.0f;
-    ref.theta_l_r = 0.0f;
+    ref.theta_l_r = -0.03f;
     ref.dtheta_l_r = 0.0f;
 
     ref.theta_b = cfg_.pitch_offset;
