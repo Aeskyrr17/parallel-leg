@@ -124,13 +124,14 @@
 			<member name="item79" type="CObject_ptr">ObjId0204</member>
 			<member name="item80" type="CObject_ptr">ObjId0205</member>
 			<member name="item81" type="CObject_ptr">ObjId0206</member>
+			<member name="item82" type="CObject_ptr">ObjId0226</member>
 		</object>
 		<object name="ObjId0004" type="CVariable">
 			<member name="name" type="string">wbr::control_debug_data.pitch</member>
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.pitch</member>
-			<member name="last_addr" type="uint32">0x20005938</member>
+			<member name="last_addr" type="uint32">0x20005990</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -179,7 +180,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.dpitch</member>
-			<member name="last_addr" type="uint32">0x2000593C</member>
+			<member name="last_addr" type="uint32">0x20005994</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -228,7 +229,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.left_leg.alpha</member>
-			<member name="last_addr" type="uint32">0x200059C0</member>
+			<member name="last_addr" type="uint32">0x20005A18</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -277,7 +278,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.left_leg.dalpha</member>
-			<member name="last_addr" type="uint32">0x200059C4</member>
+			<member name="last_addr" type="uint32">0x20005A1C</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -326,7 +327,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.left_leg.dphi</member>
-			<member name="last_addr" type="uint32">0x200059BC</member>
+			<member name="last_addr" type="uint32">0x20005A14</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -375,7 +376,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.odometry_v</member>
-			<member name="last_addr" type="uint32">0x20005954</member>
+			<member name="last_addr" type="uint32">0x200059AC</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -424,7 +425,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.odometry_x</member>
-			<member name="last_addr" type="uint32">0x20005950</member>
+			<member name="last_addr" type="uint32">0x200059A8</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -473,7 +474,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.right_leg.alpha</member>
-			<member name="last_addr" type="uint32">0x20005A04</member>
+			<member name="last_addr" type="uint32">0x20005A5C</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -522,7 +523,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.right_leg.dalpha</member>
-			<member name="last_addr" type="uint32">0x20005A08</member>
+			<member name="last_addr" type="uint32">0x20005A60</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -571,7 +572,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.right_leg.dphi</member>
-			<member name="last_addr" type="uint32">0x20005A00</member>
+			<member name="last_addr" type="uint32">0x20005A58</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -620,7 +621,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.right_leg.phi</member>
-			<member name="last_addr" type="uint32">0x200059FC</member>
+			<member name="last_addr" type="uint32">0x20005A54</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -669,7 +670,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.yaw</member>
-			<member name="last_addr" type="uint32">0x20005948</member>
+			<member name="last_addr" type="uint32">0x200059A0</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -718,7 +719,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.command_v</member>
-			<member name="last_addr" type="uint32">0x20005960</member>
+			<member name="last_addr" type="uint32">0x200059B8</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -767,7 +768,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.command_x</member>
-			<member name="last_addr" type="uint32">0x2000595C</member>
+			<member name="last_addr" type="uint32">0x200059B4</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -816,7 +817,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.left_leg.phi</member>
-			<member name="last_addr" type="uint32">0x200059B8</member>
+			<member name="last_addr" type="uint32">0x20005A10</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -914,7 +915,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.command_yaw_rate</member>
-			<member name="last_addr" type="uint32">0x20005968</member>
+			<member name="last_addr" type="uint32">0x200059C0</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -963,7 +964,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.dyaw</member>
-			<member name="last_addr" type="uint32">0x2000594C</member>
+			<member name="last_addr" type="uint32">0x200059A4</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -1012,7 +1013,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.command_leg_length</member>
-			<member name="last_addr" type="uint32">0x2000596C</member>
+			<member name="last_addr" type="uint32">0x200059C4</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -1061,7 +1062,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.command_yaw</member>
-			<member name="last_addr" type="uint32">0x20005964</member>
+			<member name="last_addr" type="uint32">0x200059BC</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -1110,7 +1111,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">ahrs_debug_telemetry</member>
-			<member name="last_addr" type="uint32">0x20000310</member>
+			<member name="last_addr" type="uint32">0x20000348</member>
 			<member name="byte_size" type="sint32">240</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -1159,7 +1160,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.left_leg.motor4_position</member>
-			<member name="last_addr" type="uint32">0x200059AC</member>
+			<member name="last_addr" type="uint32">0x20005A04</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -1208,7 +1209,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.right_leg.motor4_position</member>
-			<member name="last_addr" type="uint32">0x200059F0</member>
+			<member name="last_addr" type="uint32">0x20005A48</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -1257,7 +1258,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.left_leg.motor1_position</member>
-			<member name="last_addr" type="uint32">0x200059A8</member>
+			<member name="last_addr" type="uint32">0x20005A00</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -1306,7 +1307,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.right_leg.motor1_position</member>
-			<member name="last_addr" type="uint32">0x200059EC</member>
+			<member name="last_addr" type="uint32">0x20005A44</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -1600,7 +1601,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.left_leg.length</member>
-			<member name="last_addr" type="uint32">0x200059C8</member>
+			<member name="last_addr" type="uint32">0x20005A20</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -1649,7 +1650,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.right_leg.length</member>
-			<member name="last_addr" type="uint32">0x20005A0C</member>
+			<member name="last_addr" type="uint32">0x20005A64</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -1698,7 +1699,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.wheel_torque_left_ref</member>
-			<member name="last_addr" type="uint32">0x20005970</member>
+			<member name="last_addr" type="uint32">0x200059C8</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -1747,7 +1748,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.wheel_torque_right_ref</member>
-			<member name="last_addr" type="uint32">0x20005974</member>
+			<member name="last_addr" type="uint32">0x200059CC</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -1796,7 +1797,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.left_leg.force_ref</member>
-			<member name="last_addr" type="uint32">0x200059D8</member>
+			<member name="last_addr" type="uint32">0x20005A30</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -1845,7 +1846,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.right_leg.force_ref</member>
-			<member name="last_addr" type="uint32">0x20005A1C</member>
+			<member name="last_addr" type="uint32">0x20005A74</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -1894,7 +1895,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data</member>
-			<member name="last_addr" type="uint32">0x20005930</member>
+			<member name="last_addr" type="uint32">0x20005988</member>
 			<member name="byte_size" type="sint32">0</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -1943,7 +1944,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.acceleration_z</member>
-			<member name="last_addr" type="uint32">0x20005958</member>
+			<member name="last_addr" type="uint32">0x200059B0</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -1992,7 +1993,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.actuation_enabled</member>
-			<member name="last_addr" type="uint32">0x20005A4C</member>
+			<member name="last_addr" type="uint32">0x20005AA4</member>
 			<member name="byte_size" type="sint32">1</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -2041,7 +2042,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.cycle_count</member>
-			<member name="last_addr" type="uint32">0x20005930</member>
+			<member name="last_addr" type="uint32">0x20005988</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -2090,7 +2091,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.droll</member>
-			<member name="last_addr" type="uint32">0x20005944</member>
+			<member name="last_addr" type="uint32">0x2000599C</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -2139,7 +2140,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.dt</member>
-			<member name="last_addr" type="uint32">0x20005934</member>
+			<member name="last_addr" type="uint32">0x2000598C</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -2188,7 +2189,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.input_valid</member>
-			<member name="last_addr" type="uint32">0x20005A4A</member>
+			<member name="last_addr" type="uint32">0x20005AA2</member>
 			<member name="byte_size" type="sint32">1</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -2237,7 +2238,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.left_leg</member>
-			<member name="last_addr" type="uint32">0x200059A8</member>
+			<member name="last_addr" type="uint32">0x20005A00</member>
 			<member name="byte_size" type="sint32">68</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -2286,7 +2287,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.left_leg.force_fdb</member>
-			<member name="last_addr" type="uint32">0x200059D0</member>
+			<member name="last_addr" type="uint32">0x20005A28</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -2335,7 +2336,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.left_leg.length_velocity</member>
-			<member name="last_addr" type="uint32">0x200059CC</member>
+			<member name="last_addr" type="uint32">0x20005A24</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -2384,7 +2385,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.left_leg.motor1_velocity</member>
-			<member name="last_addr" type="uint32">0x200059B0</member>
+			<member name="last_addr" type="uint32">0x20005A08</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -2433,7 +2434,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.left_leg.motor4_velocity</member>
-			<member name="last_addr" type="uint32">0x200059B4</member>
+			<member name="last_addr" type="uint32">0x20005A0C</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -2482,7 +2483,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.left_leg.spring_force</member>
-			<member name="last_addr" type="uint32">0x200059E4</member>
+			<member name="last_addr" type="uint32">0x20005A3C</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -2531,7 +2532,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.left_leg.support_force</member>
-			<member name="last_addr" type="uint32">0x200059E0</member>
+			<member name="last_addr" type="uint32">0x20005A38</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -2580,7 +2581,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.left_leg.torque_fdb</member>
-			<member name="last_addr" type="uint32">0x200059D4</member>
+			<member name="last_addr" type="uint32">0x20005A2C</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -2629,7 +2630,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.left_leg.torque_ref</member>
-			<member name="last_addr" type="uint32">0x200059DC</member>
+			<member name="last_addr" type="uint32">0x20005A34</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -2678,7 +2679,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.left_leg.valid</member>
-			<member name="last_addr" type="uint32">0x200059E8</member>
+			<member name="last_addr" type="uint32">0x20005A40</member>
 			<member name="byte_size" type="sint32">1</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -2727,7 +2728,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.motor_torque</member>
-			<member name="last_addr" type="uint32">0x20005A30</member>
+			<member name="last_addr" type="uint32">0x20005A88</member>
 			<member name="byte_size" type="sint32">24</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -2776,7 +2777,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.motor_torque[0]</member>
-			<member name="last_addr" type="uint32">0x20005A30</member>
+			<member name="last_addr" type="uint32">0x20005A88</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -2825,7 +2826,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.output_valid</member>
-			<member name="last_addr" type="uint32">0x20005A4B</member>
+			<member name="last_addr" type="uint32">0x20005AA3</member>
 			<member name="byte_size" type="sint32">1</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -2874,7 +2875,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.right_leg</member>
-			<member name="last_addr" type="uint32">0x200059EC</member>
+			<member name="last_addr" type="uint32">0x20005A44</member>
 			<member name="byte_size" type="sint32">68</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -2923,7 +2924,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.right_leg.force_fdb</member>
-			<member name="last_addr" type="uint32">0x20005A14</member>
+			<member name="last_addr" type="uint32">0x20005A6C</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -2972,7 +2973,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.right_leg.length_velocity</member>
-			<member name="last_addr" type="uint32">0x20005A10</member>
+			<member name="last_addr" type="uint32">0x20005A68</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -3021,7 +3022,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.right_leg.motor1_velocity</member>
-			<member name="last_addr" type="uint32">0x200059F4</member>
+			<member name="last_addr" type="uint32">0x20005A4C</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -3070,7 +3071,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.right_leg.motor4_velocity</member>
-			<member name="last_addr" type="uint32">0x200059F8</member>
+			<member name="last_addr" type="uint32">0x20005A50</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -3119,7 +3120,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.right_leg.spring_force</member>
-			<member name="last_addr" type="uint32">0x20005A28</member>
+			<member name="last_addr" type="uint32">0x20005A80</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -3168,7 +3169,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.right_leg.support_force</member>
-			<member name="last_addr" type="uint32">0x20005A24</member>
+			<member name="last_addr" type="uint32">0x20005A7C</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -3217,7 +3218,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.right_leg.torque_fdb</member>
-			<member name="last_addr" type="uint32">0x20005A18</member>
+			<member name="last_addr" type="uint32">0x20005A70</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -3266,7 +3267,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.right_leg.torque_ref</member>
-			<member name="last_addr" type="uint32">0x20005A20</member>
+			<member name="last_addr" type="uint32">0x20005A78</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -3315,7 +3316,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.right_leg.valid</member>
-			<member name="last_addr" type="uint32">0x20005A2C</member>
+			<member name="last_addr" type="uint32">0x20005A84</member>
 			<member name="byte_size" type="sint32">1</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -3364,7 +3365,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.roll</member>
-			<member name="last_addr" type="uint32">0x20005940</member>
+			<member name="last_addr" type="uint32">0x20005998</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -3413,7 +3414,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.state</member>
-			<member name="last_addr" type="uint32">0x20005A48</member>
+			<member name="last_addr" type="uint32">0x20005AA0</member>
 			<member name="byte_size" type="sint32">1</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -3462,7 +3463,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.wheel_left_fdb</member>
-			<member name="last_addr" type="uint32">0x20005978</member>
+			<member name="last_addr" type="uint32">0x200059D0</member>
 			<member name="byte_size" type="sint32">24</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -3511,7 +3512,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.wheel_left_fdb.current</member>
-			<member name="last_addr" type="uint32">0x20005984</member>
+			<member name="last_addr" type="uint32">0x200059DC</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -3560,7 +3561,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.wheel_left_fdb.error_code</member>
-			<member name="last_addr" type="uint32">0x2000598C</member>
+			<member name="last_addr" type="uint32">0x200059E4</member>
 			<member name="byte_size" type="sint32">1</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -3609,7 +3610,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.wheel_left_fdb.position</member>
-			<member name="last_addr" type="uint32">0x20005978</member>
+			<member name="last_addr" type="uint32">0x200059D0</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -3658,7 +3659,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.wheel_left_fdb.temperature</member>
-			<member name="last_addr" type="uint32">0x20005988</member>
+			<member name="last_addr" type="uint32">0x200059E0</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -3707,7 +3708,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.wheel_left_fdb.torque</member>
-			<member name="last_addr" type="uint32">0x20005980</member>
+			<member name="last_addr" type="uint32">0x200059D8</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -3756,7 +3757,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.wheel_left_fdb.velocity</member>
-			<member name="last_addr" type="uint32">0x2000597C</member>
+			<member name="last_addr" type="uint32">0x200059D4</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -3805,7 +3806,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.wheel_right_fdb</member>
-			<member name="last_addr" type="uint32">0x20005990</member>
+			<member name="last_addr" type="uint32">0x200059E8</member>
 			<member name="byte_size" type="sint32">24</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -3854,7 +3855,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.wheel_right_fdb.current</member>
-			<member name="last_addr" type="uint32">0x2000599C</member>
+			<member name="last_addr" type="uint32">0x200059F4</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -3903,7 +3904,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.wheel_right_fdb.error_code</member>
-			<member name="last_addr" type="uint32">0x200059A4</member>
+			<member name="last_addr" type="uint32">0x200059FC</member>
 			<member name="byte_size" type="sint32">1</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -3952,7 +3953,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.wheel_right_fdb.position</member>
-			<member name="last_addr" type="uint32">0x20005990</member>
+			<member name="last_addr" type="uint32">0x200059E8</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -4001,7 +4002,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.wheel_right_fdb.temperature</member>
-			<member name="last_addr" type="uint32">0x200059A0</member>
+			<member name="last_addr" type="uint32">0x200059F8</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -4050,7 +4051,7 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.wheel_right_fdb.torque</member>
-			<member name="last_addr" type="uint32">0x20005998</member>
+			<member name="last_addr" type="uint32">0x200059F0</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
@@ -4099,13 +4100,62 @@
 			<member name="unit" type="string">unit</member>
 			<member name="period" type="sint32">1000</member>
 			<member name="address" type="string">wbr::control_debug_data.wheel_right_fdb.velocity</member>
-			<member name="last_addr" type="uint32">0x20005994</member>
+			<member name="last_addr" type="uint32">0x200059EC</member>
 			<member name="byte_size" type="sint32">4</member>
 			<member name="description" type="string"/>
 			<member name="comment" type="string"/>
 			<member name="virtual" type="sint32">0</member>
 			<member name="virtual_default" type="string">0</member>
 			<member name="treat_as" type="sint32">2</member>
+			<member name="type_fmt" type="string"/>
+			<member name="bit_shift" type="sint32">0</member>
+			<member name="bit_mask" type="string">no mask (-1)</member>
+			<member name="value_trf" type="CObject_ptr">NULL</member>
+			<member name="enum_enabled" type="sint32">0</member>
+			<member name="enum_num_always" type="sint32">0</member>
+			<member name="enum_default_val" type="string">unknown</member>
+			<member name="enum_num_with_default" type="sint32">1</member>
+			<member name="enum" type="string"/>
+			<member name="show_as" type="sint32">0</member>
+			<member name="show_val" type="sint32">1</member>
+			<member name="show_max" type="sint32">0</member>
+			<member name="show_min" type="sint32">0</member>
+			<member name="show_num_fixed_digs" type="sint32">2147483647</member>
+			<member name="show_num_lzero_fill" type="sint32">0</member>
+			<member name="show_num_afp_digs" type="sint32">2147483647</member>
+			<member name="show_num_exp" type="sint32">0</member>
+			<member name="show_ascii_zterm" type="sint32">0</member>
+			<member name="show_ascii_rev" type="sint32">0</member>
+			<member name="show_ascii_hex" type="sint32">1</member>
+			<member name="show_ascii_chwdt" type="sint32">1</member>
+			<member name="filt_enabled" type="sint32">0</member>
+			<member name="filt_reset_onmod" type="sint32">1</member>
+			<member name="filt_time" type="uint32">0x1388</member>
+			<member name="modif_mode" type="sint32">0</member>
+			<member name="modif_edit_mode" type="sint32">2</member>
+			<member name="modif_set_mode" type="sint32">0</member>
+			<member name="modif_auto_fin" type="sint32">1</member>
+			<member name="modif_auto_hide" type="sint32">1</member>
+			<member name="modif_predefs_modes" type="uint32">0x1</member>
+			<member name="modif_predefs_other" type="string"/>
+			<member name="modif_set_min" type="string"/>
+			<member name="modif_set_max" type="string"/>
+			<member name="modif_set_step" type="string"/>
+			<member name="modif_address" type="string"/>
+			<member name="modif_last_addr" type="uint32">0x0</member>
+		</object>
+		<object name="ObjId0226" type="CVariable">
+			<member name="name" type="string">g_control_tuning.roll_pid</member>
+			<member name="unit" type="string">unit</member>
+			<member name="period" type="sint32">1000</member>
+			<member name="address" type="string">g_control_tuning.roll_pid</member>
+			<member name="last_addr" type="uint32">0x200078A8</member>
+			<member name="byte_size" type="sint32">4</member>
+			<member name="description" type="string"/>
+			<member name="comment" type="string"/>
+			<member name="virtual" type="sint32">0</member>
+			<member name="virtual_default" type="string">0</member>
+			<member name="treat_as" type="sint32">0</member>
 			<member name="type_fmt" type="string"/>
 			<member name="bit_shift" type="sint32">0</member>
 			<member name="bit_mask" type="string">no mask (-1)</member>
@@ -4191,6 +4241,7 @@
 			<member name="item0" type="CObject_ptr">ObjId0097</member>
 			<member name="item1" type="CObject_ptr">ObjId0098</member>
 			<member name="item2" type="CObject_ptr">ObjId0099</member>
+			<member name="item3" type="CObject_ptr">ObjId0226</member>
 		</object>
 		<object name="ObjId0035" type="CObList"/>
 		<object name="ObjId0036" type="CObList">
@@ -5716,39 +5767,39 @@
 			<member name="forecolor" type="uint32">0x0</member>
 		</object>
 		<object name="ObjId0083" type="CObArray" length="6">
-			<member name="index0" type="CObject_ptr">ObjId0134</member>
-			<member name="index1" type="CObject_ptr">ObjId0135</member>
-			<member name="index2" type="CObject_ptr">ObjId0136</member>
-			<member name="index3" type="CObject_ptr">ObjId0137</member>
-			<member name="index4" type="CObject_ptr">ObjId0138</member>
-			<member name="index5" type="CObject_ptr">ObjId0139</member>
+			<member name="index0" type="CObject_ptr">ObjId0227</member>
+			<member name="index1" type="CObject_ptr">ObjId0228</member>
+			<member name="index2" type="CObject_ptr">ObjId0229</member>
+			<member name="index3" type="CObject_ptr">ObjId0230</member>
+			<member name="index4" type="CObject_ptr">ObjId0231</member>
+			<member name="index5" type="CObject_ptr">ObjId0232</member>
 		</object>
-		<object name="ObjId0134" type="CPrjItemBlock_ColInfo">
+		<object name="ObjId0227" type="CPrjItemBlock_ColInfo">
 			<member name="column_visible" type="sint32">1</member>
 			<member name="column_width" type="sint32">251</member>
 			<member name="column_ix" type="sint32">0</member>
 		</object>
-		<object name="ObjId0135" type="CPrjItemBlock_ColInfo">
+		<object name="ObjId0228" type="CPrjItemBlock_ColInfo">
 			<member name="column_visible" type="sint32">1</member>
 			<member name="column_width" type="sint32">120</member>
 			<member name="column_ix" type="sint32">1</member>
 		</object>
-		<object name="ObjId0136" type="CPrjItemBlock_ColInfo">
+		<object name="ObjId0229" type="CPrjItemBlock_ColInfo">
 			<member name="column_visible" type="sint32">1</member>
 			<member name="column_width" type="sint32">120</member>
 			<member name="column_ix" type="sint32">2</member>
 		</object>
-		<object name="ObjId0137" type="CPrjItemBlock_ColInfo">
+		<object name="ObjId0230" type="CPrjItemBlock_ColInfo">
 			<member name="column_visible" type="sint32">1</member>
 			<member name="column_width" type="sint32">70</member>
 			<member name="column_ix" type="sint32">3</member>
 		</object>
-		<object name="ObjId0138" type="CPrjItemBlock_ColInfo">
+		<object name="ObjId0231" type="CPrjItemBlock_ColInfo">
 			<member name="column_visible" type="sint32">1</member>
 			<member name="column_width" type="sint32">200</member>
 			<member name="column_ix" type="sint32">4</member>
 		</object>
-		<object name="ObjId0139" type="CPrjItemBlock_ColInfo">
+		<object name="ObjId0232" type="CPrjItemBlock_ColInfo">
 			<member name="column_visible" type="sint32">0</member>
 			<member name="column_width" type="sint32">120</member>
 			<member name="column_ix" type="sint32">5</member>
@@ -5760,6 +5811,8 @@
 			<member name="value1" type="CObject_ptr">ObjId0142</member>
 			<member name="key2" type="CObject_ptr">ObjId0099</member>
 			<member name="value2" type="CObject_ptr">ObjId0144</member>
+			<member name="key3" type="CObject_ptr">ObjId0226</member>
+			<member name="value3" type="CObject_ptr">ObjId0233</member>
 		</object>
 		<object name="ObjId0140" type="CPrjItemBlock_VarInfo">
 			<member name="row_height" type="sint32">15</member>
@@ -5776,6 +5829,11 @@
 			<member name="row_cell_formats" type="CObArrayEx">ObjId0145</member>
 		</object>
 		<object name="ObjId0145" type="CObArray" length="0"/>
+		<object name="ObjId0233" type="CPrjItemBlock_VarInfo">
+			<member name="row_height" type="sint32">15</member>
+			<member name="row_cell_formats" type="CObArrayEx">ObjId0234</member>
+		</object>
+		<object name="ObjId0234" type="CObArray" length="0"/>
 		<object name="ObjId0091" type="CFlashProgDlg">
 			<member name="is_default" type="sint32">1</member>
 			<member name="csw_addr" type="string">fprgCSW</member>

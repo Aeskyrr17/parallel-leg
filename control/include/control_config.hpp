@@ -24,7 +24,7 @@ struct command_config
     float max_len = 0.34f;
     float normal_len = 0.20f;
 
-    float stationary_vel = 0.008f;
+    float stationary_vel = 0.01f;
     float stationary_vel_error = 0.5f;
 };
 
@@ -88,22 +88,33 @@ struct state_config
 {
     // wbr_2026 Normal control values: N, m.
     float offground_support_force = 10.0f;
-    float leg_len_bias = 0.03f;
 };
 
 struct jump_config
 {
     // wbr_2026 V0.1 jump values: m, N.
     float extend_len = 0.370f;
-    float retract_len = 0.170f;
+    float retract_len = 0.140f;
     float offground_len = 0.300f;
 
-    float extend_done_len = 0.320f;
-    float retract_done_len = 0.140f;
-    float support_force = 20.0f;
+    float extend_done_len = 0.340f;
+    float retract_done_len = 0.145f;
+    float support_force = 30.0f;
 
-    float extend_force = 400.0f;
+    float extend_force = 450.0f;
     float retract_force = -200.0f;
+
+    float landing_len = 0.26f;
+
+    // 实际腿长比 landing_len 短多少，才认为发生了压缩。
+    float landing_compression = 0.01f;
+
+    // 腿长收缩速度阈值，单位 m/s。
+    float landing_dlen_threshold = 0.03f;
+
+    // 1 kHz 下连续确认 10 ms。
+    std::uint16_t landing_confirm_ticks = 10;
+
 };
 
 struct leg_config
@@ -125,14 +136,17 @@ struct leg_config
 
 struct leg_control_config
 {
-    ::control::pid len_pid{4000.0f, 0.0f, -120.0f, 200.0f, 0.0f,
+    ::control::pid len_pid{4000.0f, 0.0f, -200.0f, 200.0f, 0.0f,
                            ::control::pid_mode::delta};
 };
 
 struct chassis_config
 {
     leg_control_config leg_control{};
-    ::control::pid roll_pid{0.3f, 0.0f, 1.0f, 0.5f, 0.0f,
+    leg_control_config jump_retract_control{
+        ::control::pid{5000.0f, 0.0f, -200.0f, 200.0f, 0.0f,
+                       ::control::pid_mode::delta}};
+    ::control::pid roll_pid{0.3f, 0.0f, 0.5f, 0.05f, 0.0f,
                              ::control::pid_mode::position};
     actuator_config actuator{};
 

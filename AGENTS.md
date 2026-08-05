@@ -185,7 +185,7 @@ remain together in `wbr_control`; AHRS and remoter keep their module-owned threa
   - `step(chassis_context)` with explicit Relax/Normal/Spin/Offground/Jump methods
   - owns independent left/right leg-length PID objects plus the existing Roll PID; its context
     receives only read-only `link_state` references
-  - Normal applies LQR wheel/leg torque, `cmd.len + 0.03 m`, roll-compensated length PD, and optional
+  - Normal applies LQR wheel/leg torque, the direct `cmd.len` target, roll-compensated length PD, and optional
     spring-force subtraction; the off-ground transition remains disabled
   - Normal and Spin map the Function-owned continuous yaw/yaw-rate command directly; the observed
     LQR yaw state uses `ahrs::message::total_yaw`
@@ -194,8 +194,8 @@ remain together in `wbr_control`; AHRS and remoter keep their module-owned threa
     Prepared sets `START_JUMP`, then the Jump command advances
     `EXTEND_LEGS -> IN_AIR -> LANDING` from current leg length and combined support feedback
   - jump actuation retains the current `+400 N` extension, in-air length-PID control, 20 N support
-    threshold, sparse off-ground LQR, zero wheel output, 0.30 m off-ground length target, and
-    off-ground Odometry reset
+    threshold, six-consecutive-cycle landing confirmation, sparse off-ground LQR, zero wheel
+    output, 0.30 m off-ground length target, and off-ground Odometry reset
 - `control_entry`
   - reads latest command, keeps same-cycle high-frequency composition, uses fixed configured `dt`,
     applies the actuator gate, performs one commit, and publishes post-reset chassis feedback
@@ -254,7 +254,7 @@ It owns:
 - leg_config: legacy five-bar geometry, explicit spring enable/model, and solver numerics
 - chassis_config: wheel radius/mass, gravity, one `leg_control_config` copied into two independent
   leg-length PID states, roll PID, actuator config, LQR fit range, command mapping, Normal-state
-  preload/off-ground threshold, and runtime
+  off-ground threshold, and runtime
 - hip/wheel torque limits
 - leg directions, wheel directions, and four LK8016 raw encoder zero points
 - command scales/slopes/reference limits
@@ -449,7 +449,7 @@ cmake --build --preset Release --target CMakeFiles/pnx_embedded.dir/control/src/
 - Relax keeps the existing per-cycle Odometry reset. Control publishes feedback after that reset,
   and Function synchronizes both maintained references to the resulting `x` and current
   `total_yaw`.
-- Normal sends `ctx.cmd.len + leg_len_bias` to the two live length PID objects, so manual Function
+- Normal sends `ctx.cmd.len` directly to the two live length PID objects, so manual Function
   leg-length updates now affect control.
 - Jump requires a Prepared command before the trigger, advances through `START_JUMP`,
   `EXTEND_LEGS`, `IN_AIR`, and `LANDING` inside `ChassisController`, and exposes the current stage

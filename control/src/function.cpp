@@ -47,7 +47,7 @@ const chassis_command& Function::update(const remoter::state& remote, float odom
             case remoter::sw_state::low:
                 cmd_.mode = command_mode::normal;
                 cmd_.jump = jump_command::None;
-                cmd_.dyaw = yaw_updater_.update(-remote.right_x * cfg_.yaw_scale);
+                cmd_.dyaw = yaw_updater_.update(-remote.left_x * cfg_.yaw_scale);
                 cmd_.v = vel_updater_.update(remote.left_y * cfg_.vel_scale);
                 cmd_.roll = 0.0f;
                 cmd_.len =
@@ -61,7 +61,7 @@ const chassis_command& Function::update(const remoter::state& remote, float odom
                 cmd_.jump = jump_command::Prepared;
                 cmd_.len = cfg_.normal_len;
                 cmd_.v = vel_updater_.update(remote.left_y * cfg_.vel_scale);
-                cmd_.dyaw = yaw_updater_.update(-remote.right_x * cfg_.yaw_scale);
+                cmd_.dyaw = yaw_updater_.update(-remote.left_x * cfg_.yaw_scale);
                 cmd_.roll = 0.0f;
                 cmd_.w = 0.0f;
                 break;

@@ -78,7 +78,7 @@ private:
     void reset();
     static float len_control(leg_control_state& control, const link_state& leg,
                              float reference);
-
+    float roll_control(const chassis_context& ctx);
     void transition_to(chassis_state next);
     void transition_jump_to(jump_stage next);
 
@@ -98,10 +98,14 @@ private:
     LQR lqr_;
     leg_control_state left_control_;
     leg_control_state right_control_;
+    leg_control_state left_jump_retract_control_;
+    leg_control_state right_jump_retract_control_;
+
     ::control::pid roll_pd_;
 
     chassis_state state_ = chassis_state::RELAX;
     jump_stage jump_stage_ = jump_stage::DONT_JUMP;
+    std::uint8_t landing_support_count_ = 0U;
 };
 
 } // namespace wbr

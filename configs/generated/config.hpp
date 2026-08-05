@@ -23,6 +23,7 @@
 #define MOTOR_DJI 1
 #define MOTOR_DM 0
 #define MOTOR_LK 1
+#define CAN_DIAG_ENABLED 1
 
 namespace config::feature {
 
@@ -44,6 +45,7 @@ inline constexpr bool has_motors = 1;
 inline constexpr bool motor_dji = 1;
 inline constexpr bool motor_dm = 0;
 inline constexpr bool motor_lk = 1;
+inline constexpr bool can_diag = 1;
 
 } // namespace config::feature
 
@@ -175,3 +177,8 @@ namespace params::usb {
   inline constexpr std::uint32_t write_thread_priority = 5;
   inline constexpr std::uint32_t period_ticks = 2;
 } // namespace params::usb
+
+namespace params::can_diag {
+  inline constexpr std::uint32_t sample_period_ms = 1000;
+  inline constexpr std::uint32_t window_size = 60;
+} // namespace params::can_diag

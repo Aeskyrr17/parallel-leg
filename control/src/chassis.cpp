@@ -10,6 +10,8 @@ ChassisController::ChassisController(const chassis_config& cfg)
       lqr_(cfg.lqr),
       left_control_(cfg.leg_control),
       right_control_(cfg.leg_control),
+      left_jump_retract_control_(cfg.jump_retract_control),
+      right_jump_retract_control_(cfg.jump_retract_control),
       roll_pd_(cfg.roll_pid)
 {
     reset();
@@ -65,6 +67,7 @@ void ChassisController::reset()
 {
     state_ = chassis_state::RELAX;
     jump_stage_ = jump_stage::DONT_JUMP;
+    landing_support_count_ = 0U;
 
     left_control_.len_pid.clear();
     right_control_.len_pid.clear();
@@ -85,6 +88,14 @@ float ChassisController::len_control(leg_control_state& control, const link_stat
     return control.len_pid.result;
 }
 
+float ChassisController::roll_control(const chassis_context& ctx)
+{
+    roll_pd_.ref = ctx.cmd.roll;
+    roll_pd_.fdb = ctx.ins.roll;
+    roll_pd_.update(ctx.ins.gyro_r);
+    return roll_pd_.result;
+}
+
 void ChassisController::transition_to(chassis_state next)
 {
     if (state_ == next) {return;}
@@ -94,7 +105,15 @@ void ChassisController::transition_to(chassis_state next)
 void ChassisController::transition_jump_to(jump_stage next)
 {
     if (jump_stage_ == next) {return;}
+
+    if (next == jump_stage::IN_AIR)
+    {
+        left_jump_retract_control_.len_pid.clear();
+        right_jump_retract_control_.len_pid.clear();
+    }
+
     jump_stage_ = next;
+    landing_support_count_ = 0U;
 }
 
 void ChassisController::step_relax(const chassis_context& ctx, chassis_output& out)
@@ -130,14 +149,12 @@ void ChassisController::step_normal(const chassis_context& ctx, chassis_output& 
     const lqr_state ref = build_normal_ref(ctx);
     const lqr_output lqr = lqr_.solve(left.len, right.len, false, obs, ref);
 
-    roll_pd_.ref = ctx.cmd.roll;
-    roll_pd_.fdb = ctx.ins.roll;
-    roll_pd_.update(ctx.ins.gyro_r);
+    const float roll_pd_result = roll_control(ctx);
 
     out = {};
-    const float len_ref = ctx.cmd.len + cfg_.state.leg_len_bias;
-    out.left_target.F = len_control(left_control_, left, len_ref + roll_pd_.result) - left.Fs;
-    out.right_target.F = len_control(right_control_, right, len_ref - roll_pd_.result) - right.Fs;
+    const float len_ref = ctx.cmd.len;
+    out.left_target.F = len_control(left_control_, left, len_ref + roll_pd_result) ;
+    out.right_target.F = len_control(right_control_, right, len_ref - roll_pd_result) ;
     out.left_target.Tp = lqr.tau_l_l;
     out.right_target.Tp = lqr.tau_l_r;
     out.tau_w_l = lqr.tau_w_l;
@@ -199,7 +216,8 @@ void ChassisController::step_spin(const chassis_context& ctx, chassis_output& ou
 
 void ChassisController::step_jump(const chassis_context& ctx, chassis_output& out)
 {
-    if (ctx.cmd.mode != command_mode::jump || ctx.cmd.jump != jump_command::Jump ||
+    if (ctx.cmd.mode != command_mode::jump ||
+        ctx.cmd.jump != jump_command::Jump ||
         jump_stage_ == jump_stage::DONT_JUMP)
     {
         transition_jump_to(jump_stage::DONT_JUMP);
@@ -210,80 +228,127 @@ void ChassisController::step_jump(const chassis_context& ctx, chassis_output& ou
 
     const link_state& left = ctx.left;
     const link_state& right = ctx.right;
+
     const float support_force = left.N + right.N;
+    const float average_len = 0.5f * (left.len + right.len);
+
+    const jump_stage current_stage = jump_stage_;
+
     const bool offground = support_force < cfg_.jump.support_force;
+    const bool use_offground_lqr = offground || current_stage == jump_stage::IN_AIR || current_stage == jump_stage::LANDING;
 
     const lqr_state obs = build_obs(ctx);
-    const lqr_state ref = offground ? build_offground_ref(ctx) : build_normal_ref(ctx);
-    const bool use_offground_lqr = offground || jump_stage_ == jump_stage::IN_AIR;
-    const lqr_output lqr =
-        lqr_.solve(left.len, right.len, use_offground_lqr, obs, ref);
+    const lqr_state ref = use_offground_lqr ? build_offground_ref(ctx) : build_normal_ref(ctx);
+    const lqr_output lqr =lqr_.solve(left.len,right.len,use_offground_lqr, obs, ref);
 
-    roll_pd_.ref = ctx.cmd.roll;
-    roll_pd_.fdb = ctx.ins.roll;
-    roll_pd_.update(ctx.ins.gyro_r);
-
-    float command_len = cfg_.cmd.normal_len - 0.03f;
-    if (jump_stage_ == jump_stage::EXTEND_LEGS)
-    {
-        command_len = cfg_.jump.extend_len;
-    }
-    else if (jump_stage_ == jump_stage::IN_AIR)
-    {
-        command_len = cfg_.jump.retract_len;
-    }
+    const float roll_pd_result = roll_control(ctx);
 
     out = {};
-    if (offground)
+
+    switch (current_stage)
     {
-        out.left_target.F = len_control(left_control_, left, cfg_.jump.offground_len) - left.Fs;
-        out.right_target.F = len_control(right_control_, right, cfg_.jump.offground_len) - right.Fs;
+    case jump_stage::EXTEND_LEGS:
+    {
+        //起跳阶段直接输出恒定伸腿力
+        out.left_target.F = cfg_.jump.extend_force;
+        out.right_target.F = cfg_.jump.extend_force;
+
+        //只根据腿长判断是否进入inair
+        if (average_len > cfg_.jump.extend_done_len)
+        {
+            transition_jump_to(jump_stage::IN_AIR);
+        }
+
+        break;
+    }
+
+    case jump_stage::IN_AIR:
+    {
+        // 主动收腿到 retract_len
+        const float command_len = cfg_.jump.retract_len;
+        out.left_target.F = len_control(left_jump_retract_control_,left, command_len + roll_pd_result);
+        out.right_target.F =len_control( right_jump_retract_control_, right, command_len - roll_pd_result);
         out.reset_odom = true;
-    }
-    else
-    {
-        const float len_ref = command_len + cfg_.state.leg_len_bias;
-        out.left_target.F =
-            len_control(left_control_, left, len_ref + roll_pd_.result) - left.Fs;
-        out.right_target.F =
-            len_control(right_control_, right, len_ref - roll_pd_.result) - right.Fs;
-
-        if (jump_stage_ == jump_stage::EXTEND_LEGS)
+        // 收腿阶段根据腿长判断是否进入landing
+        if (average_len < cfg_.jump.retract_done_len)
         {
-            out.left_target.F = cfg_.jump.extend_force;
-            out.right_target.F = cfg_.jump.extend_force;
+            transition_jump_to(jump_stage::LANDING);
         }
-        else if (jump_stage_ == jump_stage::IN_AIR)
+
+        break;
+    }
+
+    // case jump_stage::LANDING:
+    // {
+    //     // 落地准备，主动伸腿到 landing_len
+    //     const float command_len = cfg_.jump.landing_len;
+    //     out.left_target.F =len_control(left_control_,left,command_len + roll_pd_result);
+    //     out.right_target.F =len_control(right_control_,right,command_len - roll_pd_result);
+    //     out.reset_odom = true;
+
+    //     // 支撑力恢复后认为落地
+    //     if (support_force > cfg_.jump.support_force)
+    //     {
+    //         ++landing_support_count_;
+    //         if (landing_support_count_ > 10U)
+    //         {
+    //             transition_jump_to(jump_stage::DONT_JUMP);
+    //             transition_to(chassis_state::NORMAL);
+    //         }
+    //     }
+    //     else
+    //     {
+    //         landing_support_count_ = 0U;
+    //     }
+
+    //     break;
+    // }
+    case jump_stage::LANDING:
+    {
+        const float command_len = cfg_.jump.landing_len;
+
+        out.left_target.F = len_control(left_control_, left, command_len + roll_pd_result);
+        out.right_target.F = len_control(right_control_, right, command_len - roll_pd_result);
+        out.reset_odom = true;
+
+        const float average_dlen = 0.5f * (left.dlen + right.dlen);
+        const bool compressed = average_len < command_len - cfg_.jump.landing_compression;
+        const bool compressing = average_dlen < -cfg_.jump.landing_dlen_threshold;
+
+        landing_support_count_ = compressed && compressing
+                                    ? landing_support_count_ + 1
+                                    : 0;
+
+        if (landing_support_count_ >= cfg_.jump.landing_confirm_ticks)
         {
-            // out.left_target.F = cfg_.jump.retract_force;
-            // out.right_target.F = cfg_.jump.retract_force;
-            out.left_target.F =
-                len_control(left_control_, left, len_ref + roll_pd_.result) - left.Fs;
-            out.right_target.F =
-                len_control(right_control_, right, len_ref - roll_pd_.result) - right.Fs;
+            transition_jump_to(jump_stage::DONT_JUMP);
+            transition_to(chassis_state::NORMAL);
         }
+
+
+        break;
     }
 
-    out.left_target.Tp = lqr.tau_l_l;
-    out.right_target.Tp = lqr.tau_l_r;
-    out.tau_w_l = lqr.tau_w_l;
-    out.tau_w_r = lqr.tau_w_r;
-    out.relax = false;
-
-    const float average_len = 0.5f * (left.len + right.len);
-    if (jump_stage_ == jump_stage::EXTEND_LEGS && average_len > cfg_.jump.extend_done_len)
+    case jump_stage::START_JUMP:
+    case jump_stage::DONT_JUMP:
+    default:
     {
-        transition_jump_to(jump_stage::IN_AIR);
-    }
-    else if (jump_stage_ == jump_stage::IN_AIR && average_len < cfg_.jump.retract_done_len)
-    {
-        transition_jump_to(jump_stage::LANDING);
-    }
-    else if (jump_stage_ == jump_stage::LANDING && support_force > cfg_.jump.support_force)
-    {
+        // 正常流程中，进入 step_jump() 时不应处于这些阶段。
         transition_jump_to(jump_stage::DONT_JUMP);
         transition_to(chassis_state::NORMAL);
+        step_normal(ctx, out);
+        return;
     }
+    }
+
+    // 公用输出
+    out.left_target.Tp = lqr.tau_l_l;
+    out.right_target.Tp = lqr.tau_l_r;
+
+    out.tau_w_l = lqr.tau_w_l;
+    out.tau_w_r = lqr.tau_w_r;
+
+    out.relax = false;
 }
 
 lqr_state ChassisController::build_obs(const chassis_context& ctx) const
