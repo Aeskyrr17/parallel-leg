@@ -5,20 +5,32 @@
 namespace wbr
 {
 
+volatile control_tuning g_control_tuning{};
+
 ChassisController::ChassisController(const chassis_config& cfg)
     : cfg_(cfg),
       lqr_(cfg.lqr),
-      left_control_(cfg.leg_control),
-      right_control_(cfg.leg_control),
-      left_jump_retract_control_(cfg.jump_retract_control),
-      right_jump_retract_control_(cfg.jump_retract_control),
+      left_len_pid_(cfg.leg_control.len_pid),
+      right_len_pid_(cfg.leg_control.len_pid),
+      left_jump_retract_pid_(cfg.jump_retract_control.len_pid),
+      right_jump_retract_pid_(cfg.jump_retract_control.len_pid),
       roll_pd_(cfg.roll_pid)
 {
+    g_control_tuning.leg_len.kp = cfg.leg_control.len_pid.kp;
+    g_control_tuning.leg_len.ki = cfg.leg_control.len_pid.ki;
+    g_control_tuning.leg_len.kd = cfg.leg_control.len_pid.kd;
+
+    g_control_tuning.roll.kp = cfg.roll_pid.kp;
+    g_control_tuning.roll.ki = cfg.roll_pid.ki;
+    g_control_tuning.roll.kd = cfg.roll_pid.kd;
+
     reset();
 }
 
 chassis_output ChassisController::step(const chassis_context& ctx)
 {
+    sync_tuning();
+
     chassis_output out{};
 
     if (!ctx.control_ok || ctx.cmd.mode == command_mode::relax)
@@ -69,12 +81,28 @@ void ChassisController::reset()
     jump_stage_ = jump_stage::DONT_JUMP;
     landing_support_count_ = 0U;
 
-    left_control_.len_pid.clear();
-    right_control_.len_pid.clear();
+    left_len_pid_.clear();
+    right_len_pid_.clear();
     roll_pd_.clear();
 }
 
-float ChassisController::len_control(leg_control_state& control, const link_state& leg,
+void ChassisController::sync_tuning()
+{
+    const float leg_kp = g_control_tuning.leg_len.kp;
+    const float leg_ki = g_control_tuning.leg_len.ki;
+    const float leg_kd = g_control_tuning.leg_len.kd;
+
+    left_len_pid_.tune(leg_kp, leg_ki, leg_kd);
+    right_len_pid_.tune(leg_kp, leg_ki, leg_kd);
+
+    const float roll_kp = g_control_tuning.roll.kp;
+    const float roll_ki = g_control_tuning.roll.ki;
+    const float roll_kd = g_control_tuning.roll.kd;
+
+    roll_pd_.tune(roll_kp, roll_ki, roll_kd);
+}
+
+float ChassisController::len_control(::control::pid& pid, const link_state& leg,
                                      float reference)
 {
     if (!leg.valid)
@@ -82,10 +110,10 @@ float ChassisController::len_control(leg_control_state& control, const link_stat
         return 0.0f;
     }
 
-    control.len_pid.ref = reference;
-    control.len_pid.fdb = leg.len;
-    control.len_pid.update(leg.dlen);
-    return control.len_pid.result;
+    pid.ref = reference;
+    pid.fdb = leg.len;
+    pid.update(leg.dlen);
+    return pid.result;
 }
 
 float ChassisController::roll_control(const chassis_context& ctx)
@@ -108,8 +136,8 @@ void ChassisController::transition_jump_to(jump_stage next)
 
     if (next == jump_stage::IN_AIR)
     {
-        left_jump_retract_control_.len_pid.clear();
-        right_jump_retract_control_.len_pid.clear();
+        left_jump_retract_pid_.clear();
+        right_jump_retract_pid_.clear();
     }
 
     jump_stage_ = next;
@@ -153,8 +181,8 @@ void ChassisController::step_normal(const chassis_context& ctx, chassis_output& 
 
     out = {};
     const float len_ref = ctx.cmd.len;
-    out.left_target.F = len_control(left_control_, left, len_ref + roll_pd_result) ;
-    out.right_target.F = len_control(right_control_, right, len_ref - roll_pd_result) ;
+    out.left_target.F = len_control(left_len_pid_, left, len_ref + roll_pd_result) ;
+    out.right_target.F = len_control(right_len_pid_, right, len_ref - roll_pd_result) ;
     out.left_target.Tp = lqr.tau_l_l;
     out.right_target.Tp = lqr.tau_l_r;
     out.tau_w_l = lqr.tau_w_l;
@@ -266,8 +294,8 @@ void ChassisController::step_jump(const chassis_context& ctx, chassis_output& ou
     {
         // 主动收腿到 retract_len
         const float command_len = cfg_.jump.retract_len;
-        out.left_target.F = len_control(left_jump_retract_control_,left, command_len + roll_pd_result);
-        out.right_target.F =len_control( right_jump_retract_control_, right, command_len - roll_pd_result);
+        out.left_target.F = len_control(left_jump_retract_pid_,left, command_len + roll_pd_result);
+        out.right_target.F =len_control( right_jump_retract_pid_, right, command_len - roll_pd_result);
         out.reset_odom = true;
         // 收腿阶段根据腿长判断是否进入landing
         if (average_len < cfg_.jump.retract_done_len)
@@ -282,8 +310,8 @@ void ChassisController::step_jump(const chassis_context& ctx, chassis_output& ou
     // {
     //     // 落地准备，主动伸腿到 landing_len
     //     const float command_len = cfg_.jump.landing_len;
-    //     out.left_target.F =len_control(left_control_,left,command_len + roll_pd_result);
-    //     out.right_target.F =len_control(right_control_,right,command_len - roll_pd_result);
+    //     out.left_target.F =len_control(left_len_pid_,left,command_len + roll_pd_result);
+    //     out.right_target.F =len_control(right_len_pid_,right,command_len - roll_pd_result);
     //     out.reset_odom = true;
 
     //     // 支撑力恢复后认为落地
@@ -307,8 +335,8 @@ void ChassisController::step_jump(const chassis_context& ctx, chassis_output& ou
     {
         const float command_len = cfg_.jump.landing_len;
 
-        out.left_target.F = len_control(left_control_, left, command_len + roll_pd_result);
-        out.right_target.F = len_control(right_control_, right, command_len - roll_pd_result);
+        out.left_target.F = len_control(left_len_pid_, left, command_len + roll_pd_result);
+        out.right_target.F = len_control(right_len_pid_, right, command_len - roll_pd_result);
         out.reset_odom = true;
 
         const float average_dlen = 0.5f * (left.dlen + right.dlen);

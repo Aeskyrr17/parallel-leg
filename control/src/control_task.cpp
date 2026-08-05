@@ -312,16 +312,3 @@ bool start_control_task() noexcept
 }
 
 } // namespace wbr
-
-struct control_tuning_handles
-{
-    ::control::pid* left_len_pid;
-    ::control::pid* right_len_pid;
-    ::control::pid* roll_pid;
-};
-
-control_tuning_handles g_control_tuning{
-    &wbr::chassis.left_len_pid_for_tuning(),
-    &wbr::chassis.right_len_pid_for_tuning(),
-    &wbr::chassis.roll_pid_for_tuning(),
-};

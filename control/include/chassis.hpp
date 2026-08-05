@@ -54,6 +54,21 @@ struct chassis_output
     bool reset_odom = false;
 };
 
+struct pid_tuning
+{
+    float kp = 0.0f;
+    float ki = 0.0f;
+    float kd = 0.0f;
+};
+
+struct control_tuning
+{
+    pid_tuning leg_len{};
+    pid_tuning roll{};
+};
+
+extern volatile control_tuning g_control_tuning;
+
 class ChassisController
 {
 public:
@@ -63,20 +78,10 @@ public:
     chassis_state state() const { return state_; }
     jump_stage jump_state() const { return jump_stage_; }
 
-    ::control::pid& left_len_pid_for_tuning() noexcept { return left_control_.len_pid; }
-    ::control::pid& right_len_pid_for_tuning() noexcept { return right_control_.len_pid; }
-    ::control::pid& roll_pid_for_tuning() noexcept { return roll_pd_; }
-
 private:
-    struct leg_control_state
-    {
-        explicit leg_control_state(const leg_control_config& cfg) : len_pid(cfg.len_pid) {}
-
-        ::control::pid len_pid;
-    };
-
     void reset();
-    static float len_control(leg_control_state& control, const link_state& leg,
+    void sync_tuning();
+    static float len_control(::control::pid& pid, const link_state& leg,
                              float reference);
     float roll_control(const chassis_context& ctx);
     void transition_to(chassis_state next);
@@ -96,10 +101,10 @@ private:
 private:
     const chassis_config& cfg_;
     LQR lqr_;
-    leg_control_state left_control_;
-    leg_control_state right_control_;
-    leg_control_state left_jump_retract_control_;
-    leg_control_state right_jump_retract_control_;
+    ::control::pid left_len_pid_;
+    ::control::pid right_len_pid_;
+    ::control::pid left_jump_retract_pid_;
+    ::control::pid right_jump_retract_pid_;
 
     ::control::pid roll_pd_;
 

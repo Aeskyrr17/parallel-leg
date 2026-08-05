@@ -57,9 +57,10 @@ hardware-validated.
 - Each cycle calls `send_control()` once at the end of `control_entry()`.
 - Debug builds expose the single POD `wbr::control_debug_data` IDE-Watch snapshot. Its
   definition is in `control_task.cpp`; it owns no thread, lock, pointer, or control behavior.
-- `control_task.cpp` also exposes the global `g_control_tuning` Watch entry. Its three pointers
-  refer directly to the two live leg-length PID objects and the live chassis Roll PID; there is no
-  parameter copy, `volatile` tuning object, or per-cycle tuning synchronization.
+- `chassis.cpp` exposes the global volatile POD `wbr::g_control_tuning` Watch entry. Its direct
+  `leg_len` and `roll` fields are initialized from the live chassis configuration, then their
+  `kp/ki/kd` values are synchronized into the private PID objects at the start of every controller
+  step. PID mode, limits, integral state, and error history are not synchronized or reset.
 - `k_default_chassis.runtime.actuation_enabled` is currently `true`; a valid non-Relax
   control cycle can therefore write active motor commands.
 
@@ -183,8 +184,9 @@ remain together in `wbr_control`; AHRS and remoter keep their module-owned threa
 - `ChassisController`
   - one enum/switch class; no state classes or factories
   - `step(chassis_context)` with explicit Relax/Normal/Spin/Offground/Jump methods
-  - owns independent left/right leg-length PID objects plus the existing Roll PID; its context
-    receives only read-only `link_state` references
+  - directly owns independent left/right leg-length PID objects plus the existing Roll PID, without
+    a single-PID leg-control state wrapper; its context receives only read-only `link_state`
+    references
   - Normal applies LQR wheel/leg torque, the direct `cmd.len` target, roll-compensated length PD, and optional
     spring-force subtraction; the off-ground transition remains disabled
   - Normal and Spin map the Function-owned continuous yaw/yaw-rate command directly; the observed
@@ -389,16 +391,9 @@ Do not invent or silently choose these values.
     - These values now run through the current parallel-leg model, LK driver, support-force estimate,
       and torque limits. Validate them with restrained low-energy tests before an unrestricted jump.
 
-15. **CAN diagnostic generated configuration**
-    - Full Debug and Release firmware builds currently fail in `pnx_bsp/can` because generated
-      `config.hpp` does not declare `config::feature::can_diag` or `params::can_diag`, while
-      `bsp_can.cpp`, `bsp_can_diag.hpp`, and `bsp_can_diag.cpp` require them.
-    - This mismatch predates and is independent of the Control responsibility refactor. Control's
-      modified Debug and Release object targets compile without warnings or errors.
-
 ## Verification
 
-Latest checks after adding `leg_control_config` and the thin `chassis_actuator` adapter:
+Latest checks after adding the direct POD runtime PID tuning entry:
 
 ```text
 cmake --build --preset Debug --target pnx_embedded --parallel 4
@@ -408,10 +403,10 @@ cmake --build --preset Release --target CMakeFiles/pnx_embedded.dir/control/src/
 ```
 
 - The modified Control object targets compile successfully in Debug and Release.
-- Full Debug and Release links are blocked by the unrelated CAN diagnostic generated-config
-  mismatch described above, so no new post-refactor firmware memory totals are available.
-- The last successful pre-refactor full links used 79,064 B DTCM / 198,564 B flash in Debug and
-  79,008 B DTCM / 100,884 B flash in Release.
+- Full Debug and Release firmware links succeed. Debug uses 84,304 B DTCM / 203,464 B flash;
+  Release uses 84,248 B DTCM / 103,760 B flash.
+- `arm-none-eabi-nm -C` finds the global `wbr::g_control_tuning` symbol in both ELF files; the
+  Debug symbol is a 24-byte global object at `0x200059a4`.
 - The generator writes the only coefficient header directly to
   `control/include/lqr_coeffs.hpp`: 484 samples, max absolute fit error `0.302590529`, RMS error
   `0.0412903229`, and worst exact-grid closed-loop max real eigenvalue `-0.926197183`.
@@ -427,8 +422,9 @@ cmake --build --preset Release --target CMakeFiles/pnx_embedded.dir/control/src/
 - No dynamic allocation was added under `control/`.
 - The only cross-thread Control topics are `chassis_command` and the lightweight
   `chassis_feedback`; no Odometry/leg/LQR/VMC topic chain was introduced.
-- The former C-linkage task telemetry remains removed. Debug builds expose only
-  `wbr::control_debug_data`, populated directly by the existing control thread.
+- The former C-linkage task telemetry remains removed. Debug builds expose
+  `wbr::control_debug_data`, populated directly by the existing control thread, plus the direct
+  POD `wbr::g_control_tuning` PID gain entry.
 - Control-layer motor sign configuration uses `leg_dir` and `motor_dir_config` inside
   `chassis_config::actuator`; only `chassis_actuator` consumes it.
 - Single-leg targets use only `virtual_force`; motor input uses only module-owned
@@ -457,7 +453,8 @@ cmake --build --preset Release --target CMakeFiles/pnx_embedded.dir/control/src/
 - The jump off-ground branch selects sparse LQR gains, zeros wheel output, targets 0.30 m leg
   length, and requests the existing Odometry reset without adding another task or message topic.
 - `ChassisController` owns separate left/right leg-length PID instances and the Roll PID;
-  `g_control_tuning` points directly to those three live objects.
+  `wbr::g_control_tuning` exposes only direct POD `kp/ki/kd` fields and synchronizes the shared
+  leg-length gains into both independent leg PID states each cycle.
 - Only Control accesses the two leg solver objects; chassis receives only their read-only states.
 - A normal cycle contains one LK `send_control()`.
 - `git diff --check` passes. No `clang-format` executable is available in the current environment,
