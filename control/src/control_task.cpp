@@ -211,6 +211,7 @@ void update_control_debug(float dt, const ahrs::message& attitude,
     debug.command_leg_length = cmd.len;
     debug.wheel_torque_left_ref = out.tau_w_l;
     debug.wheel_torque_right_ref = out.tau_w_r;
+    debug.lqr = chassis.lqr_debug();
 
     const link_state& left_link = left_leg.state();
     debug.left_leg.motor1_position = motor_fdb.left_joint1.position;

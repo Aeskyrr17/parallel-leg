@@ -57,6 +57,8 @@ struct control_debug_t
     float wheel_torque_left_ref = 0.0f;
     float wheel_torque_right_ref = 0.0f;
 
+    lqr_diagnostics lqr{};
+
     motors::feedback wheel_left_fdb{};
     motors::feedback wheel_right_fdb{};
 
