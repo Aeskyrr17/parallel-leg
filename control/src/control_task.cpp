@@ -211,6 +211,20 @@ void update_control_debug(float dt, const ahrs::message& attitude,
     debug.command_leg_length = cmd.len;
     debug.wheel_torque_left_ref = out.tau_w_l;
     debug.wheel_torque_right_ref = out.tau_w_r;
+
+    const float wheel_velocity_left =
+        chassis_cfg.actuator.motor_dir.left_wheel_dir * motor_fdb.left_wheel.velocity *
+        chassis_cfg.wheel_radius;
+    const float wheel_velocity_right =
+        chassis_cfg.actuator.motor_dir.right_wheel_dir * motor_fdb.right_wheel.velocity *
+        chassis_cfg.wheel_radius;
+    debug.wheel_linear_velocity_common =
+        0.5f * (wheel_velocity_left + wheel_velocity_right);
+    debug.wheel_linear_velocity_differential =
+        0.5f * (wheel_velocity_right - wheel_velocity_left);
+    debug.wheel_torque_common_ref = 0.5f * (out.tau_w_l + out.tau_w_r);
+    debug.wheel_torque_differential_ref = 0.5f * (out.tau_w_r - out.tau_w_l);
+
     debug.lqr = chassis.lqr_debug();
 
     const link_state& left_link = left_leg.state();

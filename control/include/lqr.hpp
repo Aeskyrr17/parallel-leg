@@ -36,12 +36,27 @@ struct lqr_output
     float tau_l_r = 0.0f; // N*m
 };
 
+struct lqr_state_diagnostic
+{
+    float error = 0.0f;
+    float tau_w_l = 0.0f;
+    float tau_w_r = 0.0f;
+    float tau_l_l = 0.0f;
+    float tau_l_r = 0.0f;
+};
+
 struct lqr_diagnostics
 {
-    // x, dx, yaw, dyaw, left leg angle/angular velocity,
-    // right leg angle/angular velocity, pitch, dpitch.
-    float error[10]{};
-    lqr_output state_contribution[10]{};
+    lqr_state_diagnostic x{};
+    lqr_state_diagnostic dx{};
+    lqr_state_diagnostic phi{};
+    lqr_state_diagnostic dphi{};
+    lqr_state_diagnostic theta_l_l{};
+    lqr_state_diagnostic dtheta_l_l{};
+    lqr_state_diagnostic theta_l_r{};
+    lqr_state_diagnostic dtheta_l_r{};
+    lqr_state_diagnostic theta_b{};
+    lqr_state_diagnostic dtheta_b{};
     lqr_output total{};
 };
 
@@ -101,7 +116,7 @@ public:
         {
             for (int state = 0; state < 10; ++state)
             {
-                diagnostics->error[state] = error[state];
+                state_diagnostic(*diagnostics, state).error = error[state];
             }
         }
 
@@ -114,7 +129,8 @@ public:
                 tau[actuator] += contribution;
                 if (diagnostics != nullptr)
                 {
-                    lqr_output& state_output = diagnostics->state_contribution[state];
+                    lqr_state_diagnostic& state_output =
+                        state_diagnostic(*diagnostics, state);
                     if (actuator == 0)
                     {
                         state_output.tau_w_l = contribution;
@@ -146,6 +162,23 @@ public:
     }
 
 private:
+    static lqr_state_diagnostic& state_diagnostic(lqr_diagnostics& diagnostics, int state)
+    {
+        switch (state)
+        {
+        case 0: return diagnostics.x;
+        case 1: return diagnostics.dx;
+        case 2: return diagnostics.phi;
+        case 3: return diagnostics.dphi;
+        case 4: return diagnostics.theta_l_l;
+        case 5: return diagnostics.dtheta_l_l;
+        case 6: return diagnostics.theta_l_r;
+        case 7: return diagnostics.dtheta_l_r;
+        case 8: return diagnostics.theta_b;
+        default: return diagnostics.dtheta_b;
+        }
+    }
+
     static bool offground_coefficient(int index)
     {
         return (index >= 24 && index < 28) || (index >= 34 && index < 38);

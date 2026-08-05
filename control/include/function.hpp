@@ -31,6 +31,9 @@ private:
     slope vel_updater_;
 
     float maintained_x_ = 0.0f;
+    bool stopping_x_ = false;
+    int stop_direction_ = 0;
+    std::uint16_t stop_confirm_count_ = 0;
     float maintained_yaw_ = 0.0f;
     remoter::sw_state prev_ctrl_ = remoter::sw_state::low;
 

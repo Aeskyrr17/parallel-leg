@@ -11,8 +11,8 @@ struct command_config
 {
     // Full-stick scales: m/s, rad/s.
     float vel_scale = 2.0f;
-    float yaw_scale = 2.0f;
-    float spin_rate = 3.0f;
+    float yaw_scale = 4.0f;
+    float spin_rate = 5.0f;
 
     // (m/s)/s, (rad/s)/s.
     float vel_slope_rate = 3.0f;
@@ -22,10 +22,12 @@ struct command_config
     float manual_len_rate = 0.2f;
     float min_len = 0.14f;
     float max_len = 0.34f;
-    float normal_len = 0.20f;
+    float normal_len = 0.23f;
+    float prepare_len = 0.20f;
 
-    float stationary_vel = 0.01f;
-    float stationary_vel_error = 0.5f;
+    float stationary_vel = 0.05f;
+    float stationary_vel_error = 0.05f;
+    std::uint8_t stop_confirm_ticks = 5U;
 };
 
 struct runtime_config
@@ -93,6 +95,7 @@ struct state_config
 struct jump_config
 {
     // wbr_2026 V0.1 jump values: m, N.
+    float prepare_len = 0.20f;
     float extend_len = 0.370f;
     float retract_len = 0.140f;
     float offground_len = 0.300f;
@@ -146,8 +149,8 @@ struct chassis_config
     leg_control_config jump_retract_control{
         ::control::pid{5000.0f, 0.0f, -200.0f, 200.0f, 0.0f,
                        ::control::pid_mode::delta}};
-    ::control::pid roll_pid{0.3f, 0.0f, 0.5f, 0.05f, 0.0f,
-                             ::control::pid_mode::position};
+    ::control::pid roll_pid{0.3f, 0.0f, -0.015f, 0.05f, 0.0f,
+                             ::control::pid_mode::delta};
     actuator_config actuator{};
 
     command_config cmd{};

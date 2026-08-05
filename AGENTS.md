@@ -56,7 +56,10 @@ hardware-validated.
   registered with `lkmotorhandler`.
 - Each cycle calls `send_control()` once at the end of `control_entry()`.
 - Debug builds expose the single POD `wbr::control_debug_data` IDE-Watch snapshot. Its
-  definition is in `control_task.cpp`; it owns no thread, lock, pointer, or control behavior.
+  definition is in `control_task.cpp`; it owns no thread, lock, pointer, or control behavior. The
+  snapshot includes the current LQR error vector, each of the ten state contributions to all four
+  actuator outputs, their total, and direction-corrected common/differential wheel linear velocity
+  and target-torque components.
 - `chassis.cpp` exposes the global volatile POD `wbr::g_control_tuning` Watch entry. Its direct
   `leg_len` and `roll` fields are initialized from the live chassis configuration, then their
   `kp/ki/kd` values are synchronized into the private PID objects at the start of every controller
@@ -154,6 +157,8 @@ remain together in `wbr_control`; AHRS and remoter keep their module-owned threa
     captures and holds the current odometry position
   - active yaw reference uses one-step continuous-angle prediction
     `total_yaw + cmd.yaw_rate * dt`; zero yaw rate captures and holds `total_yaw`
+  - exiting Spin to Normal latches both `cmd.x` and the maintained position reference to the
+    current `odom.x` on the switch-transition cycle
   - every Relax update synchronizes the maintained position and yaw to the latest
     `chassis_feedback`
 - `Odometry`
@@ -403,10 +408,10 @@ cmake --build --preset Release --target CMakeFiles/pnx_embedded.dir/control/src/
 ```
 
 - The modified Control object targets compile successfully in Debug and Release.
-- Full Debug and Release firmware links succeed. Debug uses 84,304 B DTCM / 203,464 B flash;
-  Release uses 84,248 B DTCM / 103,760 B flash.
+- Full Debug and Release firmware links succeed. Debug uses 84,760 B DTCM / 204,184 B flash;
+  Release uses 84,704 B DTCM / 104,136 B flash.
 - `arm-none-eabi-nm -C` finds the global `wbr::g_control_tuning` symbol in both ELF files; the
-  Debug symbol is a 24-byte global object at `0x200059a4`.
+  Debug symbol is a 24-byte global object at `0x200059ac`.
 - The generator writes the only coefficient header directly to
   `control/include/lqr_coeffs.hpp`: 484 samples, max absolute fit error `0.302590529`, RMS error
   `0.0412903229`, and worst exact-grid closed-loop max real eigenvalue `-0.926197183`.
