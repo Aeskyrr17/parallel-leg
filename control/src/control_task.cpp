@@ -147,6 +147,7 @@ void control_entry(ULONG /*arg*/)
             odom.state(),
             left_leg.state(),
             right_leg.state(),
+            dt,
             control_ok,
         };
         const chassis_output out = chassis.step(ctx);
@@ -196,6 +197,7 @@ void update_control_debug(float dt, const ahrs::message& attitude,
     debug.dpitch = attitude.gyro_p;
     debug.roll = attitude.roll;
     debug.droll = attitude.gyro_r;
+    debug.roll_pd_result = chassis.roll_pd_result();
     debug.yaw = attitude.yaw;
     debug.dyaw = attitude.gyro_y;
 
@@ -277,6 +279,7 @@ void update_control_debug(float dt, const ahrs::message& attitude,
 
     debug.state = chassis.state();
     debug.jump = chassis.jump_state();
+    debug.offground_detected = chassis.state() == chassis_state::OFFGROUND;
     debug.input_valid = input_ok;
     debug.output_valid = output_ok;
     debug.actuation_enabled = chassis_cfg.runtime.actuation_enabled;

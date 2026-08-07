@@ -12,7 +12,7 @@ struct command_config
     // Full-stick scales: m/s, rad/s.
     float vel_scale = 2.0f;
     float yaw_scale = 4.0f;
-    float spin_rate = 5.0f;
+    float spin_rate = 3.0f;
 
     // (m/s)/s, (rad/s)/s.
     float vel_slope_rate = 3.0f;
@@ -137,10 +137,24 @@ struct leg_config
     solver_numerics_config numerics{};
 };
 
+struct height_adaptation_config
+{
+    float short_len_enter = 0.15f;
+    float short_len_exit = 0.20f;
+
+    float len_diff_enter = 0.15f;
+    float len_diff_exit = 0.07f;
+
+    float max_offset = 0.05f;
+    float raise_rate = 0.05f;
+    float lower_rate = 0.01f;
+};
+
 struct leg_control_config
 {
-    ::control::pid len_pid{4000.0f, 0.0f, -200.0f, 200.0f, 0.0f,
+    ::control::pid len_pid{3000.0f, 0.01f, -120.0f, 400.0f, 0.0f,
                            ::control::pid_mode::delta};
+    float Gff = 90.0f; //单边腿长feedforward
 };
 
 struct chassis_config
@@ -149,8 +163,10 @@ struct chassis_config
     leg_control_config jump_retract_control{
         ::control::pid{5000.0f, 0.0f, -200.0f, 200.0f, 0.0f,
                        ::control::pid_mode::delta}};
-    ::control::pid roll_pid{0.3f, 0.0f, -0.015f, 0.05f, 0.0f,
+    ::control::pid roll_pid{0.7f, 0.0f, -0.02f, 0.1f, 0.0f,
                              ::control::pid_mode::delta};
+
+    height_adaptation_config height_adaptation;
     actuator_config actuator{};
 
     command_config cmd{};

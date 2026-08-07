@@ -41,6 +41,7 @@ struct control_debug_t
     float dpitch = 0.0f;
     float roll = 0.0f;
     float droll = 0.0f;
+    float roll_pd_result = 0.0f;
     float yaw = 0.0f;
     float dyaw = 0.0f;
 
@@ -74,6 +75,7 @@ struct control_debug_t
 
     chassis_state state = chassis_state::RELAX;
     jump_stage jump = jump_stage::DONT_JUMP;
+    bool offground_detected = false;
     bool input_valid = false;
     bool output_valid = false;
     bool actuation_enabled = false;

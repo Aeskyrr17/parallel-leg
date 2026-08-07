@@ -39,6 +39,7 @@ struct chassis_context
     const link_state& left;
     const link_state& right;
 
+    float dt = 0.0f;
     bool control_ok = false;
 };
 
@@ -67,6 +68,7 @@ struct control_tuning
     pid_tuning roll{};
 };
 
+
 extern volatile control_tuning g_control_tuning;
 
 class ChassisController
@@ -75,15 +77,17 @@ public:
     explicit ChassisController(const chassis_config& cfg);
 
     chassis_output step(const chassis_context& ctx);
+
     chassis_state state() const { return state_; }
     jump_stage jump_state() const { return jump_stage_; }
     const lqr_diagnostics& lqr_debug() const { return lqr_debug_; }
+    float roll_pd_result() const { return roll_pd_.result; }
 
 private:
     void reset();
     void sync_tuning();
     static float len_control(::control::pid& pid, const link_state& leg,
-                             float reference);
+                             float reference, float Gff);
     float roll_control(const chassis_context& ctx);
     void transition_to(chassis_state next);
     void transition_jump_to(jump_stage next);
@@ -99,6 +103,8 @@ private:
     lqr_state build_normal_ref(const chassis_context& ctx) const;
     lqr_state build_offground_ref(const chassis_context& ctx) const;
 
+    float update_adaptive_height_offset(const chassis_context& ctx, float dt);
+
 private:
     const chassis_config& cfg_;
     LQR lqr_;
@@ -112,7 +118,9 @@ private:
 
     chassis_state state_ = chassis_state::RELAX;
     jump_stage jump_stage_ = jump_stage::DONT_JUMP;
+    std::uint8_t offground_support_count_ = 0U;
     std::uint8_t landing_support_count_ = 0U;
+    float adaptive_height_offset_ = 0.0f;
 };
 
 } // namespace wbr

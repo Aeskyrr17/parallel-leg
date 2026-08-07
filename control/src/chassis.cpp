@@ -2,6 +2,9 @@
 
 #include "constrain.hpp"
 
+#include <algorithm>
+#include <cmath>
+
 namespace wbr
 {
 
@@ -15,6 +18,7 @@ ChassisController::ChassisController(const chassis_config& cfg)
       left_jump_retract_pid_(cfg.jump_retract_control.len_pid),
       right_jump_retract_pid_(cfg.jump_retract_control.len_pid),
       roll_pd_(cfg.roll_pid)
+
 {
     g_control_tuning.leg_len.kp = cfg.leg_control.len_pid.kp;
     g_control_tuning.leg_len.ki = cfg.leg_control.len_pid.ki;
@@ -44,6 +48,7 @@ chassis_output ChassisController::step(const chassis_context& ctx)
         if (entering_relax)
         {
             roll_pd_.clear();
+            adaptive_height_offset_ = 0.0f;
         }
         step_relax(ctx, out);
     }
@@ -80,7 +85,9 @@ void ChassisController::reset()
 {
     state_ = chassis_state::RELAX;
     jump_stage_ = jump_stage::DONT_JUMP;
+    offground_support_count_ = 0U;
     landing_support_count_ = 0U;
+    adaptive_height_offset_ = 0.0f;
 
     left_len_pid_.clear();
     right_len_pid_.clear();
@@ -104,7 +111,7 @@ void ChassisController::sync_tuning()
 }
 
 float ChassisController::len_control(::control::pid& pid, const link_state& leg,
-                                     float reference)
+                                     float reference, float Gff)
 {
     if (!leg.valid)
     {
@@ -114,12 +121,14 @@ float ChassisController::len_control(::control::pid& pid, const link_state& leg,
     pid.ref = reference;
     pid.fdb = leg.len;
     pid.update(leg.dlen);
-    return pid.result;
+    return pid.result + Gff;
 }
 
 float ChassisController::roll_control(const chassis_context& ctx)
 {
-    roll_pd_.ref = ctx.cmd.roll;
+    // roll_pd_.ref = ctx.cmd.roll;
+    roll_pd_.ref = 0.0f;
+    // roll_pd_.ref = cfg_.roll_offset;
     roll_pd_.fdb = ctx.ins.roll;
     roll_pd_.update(ctx.ins.gyro_r);
     return roll_pd_.result;
@@ -128,6 +137,10 @@ float ChassisController::roll_control(const chassis_context& ctx)
 void ChassisController::transition_to(chassis_state next)
 {
     if (state_ == next) {return;}
+    if (next == chassis_state::OFFGROUND || state_ == chassis_state::OFFGROUND)
+    {
+        offground_support_count_ = 0U;
+    }
     state_ = next;
 }
 
@@ -178,12 +191,19 @@ void ChassisController::step_normal(const chassis_context& ctx, chassis_output& 
     const lqr_state ref = build_normal_ref(ctx);
     const lqr_output lqr = lqr_.solve(left.len, right.len, false, obs, ref, &lqr_debug_);
 
-    const float roll_pd_result = roll_control(ctx);
+    const float roll_offset = roll_control(ctx);
+    const float height_offset = update_adaptive_height_offset(ctx, ctx.dt);
+    const float common_len = ctx.cmd.len + height_offset;
+    const float left_len_ref =
+        math::clamp(common_len + roll_offset, cfg_.cmd.min_len, cfg_.cmd.max_len);
+    const float right_len_ref =
+        math::clamp(common_len - roll_offset, cfg_.cmd.min_len, cfg_.cmd.max_len);
 
     out = {};
-    const float len_ref = ctx.cmd.len;
-    out.left_target.F = len_control(left_len_pid_, left, len_ref + roll_pd_result) ;
-    out.right_target.F = len_control(right_len_pid_, right, len_ref - roll_pd_result) ;
+    out.left_target.F =
+        len_control(left_len_pid_, left, left_len_ref, cfg_.leg_control.Gff);
+    out.right_target.F =
+        len_control(right_len_pid_, right, right_len_ref, cfg_.leg_control.Gff);
     out.left_target.Tp = lqr.tau_l_l;
     out.right_target.Tp = lqr.tau_l_r;
     out.tau_w_l = lqr.tau_w_l;
@@ -223,15 +243,42 @@ void ChassisController::step_normal(const chassis_context& ctx, chassis_output& 
 
 void ChassisController::step_offground(const chassis_context& ctx, chassis_output& out)
 {
+    const link_state& left = ctx.left;
+    const link_state& right = ctx.right;
     const lqr_state obs = build_obs(ctx);
-
     const lqr_state ref = build_offground_ref(ctx);
-
-    (void)obs;
-    (void)ref;
+    const lqr_output lqr =
+        lqr_.solve(left.len, right.len, true, obs, ref, &lqr_debug_);
+    const float roll_pd_result = roll_control(ctx);
+    const float command_len = cfg_.jump.offground_len;
 
     out = {};
-    out.relax = true;
+    out.left_target.F = len_control(left_len_pid_, left,
+                                    command_len + roll_pd_result,
+                                    cfg_.leg_control.Gff);
+    out.right_target.F = len_control(right_len_pid_, right,
+                                     command_len - roll_pd_result,
+                                     cfg_.leg_control.Gff);
+    out.left_target.Tp = lqr.tau_l_l;
+    out.right_target.Tp = lqr.tau_l_r;
+    out.tau_w_l = lqr.tau_w_l;
+    out.tau_w_r = lqr.tau_w_r;
+    out.reset_odom = true;
+    out.relax = false;
+
+    const float support_force = left.N + right.N;
+    if (support_force > cfg_.jump.support_force)
+    {
+        ++offground_support_count_;
+        if (offground_support_count_ > 5U)
+        {
+            transition_to(chassis_state::NORMAL);
+        }
+    }
+    else
+    {
+        offground_support_count_ = 0U;
+    }
 }
 
 void ChassisController::step_spin(const chassis_context& ctx, chassis_output& out)
@@ -296,8 +343,8 @@ void ChassisController::step_jump(const chassis_context& ctx, chassis_output& ou
     {
         // 主动收腿到 retract_len
         const float command_len = cfg_.jump.retract_len;
-        out.left_target.F = len_control(left_jump_retract_pid_,left, command_len + roll_pd_result);
-        out.right_target.F =len_control( right_jump_retract_pid_, right, command_len - roll_pd_result);
+        out.left_target.F = len_control(left_jump_retract_pid_,left, command_len + roll_pd_result, cfg_.leg_control.Gff);
+        out.right_target.F =len_control( right_jump_retract_pid_, right, command_len - roll_pd_result, cfg_.leg_control.Gff);
         out.reset_odom = true;
         // 收腿阶段根据腿长判断是否进入landing
         if (average_len < cfg_.jump.retract_done_len)
@@ -337,8 +384,8 @@ void ChassisController::step_jump(const chassis_context& ctx, chassis_output& ou
     {
         const float command_len = cfg_.jump.landing_len;
 
-        out.left_target.F = len_control(left_len_pid_, left, command_len + roll_pd_result);
-        out.right_target.F = len_control(right_len_pid_, right, command_len - roll_pd_result);
+        out.left_target.F = len_control(left_len_pid_, left, command_len + roll_pd_result, cfg_.leg_control.Gff);
+        out.right_target.F = len_control(right_len_pid_, right, command_len - roll_pd_result, cfg_.leg_control.Gff);
         out.reset_odom = true;
 
         const float average_dlen = 0.5f * (left.dlen + right.dlen);
@@ -445,5 +492,27 @@ lqr_state ChassisController::build_offground_ref(const chassis_context& ctx) con
 
     return ref;
 }
+
+float ChassisController::update_adaptive_height_offset(const chassis_context& ctx, float dt)
+{
+    const float short_len = std::min(ctx.left.len, ctx.right.len);
+    const float len_diff = std::fabs(ctx.left.len - ctx.right.len);
+
+    if (short_len < cfg_.height_adaptation.short_len_enter &&
+        len_diff > cfg_.height_adaptation.len_diff_enter)
+    {
+        adaptive_height_offset_ += cfg_.height_adaptation.raise_rate * dt;
+    }
+    else if (short_len > cfg_.height_adaptation.short_len_exit ||
+             len_diff < cfg_.height_adaptation.len_diff_exit)
+    {
+        adaptive_height_offset_ -= cfg_.height_adaptation.lower_rate * dt;
+    }
+
+    adaptive_height_offset_ =
+        math::clamp(adaptive_height_offset_, 0.0f, cfg_.height_adaptation.max_offset);
+    return adaptive_height_offset_;
+}
+
 
 } // namespace wbr

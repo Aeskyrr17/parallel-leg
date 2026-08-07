@@ -191,12 +191,15 @@ remain together in `wbr_control`; AHRS and remoter keep their module-owned threa
   - `step(chassis_context)` with explicit Relax/Normal/Spin/Offground/Jump methods
   - directly owns independent left/right leg-length PID objects plus the existing Roll PID, without
     a single-PID leg-control state wrapper; its context receives only read-only `link_state`
-    references
-  - Normal applies LQR wheel/leg torque, the direct `cmd.len` target, roll-compensated length PD, and optional
-    spring-force subtraction; the off-ground transition remains disabled
+    references plus the configured cycle `dt`
+  - Normal applies rate-based hysteretic common-height adaptation to `cmd.len`, adds/subtracts the
+    Roll offset, clamps both final references to the command leg-length range, and then runs the
+    independent length PIDs; combined support force below `state.offground_support_force` enters
+    Offground
   - Normal and Spin map the Function-owned continuous yaw/yaw-rate command directly; the observed
     LQR yaw state uses `ahrs::message::total_yaw`
-  - Spin currently reuses Normal; the ordinary Offground state keeps safe-relax placeholder output
+  - Spin currently reuses Normal; ordinary Offground uses sparse off-ground LQR, the configured
+    off-ground leg-length target, roll compensation, Gff, and Odometry reset
   - Jump migrates the `wbr_2026` V0.1 Prepared/trigger behavior into the existing state switch:
     Prepared sets `START_JUMP`, then the Jump command advances
     `EXTEND_LEGS -> IN_AIR -> LANDING` from current leg length and combined support feedback
@@ -227,6 +230,10 @@ RELAX
 NORMAL
     -> SPIN for a Spin command
     -> JUMP after Prepared sets `START_JUMP` and a Jump trigger follows
+    -> OFFGROUND when combined support force falls below 10 N
+
+OFFGROUND
+    -> NORMAL after combined support force remains above 30 N for six consecutive cycles
 
 JUMP
     -> NORMAL when the command is released/changed
@@ -243,7 +250,7 @@ the active `wbr_2026` branch does not provide validated behavior for them.
 | Relax | Requests odometry/position-hold reset, keeps safe relaxed output, and routes valid Normal/Jump/Spin commands |
 | Normal | Active 10-state LQR, roll-compensated length PD, spring-force subtraction, and wheel/leg outputs |
 | Spin | Reuses Normal control with the Function-owned spin yaw command |
-| Offground | Safe-relax placeholder; observed/reference scaffolding only |
+| Offground | Active sparse LQR and roll-compensated 0.30 m leg-length control; resets Odometry and returns after six-cycle support confirmation |
 | Jump | Active V0.1 extension, in-air/retraction, off-ground, and landing sequence |
 
 ## Central parameter source
@@ -265,6 +272,7 @@ It owns:
 - hip/wheel torque limits
 - leg directions, wheel directions, and four LK8016 raw encoder zero points
 - command scales/slopes/reference limits
+- Normal height-adaptation thresholds, maximum common offset, and raise/lower rates
 - V0.1 jump lengths, transition thresholds, force overrides, and support threshold
 - LQR length range/resolution
 - leg and roll PID values
@@ -284,7 +292,7 @@ PID. `chassis_actuator` retains `const actuator_config&`, const references to bo
 references to all six motors; it owns no controller, state transition, safety policy, or send call.
 Wheel-side mass and gravity remain chassis-owned and are passed as scalar cycle inputs to the leg
 solve path for the existing support-force calculation. `runtime_config::dt` is fixed at `0.001 s`
-and is passed through Function, Odometry, leg_solver, and link_solver without runtime range
+and is passed through Function, Odometry, leg_solver, link_solver, and the chassis context without runtime range
 validation.
 
 ThreadX is configured for 1000 ticks/s. The Control and Function threads both use the configured
@@ -315,7 +323,8 @@ the unchanged LK driver `offset` fields before motor registration.
   owns torque-to-current conversion.
 - The actuation/validity/Relax safety gate remains visible in `control_task`; a closed gate writes
   zero torque commands to all six buffers before the single batch commit.
-- The unimplemented ordinary Offground state returns safe-relax output.
+- Ordinary Offground keeps active leg control, uses sparse off-ground LQR, and requires six
+  consecutive support-force confirmations before returning to Normal.
 - `ChassisController` never accesses CAN, a motor manager, or commit.
 - Power limiting has one explicit insertion point after VMC and before motor buffers.
 - The actuation gate is currently true.
@@ -398,7 +407,8 @@ Do not invent or silently choose these values.
 
 ## Verification
 
-Latest checks after adding the direct POD runtime PID tuning entry:
+Latest checks after replacing the Normal height-adaptation PID with rate-based hysteresis and
+clamping both final Normal leg-length references:
 
 ```text
 cmake --build --preset Debug --target pnx_embedded --parallel 4
@@ -408,13 +418,13 @@ cmake --build --preset Release --target CMakeFiles/pnx_embedded.dir/control/src/
 ```
 
 - The modified Control object targets compile successfully in Debug and Release.
-- Full Debug and Release firmware links succeed. Debug uses 84,760 B DTCM / 204,184 B flash;
-  Release uses 84,704 B DTCM / 104,136 B flash.
+- Full Debug and Release firmware links succeed. Debug uses 84,816 B DTCM / 205,768 B flash;
+  Release uses 84,768 B DTCM / 105,008 B flash.
 - `arm-none-eabi-nm -C` finds the global `wbr::g_control_tuning` symbol in both ELF files; the
   Debug symbol is a 24-byte global object at `0x200059ac`.
 - The generator writes the only coefficient header directly to
-  `control/include/lqr_coeffs.hpp`: 484 samples, max absolute fit error `0.302590529`, RMS error
-  `0.0412903229`, and worst exact-grid closed-loop max real eigenvalue `-0.926197183`.
+  `control/include/lqr_coeffs.hpp`: 484 samples, max absolute fit error `0.313690607`, RMS error
+  `0.037629508`, and worst exact-grid closed-loop max real eigenvalue `-0.833688566`.
 - `chassis_state` declarations and switch cases are synchronized. The only declared states are
   Relax, Normal, Spin, Offground, and Jump.
 - `command_action`, `command_event`, `fsm_input`, `fsm_output`, `function_feedback`,
@@ -450,8 +460,9 @@ cmake --build --preset Release --target CMakeFiles/pnx_embedded.dir/control/src/
 - Relax keeps the existing per-cycle Odometry reset. Control publishes feedback after that reset,
   and Function synchronizes both maintained references to the resulting `x` and current
   `total_yaw`.
-- Normal sends `ctx.cmd.len` directly to the two live length PID objects, so manual Function
-  leg-length updates now affect control.
+- Normal adds the bounded adaptive common-height offset to `ctx.cmd.len`, applies the Roll
+  differential, clamps each final reference to `cmd.min_len~cmd.max_len`, and sends those references
+  to the two live length PID objects. Entering Relax clears the adaptive offset.
 - Jump requires a Prepared command before the trigger, advances through `START_JUMP`,
   `EXTEND_LEGS`, `IN_AIR`, and `LANDING` inside `ChassisController`, and exposes the current stage
   in the Debug Watch snapshot.
